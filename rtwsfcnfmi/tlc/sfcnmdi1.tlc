@@ -1,0 +1,275 @@
+%% 
+%% TLC script to generate FMI 1.0 Model Description Interface
+%% from a Simulink model during S-function code generation
+%%
+%%  Generated file:
+%%           modelDescription.xml
+%%
+%%  Version: 2.5.0
+%%  Date:    Oct. 12, 2018
+%%
+%%  Copyright 2018 Dassault Systemes
+%%  All rights reserved.
+%%
+
+%% Starting generation of modelDescription.xml
+%openfile xmlfile = "modelDescription.xml"
+%openfile inputfile = "inputs.tmp"
+%openfile outputfile = "outputs.tmp"
+%openfile paramfile = "params.tmp"
+%openfile blockiofile = "blockio.tmp"
+%openfile dworkfile = "dwork.tmp"
+%openfile dirfile = "dirfeedthrough.tmp"
+%openfile busiofile = "busio.tmp"
+%openfile nullfile = "null.tmp"
+%selectfile STDOUT
+###
+### Creating model variable description for FMI: modelDescription.xml
+###
+%selectfile xmlfile
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription
+%with CompiledModel
+  fmiVersion="1.0"
+  modelName="%<OrigName>_sf"
+  modelIdentifier="%<OrigName>_sf"
+  guid="%<GUID>" 
+  description="S-function with FMI generated from Simulink model %<OrigName>"
+  %with ConfigSet
+  author="%<ModelAuthor>"
+  %endwith
+  version="%<ModelVersion>"
+  generationTool="Dassault Systemes FMI Kit for Simulink, ver. 2.5.0 (MATLAB %<Version>)"
+  %assign XMLdate = FEVAL("makeDateAndDoc", "%<OrigName>", %<ExportImage>, %<CopyModel>, %<LoadBinaryMEX>)
+  generationDateAndTime="%<XMLdate>"
+  %if BlockHierarchyNames
+  variableNamingConvention="structured"
+  %else
+  variableNamingConvention="flat"
+  %endif   
+  numberOfContinuousStates="%<NumContStates>"
+  numberOfEventIndicators="%<ZCVectorlength>">
+  %if %<StopTime>==rtInf
+  <DefaultExperiment startTime="0.0"/>
+  %else
+  <DefaultExperiment startTime="0.0"
+    stopTime="%<StopTime>"/>
+  %endif
+  <ModelVariables>
+  %% Inputs
+  %assign nbrDirectFeedThrough = 0
+  %assign nbrInputsScalar = 0
+  %with ExternalInputs
+  %if NumExternalInputs > 0
+    %foreach portid = NumExternalInputs 
+      %assign port = ExternalInput[portid]
+      %assign nbrBusInPortVars = GenerateBusPortIO("1", "input", port, portid, nbrInputsScalar, 0, 0) 
+      %if nbrBusInPortVars > 0
+        %assign nbrInputsScalar = nbrInputsScalar + nbrBusInPortVars
+        %if port.DirectFeedThrough == "yes"
+          %assign nbrDirectFeedThrough = nbrDirectFeedThrough + nbrBusInPortVars
+        %endif
+        %selectfile busiofile
+        %assign bustype = SLibGetRecordDataTypeName(port, "")
+if ( isInput && portid==%<portid>) return allocateMemory0(1, sizeof(%<bustype>));
+      %else
+        %with port
+          %assign typeName = SLibGetRecordDataTypeName(port, "")
+          %assign fmiType = GetFMIType(typeName)
+          %if fmiType != ""
+            %assign width = LibGetRecordWidth(port)
+            %foreach idx = width
+              %selectfile xmlfile
+    <ScalarVariable
+              %if width==1
+      name="%<Identifier>"
+              %else
+      name="%<Identifier>[%<idx+1>]"
+              %endif
+              %assign valref = FEVAL("makeValueRef", "Input", typeName, nbrInputsScalar)
+      valueReference="%<valref>"
+              %if (fmiType == "fmiBoolean") || (fmiType == "fmiInteger")
+      variability="discrete"
+              %endif
+      causality="input">
+              %if fmiType == "fmiBoolean"
+      <Boolean
+        start="false"/>
+              %elseif fmiType == "fmiInteger"
+                %assign minValue = FEVAL("intmin", FEVAL("strrep", "%<typeName>", "_T", ""))
+                %assign maxValue = FEVAL("intmax", FEVAL("strrep", "%<typeName>", "_T", ""))
+                %assign minValue = FEVAL("strrep", "%<minValue>", "U", "")
+                %assign maxValue = FEVAL("strrep", "%<maxValue>", "U", "")
+                %if maxValue == "4294967295"
+                 %assign maxValue = "2147483647"
+                %endif
+      <Integer min="%<minValue>"
+        max="%<maxValue>"
+        start="0"/>
+              %else
+      <Real
+        start="0.0"/>
+              %endif
+    </ScalarVariable>
+              %if DirectFeedThrough == "yes"
+                %assign nbrDirectFeedThrough = nbrDirectFeedThrough + 1
+                %selectfile dirfile
+                %if width==1
+        <Name>%<Identifier></Name>
+                %else
+        <Name>%<Identifier>[%<idx>]</Name>
+                %endif
+              %endif
+              %selectfile inputfile
+    inputs[%<nbrInputsScalar>] = (((%<typeName> **) ssGetInputPortSignalPtrs(S, %<portid>))[%<idx>]);
+              %assign nbrInputsScalar = nbrInputsScalar + 1
+            %endforeach
+          %endif
+        %endwith
+      %endif
+    %endforeach
+  %endif
+  %endwith
+  %closefile dirfile
+  %% Check I/O dependencies
+  %assign feedThroughCase = 2
+  %if nbrDirectFeedThrough == 0
+    %assign feedThroughCase = 0
+  %elseif nbrDirectFeedThrough != nbrInputsScalar
+    %assign feedThroughCase = 1
+  %endif
+  %% Outputs
+  %assign nbrOutputsScalar = 0
+  %with ExternalOutputs
+    %if NumExternalOutputs > 0
+      %foreach portid = NumExternalOutputs
+	    %assign outp  = ExternalOutput[portid]
+	    %assign sysid = outp.Block[0]
+	    %assign blkid = outp.Block[1]
+	    %assign outportBlock = System[sysid].Block[blkid]
+        %assign nbrBusOutPortVars = GenerateBusPortIO("1", "output", outportBlock, portid, nbrOutputsScalar, nbrInputsScalar, feedThroughCase) 
+        %if nbrBusOutPortVars > 0
+          %assign nbrOutputsScalar = nbrOutputsScalar + nbrBusOutPortVars
+          %selectfile busiofile
+          %assign bustype = SLibGetRecordDataTypeName(outportBlock.DataInputPort, "")
+if (!isInput && portid==%<portid>) return allocateMemory0(width, sizeof(%<bustype>));
+        %else
+	      %with outportBlock
+            %assign typeName = SLibGetRecordDataTypeName(outp, "")
+            %assign fmiType = GetFMIType(typeName)
+            %if fmiType != ""
+	          %assign width    = LibBlockInputSignalWidth(0)
+              %foreach idx = width
+                %selectfile xmlfile
+    <ScalarVariable
+                %if width==1
+      name="%<Identifier>"
+                %else
+      name="%<Identifier>[%<idx+1>]"
+                %endif
+                %assign valref = FEVAL("makeValueRef", "Output", typeName, nbrOutputsScalar)
+      valueReference="%<valref>"
+                %if (fmiType == "fmiBoolean") || (fmiType == "fmiInteger")
+      variability="discrete"
+                %endif
+      causality="output">
+                %if fmiType == "fmiBoolean"
+      <Boolean/>
+                %elseif fmiType == "fmiInteger"
+                  %assign minValue = FEVAL("intmin", FEVAL("strrep", "%<typeName>", "_T", ""))
+                  %assign maxValue = FEVAL("intmax", FEVAL("strrep", "%<typeName>", "_T", ""))
+                  %assign minValue = FEVAL("strrep", "%<minValue>", "U", "")
+                  %assign maxValue = FEVAL("strrep", "%<maxValue>", "U", "")
+                  %if maxValue == "4294967295"
+                   %assign maxValue = "2147483647"
+                  %endif
+      <Integer min="%<minValue>"
+        max="%<maxValue>"/>
+                %else
+      <Real/>
+                %endif
+                %if feedThroughCase == 0
+      <DirectDependency/>
+                %elseif feedThroughCase == 1
+      <DirectDependency>
+          %include "%<buildDir>/dirfeedthrough.tmp"
+      </DirectDependency>
+                %endif
+    </ScalarVariable>
+                %selectfile outputfile
+    outputs[%<nbrOutputsScalar>] = &(((%<typeName> *) ssGetOutputPortSignal(S, %<portid>))[%<idx>]);
+                %assign nbrOutputsScalar = nbrOutputsScalar + 1
+              %endforeach
+            %endif
+          %endwith
+        %endif
+      %endforeach
+    %endif
+  %endwith
+  %selectfile xmlfile
+  %% Continuous-time states and their derivatives
+  %if %<BlackBoxFMU> != 1
+    %assign nbrStatesScalar = GenerateSubsystemFMI("1", "State", 0, 0, (nbrInputsScalar+nbrOutputsScalar), BlockHierarchyNames, 0) 
+  %else
+    %assign nbrStatesScalar = 0
+  %endif
+  %% DWork variables (discrete states and modes)
+  %if %<IncludeDWork> == 1 && %<BlackBoxFMU> != 1
+    %assign nbrDWorkScalar = GenerateSubsystemFMI("1", "DWork", 0, 0, (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar), BlockHierarchyNames, 0) 
+  %else
+    %assign nbrDWorkScalar = 0
+  %endif
+  %% Parameters  
+  %with ConfigSet
+    %assign inline = %<InlineParams>
+  %endwith
+  %if (%<BlackBoxFMU> != 1)
+    %if (inline != 1)
+	  %assign isRelBeforeR2015b = FEVAL("verLessThan", "matlab", "8.6")
+      %if ( isRelBeforeR2015b == 0 )
+        %assign nbrWorkspaceParams = GenerateGlobalTunablePars("1", "Parameter", (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar+nbrDWorkScalar), BlockHierarchyNames)
+        %assign nbrBlockParams = GenerateSubsystemFMI("1", "Parameter", 0, nbrWorkspaceParams, (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar+nbrDWorkScalar), BlockHierarchyNames, 0)
+        %assign nbrParamsScalar = nbrWorkspaceParams + nbrBlockParams
+      %else
+        %assign nbrParamsScalar = GenerateSubsystemFMI("1", "Parameter", 0, 0, (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar+nbrDWorkScalar), BlockHierarchyNames, 0)
+      %endif
+    %else
+      %assign nbrParamsScalar = GenerateGlobalTunablePars("1", "Parameter", (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar+nbrDWorkScalar), BlockHierarchyNames) 
+    %endif
+  %else
+    %assign nbrParamsScalar = 0
+  %endif
+  %if nbrParamsScalar > 0
+    %selectfile paramfile
+}
+    %selectfile xmlfile
+  %endif
+  %% Block output variables   
+  %if %<IncludeBlockOutputs> == 1 && %<BlackBoxFMU> != 1
+    %assign nbrBlockIOScalar = GenerateSubsystemFMI("1", "BlockOutput", 0, 0, (nbrInputsScalar+nbrOutputsScalar+2*nbrStatesScalar+nbrDWorkScalar+nbrParamsScalar), BlockHierarchyNames, 0)
+  %else
+    %assign nbrBlockIOScalar = 0
+  %endif
+  %selectfile xmlfile
+  </ModelVariables>
+  %if FMIType == "CoSimulation"
+  <Implementation>
+    <CoSimulation_StandAlone>
+      <Capabilities
+        canHandleVariableCommunicationStepSize="true"
+        canHandleEvents="true"
+		canInterpolateInputs="true"/>
+    </CoSimulation_StandAlone>
+  </Implementation>
+  %endif
+</fmiModelDescription>
+%endwith
+%closefile xmlfile
+%closefile inputfile
+%closefile outputfile
+%closefile paramfile
+%closefile blockiofile
+%closefile dworkfile
+%closefile busiofile
+%closefile nullfile
+

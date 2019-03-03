@@ -1,0 +1,33 @@
+# executables, shared libraries, debug info
+*.exe
+*.mexa64
+*.mexmaci64
+*.mexw32
+*.mexw64
+*.exp
+*.ilk
+*.lib
+*.pdb
+
+# MATLAB App Installers
+*.mlappinstall
+
+# FMUs
+*.fmu
+
+# MATALB and Simulink auto-save files
+*.asv
+*.autosave
+
+# Java binaries
+fmikit.jar
+*.class
+
+# CMake build directories
+build*/
+
+# Distribution files
+dist/
+*.zip
+
+Thumbs.db

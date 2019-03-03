@@ -1,0 +1,180 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="3046618498" file="E:\Development\FMIKit_GitHub\FMIKit.prj" location="E:\Development\FMIKit_GitHub" name="FMIKit" target="target.mlapps" target-name="Package App">
+    <param.appname>FMIKit</param.appname>
+    <param.authnamewatermark />
+    <param.email />
+    <param.company>Dassault Systemes</param.company>
+    <param.icon>${PROJECT_ROOT}\FMIKit_resources\icon_24.png</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}\FMIKit_resources\icon_48.png</file>
+      <file>${PROJECT_ROOT}\FMIKit_resources\icon_24.png</file>
+      <file>${PROJECT_ROOT}\FMIKit_resources\icon_16.png</file>
+    </param.icons>
+    <param.summary>Import and export Functional Mock-up Units (FMUs)</param.summary>
+    <param.description />
+    <param.screenshot>${PROJECT_ROOT}\docs\images\overview.png</param.screenshot>
+    <param.version>3.0.0.1</param.version>
+    <param.products.name>
+      <item>MATLAB</item>
+      <item>MATLAB Runtime - Core</item>
+      <item>Communications System Toolbox</item>
+      <item>Fixed-Point Designer</item>
+      <item>Image Processing Toolbox</item>
+      <item>MATLAB Coder</item>
+      <item>SimBiology</item>
+      <item>Simulink</item>
+    </param.products.name>
+    <param.products.id>
+      <item>'1'</item>
+      <item>'35000'</item>
+      <item>'36'</item>
+      <item>'91'</item>
+      <item>'17'</item>
+      <item>'135'</item>
+      <item>'103'</item>
+      <item>'2'</item>
+    </param.products.id>
+    <param.products.version>
+      <item>8.5</item>
+      <item>8.5</item>
+      <item>6.0</item>
+      <item>5.0</item>
+      <item>9.2</item>
+      <item>2.8</item>
+      <item>5.2</item>
+      <item>8.5</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}\FMIKit.mlappinstall</param.output>
+    <param.guid>166849ea-a902-4296-91a6-d564c7b5e05f</param.guid>
+    <unset>
+      <param.authnamewatermark />
+      <param.email />
+      <param.description />
+      <param.platforms />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\initialize_fmikit.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\+FMIKit\closeBlockDialog.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\dumpParameters.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getBlockDialog.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getInportLabels.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getModelDescription.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getOutportLabels.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getStartValue.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getUnzipDirectory.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getVariableNames.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\initialize.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\loadFMU.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\private\applyDialog.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\private\getUserData.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\private\userDataFromStruct.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\private\userDataToStruct.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setDirectInput.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setOutputPorts.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setSFunctionParameters.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setStartValue.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setUseSourceCode.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\showBlockDialog.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\version.m</file>
+      <file>${PROJECT_ROOT}\include\fmi1.h</file>
+      <file>${PROJECT_ROOT}\include\fmi2Functions.h</file>
+      <file>${PROJECT_ROOT}\include\fmi2FunctionTypes.h</file>
+      <file>${PROJECT_ROOT}\include\fmi2TypesPlatform.h</file>
+      <file>${PROJECT_ROOT}\include\fmiFunctions.h</file>
+      <file>${PROJECT_ROOT}\include\fmiModelFunctions.h</file>
+      <file>${PROJECT_ROOT}\include\fmiModelTypes.h</file>
+      <file>${PROJECT_ROOT}\include\fmiPlatformTypes.h</file>
+      <file>${PROJECT_ROOT}\include\FMU.h</file>
+      <file>${PROJECT_ROOT}\include\FMU1.h</file>
+      <file>${PROJECT_ROOT}\include\FMU2.h</file>
+      <file>${PROJECT_ROOT}\include\sfun_fmu_common.c</file>
+      <file>${PROJECT_ROOT}\include\sfun_fmu_fmi1_cs.c</file>
+      <file>${PROJECT_ROOT}\include\sfun_fmu_fmi1_me.c</file>
+      <file>${PROJECT_ROOT}\include\sfun_fmu_fmi2_cs.c</file>
+      <file>${PROJECT_ROOT}\include\sfun_fmu_fmi2_me.c</file>
+      <file>${PROJECT_ROOT}\mdl\FMIKit_blocks.mdl</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi1.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi1Functions.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi1Functions_.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi1ModelFunctions.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi1ModelFunctions_.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi2.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi2Functions.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi2Functions_.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi2ModelFunctions.c</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi2ModelFunctions_.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmi2Functions.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmi2FunctionTypes.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmi2TypesPlatform.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmiFunctions.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmiModelFunctions.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmiModelTypes.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\fmi\fmiPlatformTypes.h</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\c\rtPrintfNoOp_cpp.cpp</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\makeBlockPath.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\makeDateAndDoc.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\makeGUID.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\makeMatlabBin.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\makeValueRef.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\revert2013b.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\rtwsfcnfmi_init.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\m\rtwsfcnfmi_tmf.m</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\rtwsfcnfmi.tlc</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\rtwsfcnfmi_unix.tmf</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\rtwsfcnfmi_vc.tmf</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\rtwsfcnfmi_vcx64.tmf</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnfmilib.tlc</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnmdi1.tlc</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnmdi2.tlc</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnmei.tlc</file>
+      <file>${PROJECT_ROOT}\slx\FMIKit_blocks.slx</file>
+      <file>${PROJECT_ROOT}\src\FMU.cpp</file>
+      <file>${PROJECT_ROOT}\src\FMU1.cpp</file>
+      <file>${PROJECT_ROOT}\src\FMU2.cpp</file>
+    </fileset.depfun>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\+FMIKit</file>
+      <file>${PROJECT_ROOT}\fmikit.jar</file>
+      <file>${PROJECT_ROOT}\forms_rt.jar</file>
+      <file>${PROJECT_ROOT}\include</file>
+      <file>${PROJECT_ROOT}\initialize_fmikit.m</file>
+      <file>${PROJECT_ROOT}\LICENSE.txt</file>
+      <file>${PROJECT_ROOT}\mdl</file>
+      <file>${PROJECT_ROOT}\rtwsfcnfmi</file>
+      <file>${PROJECT_ROOT}\sfun_fmurun.cpp</file>
+      <file>${PROJECT_ROOT}\sfun_fmurun.mexw64</file>
+      <file>${PROJECT_ROOT}\slblocks.m</file>
+      <file>${PROJECT_ROOT}\slx</file>
+      <file>${PROJECT_ROOT}\src</file>
+      <file>${PROJECT_ROOT}\swingx-1.6.jar</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file location="E:\Development\FMIKit_GitHub" name="FMIKit.mlappinstall" optional="false">E:\Development\FMIKit_GitHub\FMIKit.mlappinstall</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2015a</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.2</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
