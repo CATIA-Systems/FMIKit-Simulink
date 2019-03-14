@@ -85,7 +85,8 @@ namespace fmikit {
 
     void FMU2::instantiate(bool loggingOn) {
 		auto callbacks = reinterpret_cast<fmi2CallbackFunctions*>(&m_callbackFunctions);
-		auto fmuResourceLocation = fmuLocation() + "/resources";
+		auto fmuResourceLocation = fmuLocation();
+		fmuResourceLocation += string("/resources");
 		instantiate_(instanceName().c_str(), static_cast<fmi2Type>(kind()), guid().c_str(), fmuResourceLocation.c_str(), callbacks, fmi2False, loggingOn);
 	}
 
