@@ -25,10 +25,6 @@ In the Simulink `Configuration Parameters` dialog, choose the `Code Generation` 
 Select `rtwsfcnfmi.tlc` in the list.
 FMI-specific options then become available in the Code Generation category as `FMI options`:
 
-### FMI version
-
-selects FMI version for the export (1.0 or 2.0)
-
 ### FMI type
 
 specifies FMI type (ModelExchange or CoSimulation)

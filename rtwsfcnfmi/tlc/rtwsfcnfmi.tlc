@@ -34,11 +34,7 @@
 %include "codegenentry.tlc"
 %include "sfcnfmilib.tlc"
 %assign GUID = FEVAL("makeGUID")
-%if FMIVersion == "1.0"
-  %include "sfcnmdi1.tlc"
-%else
-  %include "sfcnmdi2.tlc"
-%endif
+%include "sfcnmdi2.tlc"
 %include "sfcnmei.tlc"
 
 %% The contents between 'BEGIN_RTW_OPTIONS' and 'END_RTW_OPTIONS' are strictly
@@ -92,10 +88,11 @@
   
   rtwoptions(5).prompt         = 'FMI version:';
   rtwoptions(5).type           = 'Popup';
-  rtwoptions(5).default        = '1.0';
+  rtwoptions(5).default        = '2.0';
+  rtwoptions(5).enable         = 'off';
   rtwoptions(5).tlcvariable    = 'FMIVersion';
   rtwoptions(5).makevariable   = 'FMI_VER';
-  rtwoptions(5).popupstrings   = '1.0|2.0';
+  rtwoptions(5).popupstrings   = '2.0';
   rtwoptions(5).tooltip        = ...
     ['Specify FMI version for the export'];
 

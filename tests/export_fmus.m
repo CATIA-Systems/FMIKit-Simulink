@@ -7,30 +7,21 @@ else
 end
 
 params = {
-{'BouncingBall', '1.0', 'cs'}
-{'BouncingBall', '1.0', 'me'}
-{'BouncingBall', '2.0', 'cs'}
-{'BouncingBall', '2.0', 'me'}
-{'TestModel1', '1.0', 'cs'}
-{'TestModel1', '1.0', 'me'}
-{'TestModel1', '2.0', 'cs'}
-{'TestModel1', '2.0', 'me'}
-{'TestModel2', '1.0', 'cs'}
-{'TestModel2', '1.0', 'me'}
-{'TestModel2', '2.0', 'cs'}
-{'TestModel2', '2.0', 'me'}
-{'TriggeredSubsystems', '1.0', 'cs'}
-{'TriggeredSubsystems', '1.0', 'me'}
-{'TriggeredSubsystems', '2.0', 'cs'}
-{'TriggeredSubsystems', '2.0', 'me'}
+{'BouncingBall', 'cs'}
+{'BouncingBall', 'me'}
+{'TestModel1', 'cs'}
+{'TestModel1', 'me'}
+{'TestModel2', 'cs'}
+{'TestModel2', 'me'}
+{'TriggeredSubsystems', 'cs'}
+{'TriggeredSubsystems', 'me'}
 };
 
 tic
 for i = 1:size(params, 1)
     
     model_name = params{i}{1};
-    fmi_version = params{i}{2};
-    fmi_kind = params{i}{3};
+    fmi_kind = params{i}{2};
         
     load_system(model_name);
     
@@ -43,12 +34,12 @@ for i = 1:size(params, 1)
     fclose(fid);
 
     if strcmp(fmi_kind, 'me')
-        build_fmu(model_name, fmi_version, 'ModelExchange');
+        build_fmu(model_name, 'ModelExchange');
     else
-        build_fmu(model_name, fmi_version, 'CoSimulation');
+        build_fmu(model_name, 'CoSimulation');
     end
     
-    model_dir = fullfile(fmus_dir, fmi_version, ...
+    model_dir = fullfile(fmus_dir, '2.0', ...
         fmi_kind, 'win64', 'FMIKit', '2.6', model_name);
     
     mkdir(model_dir);
@@ -71,10 +62,9 @@ toc
 end
 
 
-function build_fmu(model_name, fmi_version, fmi_kind)
+function build_fmu(model_name, fmi_kind)
 
 % set the FMI version and kind
-set_param(model_name, 'FMIVersion', fmi_version)
 set_param(model_name, 'FMIType', fmi_kind)
 
 % set the solver
