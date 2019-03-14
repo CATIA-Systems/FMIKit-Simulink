@@ -103,8 +103,6 @@ OPTIMIZATION_FLAGS = |>OPTIMIZATION_FLAGS<|
 ADDITIONAL_LDFLAGS = |>ADDITIONAL_LDFLAGS<|
 FMI_VER         = |>FMI_VER<|
 FMI_TYPE        = |>FMI_TYPE<|
-FMI_ZIP_UTIL    = |>FMI_ZIP_UTIL<|
-FMI_ZIP_OPTS    = |>FMI_ZIP_OPTS<|
 FMI_LOAD_MEX    = |>FMI_LOAD_MEX<|
 FMI_USER_SRCS   = |>FMI_USER_SRCS<|
 FMI_OPT_OPTS    = |>FMI_OPT_OPTS<|
@@ -312,16 +310,14 @@ $(PROGRAM) : $(OBJS) $(LIBS) $(FMI_OBJ) $(FMI_SFCN_DUMMIES)
 	$(FMI_LD) $(FMI_LD_CMD) $(FMI_LD_OUT)
 	@echo "### Cleaning up temporary files and object files..."
 	@$(FMI_DEL)
-	@echo "### Creating FMU archive $(MODEL)_sf.fmu"
 	@rm -rf ../$(MODEL)_sf.fmu
 	@rm -rf binaries
-	@mkdir binaries
-	@mkdir binaries/$(FMI_DIR)
-	@mv $(MODEL)_sf.$(FMI_EXT) binaries/$(FMI_DIR)
-	$(FMI_ZIP_UTIL) $(FMI_ZIP_OPTS) ../$(MODEL)_sf.fmu modelDescription.xml binaries resources
-	@rm -rf binaries
-	@rm -rf resources
-	@rm -f modelDescription.xml
+	@mkdir FMUArchive
+	@mkdir FMUArchive/binaries
+	@mkdir FMUArchive/binaries/$(FMI_DIR)
+	@mv $(MODEL)_sf.$(FMI_EXT) FMUArchive/binaries/$(FMI_DIR)
+	@mv modelDescription.xml FMUArchive
+	@mv resources FMUArchive
 
 %.o : %.c
 	$(CC) -c $(MEX_FLAGS) $(INCLUDES) "$<"

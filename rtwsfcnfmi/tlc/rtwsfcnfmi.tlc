@@ -102,122 +102,98 @@
   rtwoptions(6).tooltip        = ...
     ['Specify FMI type for the export (Model Exchange or Co-Simulation)'];
 
-  rtwoptions(7).prompt         = 'Zip utility:';
+  rtwoptions(7).prompt         = 'Model author';
   rtwoptions(7).type           = 'Edit';
-if ispc
-  rtwoptions(7).default        = 'C:/Program Files/7-Zip/7z.exe';
-else
-  rtwoptions(7).default        = 'zip';
-end
-  rtwoptions(7).tlcvariable    = 'FMIZipUtil';
-  rtwoptions(7).makevariable   = 'FMI_ZIP_UTIL';
+  rtwoptions(7).default        = 'Unknown';
+  rtwoptions(7).tlcvariable    = 'ModelAuthor';
+  rtwoptions(7).makevariable   = '';
   rtwoptions(7).tooltip        = ...
-    ['Specify zip utility used to build FMU archive'];
-
-  rtwoptions(8).prompt         = 'Zip options:';
-  rtwoptions(8).type           = 'Edit';
-if ispc
-  rtwoptions(8).default        = 'a -r -tzip';
-else
-  rtwoptions(8).default        = '-r';
-end
-  rtwoptions(8).tlcvariable    = 'FMIZipOpts';
-  rtwoptions(8).makevariable   = 'FMI_ZIP_OPTS';
-  rtwoptions(8).tooltip        = ...
-    ['Specify command line options for zip utility'];
-
-  rtwoptions(9).prompt         = 'Model author';
-  rtwoptions(9).type           = 'Edit';
-  rtwoptions(9).default        = 'Unknown';
-  rtwoptions(9).tlcvariable    = 'ModelAuthor';
-  rtwoptions(9).makevariable   = '';
-  rtwoptions(9).tooltip        = ...
     ['Model author to be written in model description file (modelDescription.xml)'];
 
-  rtwoptions(10).prompt         = 'Generate black-box FMU';
-  rtwoptions(10).type           = 'Checkbox';
-  rtwoptions(10).default        = 'off';
-  rtwoptions(10).tlcvariable    = 'BlackBoxFMU';
-  rtwoptions(10).makevariable   = '';
-  rtwoptions(10).tooltip        = ...
+  rtwoptions(8).prompt         = 'Generate black-box FMU';
+  rtwoptions(8).type           = 'Checkbox';
+  rtwoptions(8).default        = 'off';
+  rtwoptions(8).tlcvariable    = 'BlackBoxFMU';
+  rtwoptions(8).makevariable   = '';
+  rtwoptions(8).tooltip        = ...
     ['Check this box to generate a black-box FMU, which only exposes inputs and outputs.'];
 
-  rtwoptions(11).prompt         = 'Include block hierarchy in variable names';
-  rtwoptions(11).type           = 'Checkbox';
-  rtwoptions(11).default        = 'on';
-  rtwoptions(11).tlcvariable    = 'BlockHierarchyNames';
-  rtwoptions(11).makevariable   = '';
-  rtwoptions(11).tooltip        = ...
+  rtwoptions(9).prompt         = 'Include block hierarchy in variable names';
+  rtwoptions(9).type           = 'Checkbox';
+  rtwoptions(9).default        = 'on';
+  rtwoptions(9).tlcvariable    = 'BlockHierarchyNames';
+  rtwoptions(9).makevariable   = '';
+  rtwoptions(9).tooltip        = ...
     ['Check this box to generate block-hierarchical variable names in the XML model description.'];
 
-  rtwoptions(12).prompt         = 'Include global block outputs';
-  rtwoptions(12).type           = 'Checkbox';
-  rtwoptions(12).default        = 'on';
-  rtwoptions(12).tlcvariable    = 'IncludeBlockOutputs';
-  rtwoptions(12).makevariable   = '';
-  rtwoptions(12).tooltip        = ...
+  rtwoptions(10).prompt         = 'Include global block outputs';
+  rtwoptions(10).type           = 'Checkbox';
+  rtwoptions(10).default        = 'on';
+  rtwoptions(10).tlcvariable    = 'IncludeBlockOutputs';
+  rtwoptions(10).makevariable   = '';
+  rtwoptions(10).tooltip        = ...
     ['Check this box to include global block outputs in the XML model description.'];
 
-  rtwoptions(13).prompt         = 'Include discrete states (DWork)';
-  rtwoptions(13).type           = 'Checkbox';
-  rtwoptions(13).default        = 'on';
-  rtwoptions(13).tlcvariable    = 'IncludeDWork';
-  rtwoptions(13).makevariable   = '';
-  rtwoptions(13).tooltip        = ...
+  rtwoptions(11).prompt         = 'Include discrete states (DWork)';
+  rtwoptions(11).type           = 'Checkbox';
+  rtwoptions(11).default        = 'on';
+  rtwoptions(11).tlcvariable    = 'IncludeDWork';
+  rtwoptions(11).makevariable   = '';
+  rtwoptions(11).tooltip        = ...
     ['Check this box to include discrete states and modes in the XML model description. This feature is mainly for debugging.'];
 
-  rtwoptions(14).prompt         = 'Export image (.png) of Simulink model to FMU resources';
-  rtwoptions(14).type           = 'Checkbox';
-  rtwoptions(14).default        = 'on';
-  rtwoptions(14).tlcvariable    = 'ExportImage';
-  rtwoptions(14).makevariable   = '';
-  rtwoptions(14).tooltip        = ...
+  rtwoptions(12).prompt         = 'Export image (.png) of Simulink model to FMU resources';
+  rtwoptions(12).type           = 'Checkbox';
+  rtwoptions(12).default        = 'on';
+  rtwoptions(12).tlcvariable    = 'ExportImage';
+  rtwoptions(12).makevariable   = '';
+  rtwoptions(12).tooltip        = ...
     ['Check this box to export an image of the Simulink model to the FMU resources.'];
 
-  rtwoptions(15).prompt         = 'Copy Simulink model to FMU resources';
-  rtwoptions(15).type           = 'Checkbox';
-  rtwoptions(15).default        = 'off';
-  rtwoptions(15).tlcvariable    = 'CopyModel';
-  rtwoptions(15).makevariable   = '';
-  rtwoptions(15).tooltip        = ...
+  rtwoptions(13).prompt         = 'Copy Simulink model to FMU resources';
+  rtwoptions(13).type           = 'Checkbox';
+  rtwoptions(13).default        = 'off';
+  rtwoptions(13).tlcvariable    = 'CopyModel';
+  rtwoptions(13).makevariable   = '';
+  rtwoptions(13).tooltip        = ...
     ['Check this box to copy the Simulink model to the FMU resources.'];
 
 if ispc
-  rtwoptions(16).prompt         = 'Load S-functions from binary MEX files (*.mexw32 / *.mexw64)';
+  rtwoptions(14).prompt         = 'Load S-functions from binary MEX files (*.mexw32 / *.mexw64)';
 else
-  rtwoptions(16).prompt         = 'Load S-functions from binary MEX files (*.mexglx / *.mexa64)';
+  rtwoptions(14).prompt         = 'Load S-functions from binary MEX files (*.mexglx / *.mexa64)';
 end
-  rtwoptions(16).type           = 'Checkbox';
-  rtwoptions(16).default        = 'off';
-  rtwoptions(16).tlcvariable    = 'LoadBinaryMEX';
-  rtwoptions(16).makevariable   = 'FMI_LOAD_MEX';
-  rtwoptions(16).tooltip        = ...
+  rtwoptions(14).type           = 'Checkbox';
+  rtwoptions(14).default        = 'off';
+  rtwoptions(14).tlcvariable    = 'LoadBinaryMEX';
+  rtwoptions(14).makevariable   = 'FMI_LOAD_MEX';
+  rtwoptions(14).tooltip        = ...
     ['Check this box to load internal S-functions from pre-compiled binary MEX files instead of using stand-alone compilation of S-function sources.'];
 
-  rtwoptions(17).prompt         = 'Additional S-function sources';
-  rtwoptions(17).type           = 'Edit';
-  rtwoptions(17).default        = '';
-  rtwoptions(17).tlcvariable    = '';
-  rtwoptions(17).makevariable   = 'FMI_USER_SRCS';
-  rtwoptions(17).tooltip        = ...
+  rtwoptions(15).prompt         = 'Additional S-function sources';
+  rtwoptions(15).type           = 'Edit';
+  rtwoptions(15).default        = '';
+  rtwoptions(15).tlcvariable    = '';
+  rtwoptions(15).makevariable   = 'FMI_USER_SRCS';
+  rtwoptions(15).tooltip        = ...
     ['Additional user source files for S-functions. Must be used instead of Custom Code > Source files'];
 
-  rtwoptions(18).prompt         = 'Compiler optimization flags';
-  rtwoptions(18).type           = 'Edit';
+  rtwoptions(16).prompt         = 'Compiler optimization flags';
+  rtwoptions(16).type           = 'Edit';
 if ispc
-  rtwoptions(18).default        = '/O2 /Oy-';
+  rtwoptions(16).default        = '/O2 /Oy-';
 else
-  rtwoptions(18).default        = '-O2';
+  rtwoptions(16).default        = '-O2';
 end
-  rtwoptions(18).tlcvariable    = '';
-  rtwoptions(18).makevariable   = 'FMI_OPT_OPTS';
-  rtwoptions(18).tooltip        = ...
+  rtwoptions(16).tlcvariable    = '';
+  rtwoptions(16).makevariable   = 'FMI_OPT_OPTS';
+  rtwoptions(16).tooltip        = ...
     ['Optimization flags to be used for compilation.'];
 
   % Override the default setting for model name prefixing because
   % the generated S-function is typically used in multiple models.
-  rtwoptions(19).default       = 'on';
-  rtwoptions(19).tlcvariable   = 'PrefixModelToSubsysFcnNames';
+  rtwoptions(17).default       = 'on';
+  rtwoptions(17).tlcvariable   = 'PrefixModelToSubsysFcnNames';
 
 
   rtwgensettings.IsRTWSfcn = 'yes';

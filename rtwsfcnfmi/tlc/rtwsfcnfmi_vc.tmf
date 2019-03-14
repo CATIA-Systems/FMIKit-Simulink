@@ -95,8 +95,6 @@ VISUAL_VER      = |>VISUAL_VER<|
 OPTIMIZATION_FLAGS = |>OPTIMIZATION_FLAGS<|
 FMI_VER         = |>FMI_VER<|
 FMI_TYPE        = |>FMI_TYPE<|
-FMI_ZIP_UTIL    = |>FMI_ZIP_UTIL<|
-FMI_ZIP_OPTS    = |>FMI_ZIP_OPTS<|
 FMI_LOAD_MEX    = |>FMI_LOAD_MEX<|
 FMI_USER_SRCS   = |>FMI_USER_SRCS<|
 FMI_OPT_OPTS    = |>FMI_OPT_OPTS<|
@@ -290,7 +288,6 @@ $(MODEL)_sf.$(FMI_EXT) : $(FMI_OBJ) $(FMI_SFCN_DUMMIES)
     $(FMI_LD) $(FMI_LD_OUT) $(FMI_LD_CMD) 
     @$(FMI_MT)
     @$(FMI_DEL)
-    @cmd /C "echo ### Creating FMU archive" $(MODEL)_sf.fmu
     @if exist FMUArchive rmdir /s /q FMUArchive 
     @if exist binaries rmdir /s /q binaries
     @if exist ..\$(MODEL)_sf.fmu del ..\$(MODEL)_sf.fmu
@@ -304,9 +301,6 @@ $(MODEL)_sf.$(FMI_EXT) : $(FMI_OBJ) $(FMI_SFCN_DUMMIES)
     @move binaries FMUArchive
     @if exist resources move resources FMUArchive
     @if exist modelDescription.xml move modelDescription.xml FMUArchive
-    @cd FMUArchive
-    @"$(FMI_ZIP_UTIL)" $(FMI_ZIP_OPTS) "..\..\$(MODEL)_sf.fmu" *
-    @cd ..
 
 # Look in simulink/src helper files
 
