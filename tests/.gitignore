@@ -1,0 +1,8 @@
+# RTW generated files
+slprj/
+*_sfcn_rtw_fmi/
+*_sf.c
+*_sf.h
+
+# exported FMUs
+fmus/
