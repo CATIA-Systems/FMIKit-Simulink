@@ -6,4 +6,4 @@ blkStruct.Name        = 'FMI Kit';
 blkStruct.OpenFcn     = 'FMIKit.initialize';
 
 blkStruct.Browser(1).Library = 'FMIKit_blocks';
-blkStruct.Browser(1).Name    = 'FMI Kit';
+blkStruct.Browser(1).Name    = 'FMIKit';

@@ -8,19 +8,6 @@ msg = false;
 
 info = what('FMIKit');
 [folder, ~, ~] = fileparts(info(1).path);
-
-% add the block library to the path
-if isempty(which('FMIKit_blocks'))
-
-    % use .mdl format for MATLAB versions < 8.4 (R2014b) 
-    if verLessThan('matlab', '8.4')
-        addpath(fullfile(folder, 'mdl'));
-    else
-        addpath(fullfile(folder, 'slx'));
-    end
-
-    msg = true;
-end
       
 % initialize FMU export
 if isempty(which('rtwsfcnfmi_init'))
