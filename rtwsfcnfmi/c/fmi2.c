@@ -115,6 +115,16 @@ const char* _SFCN_FMI_MATLAB_BIN = NULL;
 
 /***************** Common functions *****************/
 
+const char* fmi2GetTypesPlatform()
+{
+	return fmi2TypesPlatform;
+}
+
+const char* fmi2GetVersion()
+{
+	return fmi2Version;
+}
+
 fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[])
 {
 	Model* model = (Model*) c;
