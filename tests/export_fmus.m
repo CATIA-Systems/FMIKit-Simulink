@@ -44,6 +44,11 @@ for i = 1:size(params, 1)
     
     mkdir(model_dir);
 
+    if exist([model_name '_in.csv'], 'file')
+        copyfile([model_name '_in.csv'], ...
+            fullfile(model_dir, [model_name '_in.csv']));
+    end
+    
     copyfile([model_name '_ref.csv'], ...
         fullfile(model_dir, [model_name '_ref.csv']));
     

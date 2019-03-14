@@ -31,8 +31,9 @@ target_include_directories(ode1 PRIVATE
 # model
 add_library(${MODEL_NAME}_sf SHARED
   c/fmi.h
-  c/fmi2Functions_.h
-  c/fmi2ModelFunctions_.h
+  c/fmi/fmi2Functions.h
+  c/fmi/fmi2FunctionTypes.h
+  c/fmi/fmi2TypesPlatform.h
   "${MODEL_DIR}/${MODEL_NAME}_sfcn_rtw_fmi/${MODEL_NAME}_sf_data.c"
   "${MODEL_DIR}/${MODEL_NAME}_sfcn_rtw_fmi/rtGetInf.c"
   "${MODEL_DIR}/${MODEL_NAME}_sfcn_rtw_fmi/rtGetNaN.c"
