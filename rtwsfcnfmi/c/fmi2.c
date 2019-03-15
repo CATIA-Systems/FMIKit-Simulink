@@ -43,6 +43,7 @@ typedef struct {
 	fmi2Boolean shouldRecompute;
 	fmi2Boolean isCoSim;
 	fmi2Boolean isDiscrete;
+	fmi2Boolean hasEnteredContMode;
 	fmi2Real time;
 	fmi2Real nbrSolverSteps;
 	fmi2EventInfo eventInfo;
@@ -133,6 +134,7 @@ fmi2Status fmi2SetDebugLogging(fmi2Component c, fmi2Boolean loggingOn, size_t nC
 	return fmi2OK;
 }
 
+int LoadMEXAndDependencies(Model* model);
 void fmi2FreeInstance(fmi2Component c);
 
 fmi2Component fmi2Instantiate(fmi2String	instanceName,
@@ -177,6 +179,7 @@ fmi2Component fmi2Instantiate(fmi2String	instanceName,
 	model->nbrSolverSteps = 0.0;
 	model->isDiscrete = fmi2False;
 	model->isCoSim = fmi2False;
+	model->hasEnteredContMode = fmi2False;
 	if (fmuType == fmi2CoSimulation) {
 		model->isCoSim = fmi2True;
 		if (functions->stepFinished != NULL) {
@@ -366,6 +369,7 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	return status;
 }
 
+fmi2Status fmi2NewDiscreteStates_(fmi2Component c, fmi2EventInfo* eventInfo);
 fmi2Status fmi2EnterInitializationMode(fmi2Component c)
 {
 	Model* model = (Model*) c;
@@ -837,7 +841,11 @@ fmi2Status fmi2NewDiscreteStates(fmi2Component c, fmi2EventInfo* eventInfo)
 	}
 	/* Set sample hit for continuous sample time with FIXED_IN_MINOR_STEP_OFFSET */
 	if (model->fixed_in_minor_step_offset_tid != -1) {
-		model->S->mdlInfo->sampleHits[model->fixed_in_minor_step_offset_tid] = 1;
+		/* Except first call after initialization */
+		model->S->mdlInfo->sampleHits[model->fixed_in_minor_step_offset_tid] = 0;
+		if (model->hasEnteredContMode) {
+			model->S->mdlInfo->sampleHits[model->fixed_in_minor_step_offset_tid] = 1;
+		}
 	}
 	if (SFCN_FMI_LOAD_MEX) {
 		copyPerTaskSampleHits(model->S);
@@ -928,6 +936,7 @@ fmi2Status fmi2EnterContinuousTimeMode(fmi2Component c)
 	}
 
 	logger(model, model->instanceName, fmi2OK, "", "Enter continuous-time mode at time = %.16f\n", ssGetT(model->S));
+	model->hasEnteredContMode = fmi2True;
 	model->status = modelContinuousTimeMode;
 	return fmi2OK;
 }
