@@ -2,12 +2,6 @@
 %%  TLC library with utility functions for the FMU 
 %%  model description (XML) generation.
 %%
-%%  Version: 2.5.0
-%%  Date:    Oct. 12, 2018
-%%
-%%  Copyright 2018 Dassault Systemes
-%%  All rights reserved. 
-%%
 
 %function GetFMIType(typeName) void
   %assign isReal    = (typeName == "real_T" || typeName == "real32_T") ? 1 : 0

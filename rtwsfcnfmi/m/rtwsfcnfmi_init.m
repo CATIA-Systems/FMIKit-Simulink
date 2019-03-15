@@ -1,9 +1,7 @@
-% Copyright (c) 2019 Dassault Systemes. All rights reserved.
-
 function rtwsfcnfmi_init
 % RTWSFCNFMI_INIT
 %
-%	Initialize the FMI Kit FMU export
+%	Initialize the FMU export
 
 % check MATLAB version
 rel = version('-release');

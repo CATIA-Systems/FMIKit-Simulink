@@ -1,9 +1,6 @@
-% Copyright (c) 2019 Dassault Systemes. All rights reserved.
-
 function res = revert2013b
 %REVERT2013B	Help utility to revert code generation
 %		for inline parameters OFF to R2013b
-%
 
 rel = version('-release');
 

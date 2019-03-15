@@ -3,9 +3,6 @@
 #  Template makefile for building RTW-generated S-functions with FMI
 #  using Visual C compilers (64-bit).
 #
-#   Version: 2.5.0
-#   Date:    Oct. 12, 2018 
-#
 #  Customized from rtwsfcn_vcx64.tmf in the Matlab distribution.
 #
 

@@ -5,12 +5,6 @@
 %%  Generated file:
 %%           modelDescription.xml
 %%
-%%  Version: 2.5.0
-%%  Date:    Oct. 12, 2018
-%%
-%%  Copyright 2018 Dassault Systemes
-%%  All rights reserved.
-%%
 
 %% Starting generation of modelDescription.xml
 %assign nbrVariables = 1

@@ -2,13 +2,6 @@ function valueRef = makeValueRef(category_str, datatype_str, index)
 % MAKEVALUEREF  Help utility called by sfcnmdi.tlc to construct value reference for FMI
 %
 %  category: bits 31-28  datatype: bits 27-24  index: bits 23-0
-%
-%  Author:  Dan Henriksson, Dassault Systèmes AB
-%  Version: 1.1
-%  Date:    August 20, 2010
-%
-%  Copyright 2010 Dassault Systèmes
-%  All rights reserved.
 
 % Check range of index
 if (index < 0 || index > 2^24-1)

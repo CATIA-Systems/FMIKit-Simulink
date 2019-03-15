@@ -1,9 +1,6 @@
 function blockPath = makeBlockPath(varPath)
 %MAKEBLOCKPATH	Help utility to construct valid hierarchical path
 %               with dot notation according to FMI specification
-%
-%  Copyright 2015 Dassault Systèmes
-%  All rights reserved.
 
 % Replace original '/' in block names
 varPath = strrep(varPath, '//', '_');

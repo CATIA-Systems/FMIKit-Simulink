@@ -1,13 +1,6 @@
 function XMLdate = makeDateAndDoc(modelName, exportImage, copyModel, LoadBinaryMEX)
 % MAKEDATEANDODC  Help utility to construct date for XML and to
 %                 generate documentation files in resources 
-%
-%  Author:  Dan Henriksson, Dassault Systemes AB
-%  Version: 2.3.0
-%  Date:    March 31, 2016
-%
-%  Copyright 2016 Dassault Systemes
-%  All rights reserved.
 
 res_dir = [modelName '_sfcn_rtw_fmi/resources/'];
 if exist(res_dir, 'dir') == 7
