@@ -38,6 +38,21 @@ end
 
 if msg
     disp(['Initializing FMI Kit ' FMIKit.version()])
+    
+    % check MATLAB version
+    rel = version('-release');
+    rel_year = str2double(rel(1:4));
+    if rel(5) ~= 'a'
+        rel_year = rel_year + 0.1;
+    end
+    
+    if rel_year < 2012.1 || rel_year > 2019.0
+        warning('FMU import is only supported on MATLAB R2012b - R2019a')
+    end
+    
+    if rel_year < 2012.1 || rel_year > 2018.1
+        warning('FMU export is only supported on MATLAB R2012b - R2018b')
+    end
 end
 
 end
