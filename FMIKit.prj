@@ -2,11 +2,11 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
   <configuration target="target.mlapps" target-name="Package App" name="FMIKit" location="E:\Development\FMIKit-Simulink" file="E:\Development\FMIKit-Simulink\FMIKit.prj" build-checksum="1932270851">
     <param.appname>FMIKit</param.appname>
-    <param.authnamewatermark />
+    <param.authnamewatermark>Dassault Systemes</param.authnamewatermark>
     <param.email />
     <param.company />
     <param.icon />
-    <param.summary />
+    <param.summary>Import and export Functional Mock-up Units</param.summary>
     <param.description />
     <param.screenshot />
     <param.version>2.6</param.version>
@@ -129,21 +129,21 @@
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files (x86)\MATLAB\R2012b</root>
+      <root>C:\Program Files\MATLAB\R2012b</root>
     </matlab>
     <platform>
       <unix>false</unix>
-      <mac>true</mac>
+      <mac>false</mac>
       <windows>true</windows>
       <win2k>false</win2k>
       <winxp>false</winxp>
       <vista>true</vista>
-      <linux>true</linux>
+      <linux>false</linux>
       <solaris>false</solaris>
       <osver>6.2</osver>
-      <os32>true</os32>
-      <os64>false</os64>
-      <arch>win32</arch>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
       <matlab>true</matlab>
     </platform>
   </configuration>
