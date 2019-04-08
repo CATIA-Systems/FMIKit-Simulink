@@ -1,5 +1,19 @@
 function export_fmus(varargin)
 
+% compile timesthree.c
+mex timesthree.c
+
+switch mexext
+    case 'mexa64'
+        platform = 'linux64';
+    case 'mexmaci64'
+        platform = 'darwin64';
+    case 'mexw32'
+        platform = 'win32';
+    case 'mexw64'
+        platform = 'win64';
+end
+
 if numel(varargin) == 1
     fmus_dir = varargin{1};
 else
@@ -40,7 +54,7 @@ for i = 1:size(params, 1)
     end
     
     model_dir = fullfile(fmus_dir, '2.0', ...
-        fmi_kind, 'win64', 'FMIKit', '2.6', model_name);
+        fmi_kind, platform, 'FMIKit', num2str(FMIKit.version), model_name);
     
     mkdir(model_dir);
 
