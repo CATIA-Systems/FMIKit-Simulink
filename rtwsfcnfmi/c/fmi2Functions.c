@@ -11,6 +11,8 @@
 -----------------------------------------------------------
 */
 
+#include <stddef.h>
+
 /* FMI memory allocation with zero initialization */
 extern void* allocateMemory0(size_t nobj, size_t size);
 

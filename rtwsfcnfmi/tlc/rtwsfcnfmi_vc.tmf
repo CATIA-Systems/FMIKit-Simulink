@@ -208,7 +208,11 @@ FMI_SOLVER_OBJ = ode1.obj
 !endif
 
 FMI_SRC = $(SFCN_FMI_ROOT)\c\$(FMI_MODULE).c
+FMI_SRC2 = $(SFCN_FMI_ROOT)\c\$(FMI_PREFIX).c
+FMI_SRC3 = $(SFCN_FMI_ROOT)\c\rtPrintfNoOp_cpp.cpp
 FMI_OBJ = $(FMI_MODULE).obj
+FMI_OBJ2 = $(FMI_PREFIX).obj
+FMI_OBJ3 = rtPrintfNoOp_cpp.obj
 
 !if "$(FMI_LOAD_MEX)" == "1"
 FMI_SFCN_SRCS =
@@ -227,7 +231,7 @@ FMI_SFCN_OBJS_CPP_LOWER = $(FMI_SFCN_OBJS_CPP_UPPER:.cpp=.obj)
 FMI_SFCN_OBJS_C_UPPER = $(FMI_SFCN_OBJS_CPP_LOWER:.C=.obj)
 FMI_SFCN_OBJS_C_LOWER = $(FMI_SFCN_OBJS_C_UPPER:.c=.obj)
 
-FMI_OBJS = $(FMI_OBJ) $(FMI_SOLVER_OBJ) $(FMI_SFCN_OBJS_C_LOWER) $(FMI_RT_OBJS) $(OBJS_C_LOWER)
+FMI_OBJS = $(FMI_OBJ) $(FMI_OBJ2) $(FMI_OBJ3) $(FMI_SOLVER_OBJ) $(FMI_SFCN_OBJS_C_LOWER) $(FMI_RT_OBJS) $(OBJS_C_LOWER)
 
 # To invoke special rule for compilation of S-function sources
 FMI_SFCN_DUMMIES_CPP_UPPER = $(FMI_SFCN_SRCS:.CPP=.dum)
@@ -249,12 +253,9 @@ FMI_SOLVER_DEFINES     = /DNRT /DRT_MALLOC
 
 FMI_SOLVER_INCLUDE = $(MATLAB_ROOT)\rtw\c\src\matrixmath
 
-FMI_IMPL = "$(SFCN_FMI_BIN)\$(FMI_PREFIX).obj"
-FMI_RTP_CPP = "$(SFCN_FMI_ROOT)\bin\rtPrintfNoOp\win32\rtPrintfNoOp_cpp.obj"
-
 FMI_EXT = dll
 FMI_LD  = link
-FMI_LD_CMD = /dll /MAP /LIBPATH:"$(MATLAB_ROOT)\extern\lib\win32\microsoft" libmx.lib libmex.lib libmat.lib $(FMI_OBJS) $(FMI_IMPL) $(FMI_RTP_CPP) $(S_FUNCTIONS_LIB) $(LIBS) /implib:$(MODEL)_sf.lib /MACHINE:X86 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib 
+FMI_LD_CMD = /dll /MAP /LIBPATH:"$(MATLAB_ROOT)\extern\lib\win32\microsoft" libmx.lib libmex.lib libmat.lib $(FMI_OBJS) $(S_FUNCTIONS_LIB) $(LIBS) /implib:$(MODEL)_sf.lib /MACHINE:X86 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib 
 !if "$(VISUAL_VER)" == "14.0"
 FMI_LD_CMD = $(FMI_LD_CMD) legacy_stdio_definitions.lib
 !endif
@@ -352,6 +353,8 @@ $(FMI_OBJ) :
     @cmd /C "echo ###"
     @cmd /C "echo ### Compiling FMI wrapper: " $(FMI_SRC)
     $(FMI_CC) $(FMI_CC_FLAGS) $(FMI_ROOT_SFCN_DEFINES) "$(FMI_SRC)"
+	$(FMI_CC) $(FMI_CC_FLAGS) $(FMI_ROOT_SFCN_DEFINES) "$(FMI_SRC2)"
+	$(FMI_CC) $(FMI_CC_FLAGS) $(FMI_ROOT_SFCN_DEFINES) "$(FMI_SRC3)"
     @cmd /C "echo ### Compiling fixed-step solver: " $(FMI_SOLVER_SRC)
     $(FMI_CC) $(FMI_CC_FLAGS) $(FMI_SOLVER_DEFINES) /I"$(FMI_SOLVER_INCLUDE)" "$(FMI_SOLVER_SRC)"
 !if "$(FMI_TYPE)" == "CoSimulation"
