@@ -4,5 +4,8 @@ function [tmf,envVal] = rtwsfcnfmi_tmf
 
 [tmf1,envVal] = get_tmf_for_target('rtwsfcn');
 
-tmf = ['rtwsfcnfmi' tmf1(8:end)];
-
+if (verLessThan('matlab','9.5'))
+   tmf = ['rtwsfcnfmi' tmf1(8:end)];
+else
+    tmf = ['rtwsfcnfmi_18b' tmf1(8:end)];
+end
