@@ -1,12 +1,19 @@
-rem build the Java archive
+echo build the Java archive
 call mvn -f Java/pom.xml install
 
-rem build the generic S-function
-mkdir build
-cd build
+echo build the generic S-function (sfun_fmurun.mexw32)
+mkdir win32
+cd win32
+cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=Release ..
+cmake --build .
+cd ..
+
+echo build the generic S-function (sfun_fmurun.mexw64)
+mkdir win64
+cd win64
 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 cd ..
 
-rem build the MATLAB App installer
-matlab -nodisplay -nosplash -wait -r "matlab.apputil.package('FMIKit.prj'); exit()"
+echo build the MATLAB App installer
+"C:\Program Files\MATLAB\R2012b\bin\matlab.exe" -nodisplay -nosplash -wait -r "matlab.apputil.package('FMIKit.prj'); exit()"
