@@ -193,3 +193,56 @@ Use `FMIKit.setDirectInput()` to enable direct input:
 ```
 FMIKit.setDirectInput(gcb, true)
 ```
+
+## UserData struct
+
+The information from the block dialog is stored in the parameter `UserData` of the FMU block:
+
+```
+>> ud = get_param(gcb, 'UserData')
+
+ud =
+
+      fmiKitVersion: '2.4'
+            fmuFile: 'Rectifier.fmu'
+    fmuLastModified: 1.5548e+12
+     unzipDirectory: 'Rectifier'
+          runAsKind: 1
+         sampleTime: '-1'
+         inputPorts: [0x0 struct]
+        outputPorts: [1x4 struct]
+        startValues: [0x1 containers.Map]
+       debugLogging: 0
+   errorDiagnostics: 'ignore'
+      useSourceCode: 0
+       setBlockName: 0
+       functionName: 'sfun_fmurun'
+         parameters: [1x252 char]
+        directInput: 0
+
+>> ud.outputPorts(2)
+
+ans =
+
+        label: 'iAC'
+    variables: {'iAC[1]'  'iAC[2]'  'iAC[3]'}
+```
+
+| Field            | Type           | Description                                                      |
+|------------------|----------------|------------------------------------------------------------------|
+| fmiKitVersion    | char           | FMI Kit version that imported the FMU                            |
+| fmuFile          | char           | Path to the imported FMU                                         |
+| fmuLastModified  | double         | Last modification data of the FMU                                |
+| unzipDirectory   | char           | Path to the extracted FMU                                        |
+| runAsKind        | int            | The FMI Type of the FMU (0 = Model Exchange, 1 = Co-Simuliation) |
+| sampleTime       | char           | The sample time of the block                                     |
+| inputPorts       | struct         | Struct that holds the input ports and associated variables       |
+| outputPorts      | struct         | Struct that holds the output ports and associated variables      |
+| startValues      | containers.Map | Map of variable names -> start values                            |
+| debugLogging     | bool           | Enable debug logging on the FMU instance                         |
+| errorDiagnostics | char           | Diagnostics level ('ignore', 'warning', 'error')                 |
+| useSourceCode    | bool           | Compile the FMU from source code                                 |
+| setBlockName     | bool           | Set the FMU name as block name                                   |
+| functionName     | char           | Name of the S-function                                           |
+| parameters       | char           | Parameters for the S-function                                    |
+| directInput      | bool           | Use direct input                                                 |
