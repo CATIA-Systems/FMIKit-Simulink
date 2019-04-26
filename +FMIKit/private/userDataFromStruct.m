@@ -1,4 +1,5 @@
 function userData = userDataFromStruct(ud)
+% Convert a UserData MATLAB struct to a Java object
 
 userData = fmikit.ui.UserData;
 

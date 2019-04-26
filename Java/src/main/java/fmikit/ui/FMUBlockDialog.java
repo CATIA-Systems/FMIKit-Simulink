@@ -65,7 +65,7 @@ public class FMUBlockDialog extends JDialog {
     private JButton addScalarOutputPortButton;
 
     public static boolean debugLogging = false;
-    public static final String FMI_KIT_VERSION = "2.4";
+    public static final String FMI_KIT_VERSION = "2.6";
     public static final int MODEL_EXCHANGE = 0;
     public static final int CO_SIMULATION = 1;
     public static HashMap<Double, FMUBlockDialog> dialogs = new HashMap<Double, FMUBlockDialog>();
