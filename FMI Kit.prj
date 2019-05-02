@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration target="target.mlapps" target-name="Package App" name="FMIKit" location="E:\Development\FMIKit-Simulink" file="E:\Development\FMIKit-Simulink\FMIKit.prj" build-checksum="1932270851">
-    <param.appname>FMIKit</param.appname>
+  <configuration target="target.mlapps" target-name="Package App" name="FMI Kit" location="E:\Development\FMIKit-Simulink" file="E:\Development\FMIKit-Simulink\FMI Kit.prj" build-checksum="1932270851">
+    <param.appname>FMI Kit</param.appname>
     <param.authnamewatermark>Dassault Systemes</param.authnamewatermark>
     <param.email />
     <param.company />
@@ -26,17 +26,16 @@
       <item>2.3</item>
     </param.products.version>
     <param.platforms>
+      <item>glnxa64</item>
       <item>win64</item>
       <item>win32</item>
     </param.platforms>
-    <param.output>${PROJECT_ROOT}\FMIKit.mlappinstall</param.output>
+    <param.output>${PROJECT_ROOT}\FMI Kit.mlappinstall</param.output>
     <param.guid>f1520314-21d0-404a-928b-c5e76bc451b4</param.guid>
     <unset>
-      <param.authnamewatermark />
       <param.email />
       <param.company />
       <param.icon />
-      <param.summary />
       <param.description />
       <param.screenshot />
     </unset>
@@ -56,6 +55,9 @@
       <file>${PROJECT_ROOT}\+FMIKit\getVariableNames.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\initialize.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\loadFMU.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\majorVersion.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\minorVersion.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\patchVersion.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\private\applyDialog.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\private\getUserData.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\private\userDataFromStruct.m</file>
@@ -115,6 +117,7 @@
       <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnmdi2.tlc</file>
       <file>${PROJECT_ROOT}\rtwsfcnfmi\tlc\sfcnmei.tlc</file>
       <file>${PROJECT_ROOT}\sfun_fmurun.cpp</file>
+      <file>${PROJECT_ROOT}\sfun_fmurun.mexa64</file>
       <file>${PROJECT_ROOT}\sfun_fmurun.mexw32</file>
       <file>${PROJECT_ROOT}\sfun_fmurun.mexw64</file>
       <file>${PROJECT_ROOT}\slblocks.m</file>
@@ -125,7 +128,7 @@
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
-      <file name="FMIKit.mlappinstall" location="${PROJECT_ROOT}" optional="false">FMIKit.mlappinstall</file>
+      <file name="FMI Kit.mlappinstall" location="E:\Development\FMIKit-Simulink" optional="false">E:\Development\FMIKit-Simulink\FMI Kit.mlappinstall</file>
     </build-deliverables>
     <workflow />
     <matlab>
