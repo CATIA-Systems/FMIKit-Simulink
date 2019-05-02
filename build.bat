@@ -14,6 +14,3 @@ cd win64
 cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 cd ..
-
-echo build the MATLAB App installer
-"C:\Program Files\MATLAB\R2012b\bin\matlab.exe" -nodisplay -nosplash -wait -r "matlab.apputil.package('FMIKit.prj'); exit()"
