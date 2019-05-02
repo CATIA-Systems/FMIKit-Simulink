@@ -64,7 +64,7 @@ string getStringParam(SimStruct *S, int index)
 	auto data = (char *)mxGetData(pa);
 	auto lendata = mxGetNumberOfElements(pa);
 
-	int buflen = mxGetN(pa) * sizeof(mxChar) + 1;
+	size_t buflen = mxGetN(pa) * sizeof(mxChar) + 1;
 	auto str = (char *)mxMalloc(buflen);
 	auto status = mxGetString(pa, str, buflen);
 
