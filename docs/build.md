@@ -37,11 +37,12 @@ To compile the generic S-function (`sfun_fmurun.mex*`) on Windows run
 mex sfun_fmurun.cpp src/FMU.cpp src/FMU1.cpp src/FMU2.cpp -Iinclude -lshlwapi
 ```
 
-On Linux and macOS:
+On Linux:
 
 ```
-mex sfun_fmurun.cpp src/FMU.cpp src/FMU1.cpp src/FMU2.cpp -Iinclude
+mex sfun_fmurun.cpp src/FMU.cpp src/FMU1.cpp src/FMU2.cpp -Iinclude -v CXXFLAGS='-std=c++11 -fPIC' -ldl
 ```
+
 ## Debugging the generic S-function
 
 Prerequisites: [CMake](https://cmake.org)
