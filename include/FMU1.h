@@ -43,7 +43,7 @@ namespace fmikit {
 		fmi1Component m_component ;
 		fmi1CallbackFunctions m_callbackFunctions;
 
-		void assertNoError(fmi1Status status, char *message);
+		void assertNoError(fmi1Status status, const char *message);
 
 		template<typename T> T* getFunc(const char *functionName, bool required = true) {
 

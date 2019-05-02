@@ -140,7 +140,7 @@ namespace fmikit {
 		va_end(args);
 	}
 
-	void FMU2::assertNoError(fmi2Status status, char *message) {
+	void FMU2::assertNoError(fmi2Status status, const char *message) {
 
 		if (status < fmi2Error) return;
 

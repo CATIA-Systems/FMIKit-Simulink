@@ -128,7 +128,7 @@ namespace fmikit {
 
 	FMU1::~FMU1() {}
 
-	void FMU1::assertNoError(fmi1Status status, char *message) {
+	void FMU1::assertNoError(fmi1Status status, const char *message) {
 
 		if (status < fmi1Error) return;
 

@@ -90,7 +90,7 @@ namespace fmikit {
 
 		static void logFMU2Message(fmi2ComponentEnvironment environment, fmi2String instanceName, fmi2Status status, fmi2String category, fmi2String message, ...);
 
-		void assertNoError(fmi2Status status, char *message);
+		void assertNoError(fmi2Status status, const char *message);
 
 		template<typename T> T* getFunc(const char *functionName, bool required = true) {
 
