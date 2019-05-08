@@ -27,6 +27,8 @@ for i = 2:numel(segments)
   
   segment = strrep(segment, '//', '/');
   segment = strrep(segment, '&', '&amp;');
+  segment = strrep(segment, '<', '&lt;');
+  segment = strrep(segment, '>', '&gt;');
   segment = strrep(segment, char(hex2dec('D')), ' '); % carriage return
   segment = strrep(segment, char(hex2dec('A')), ' '); % line feed
   segment = strrep(segment, char(hex2dec('9')), ' '); % tab

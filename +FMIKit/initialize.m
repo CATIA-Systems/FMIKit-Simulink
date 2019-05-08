@@ -8,19 +8,6 @@ msg = false;
 
 info = what('+FMIKit');
 [folder, ~, ~] = fileparts(info(1).path);
-      
-% initialize the RTWSFCNFMI
-if isempty(which('rtwsfcnfmi_init'))
-    rtwsfcnfmi_m_folder = fullfile(folder, 'rtwsfcnfmi', 'm');
-    if exist(rtwsfcnfmi_m_folder, 'dir')
-        addpath(rtwsfcnfmi_m_folder);
-        msg = true;
-    end
-end
-
-if ~isempty(which('rtwsfcnfmi_init'))
-    rtwsfcnfmi_init();
-end
 
 % add the src folder to the MATLAB path
 if isempty(which('FMU.cpp'))
@@ -36,6 +23,15 @@ if isempty(which('grtfmi.tlc'))
     grtfmi_folder = fullfile(folder, 'grtfmi');
     if exist(grtfmi_folder, 'dir')
         addpath(grtfmi_folder);
+        msg = true;
+    end
+end
+
+% add the RTWSFCNFMI target to the MATLAB path
+if isempty(which('rtwsfcnfmi.tlc'))
+    rtwsfcnfmi_folder = fullfile(folder, 'rtwsfcnfmi');
+    if exist(rtwsfcnfmi_folder, 'dir')
+        addpath(rtwsfcnfmi_folder);
         msg = true;
     end
 end
