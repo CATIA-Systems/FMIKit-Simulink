@@ -1,0 +1,114 @@
+%% 
+%%  TLC library with utility functions for the FMU 
+%%  model description (XML) generation.
+%%
+
+%function GetFMIType(typeName) void
+  %switch typeName
+    %case "real_T"
+    %case "real32_T"
+      %return "Real"
+    %case "int8_T"
+    %case "uint8_T"
+    %case "int16_T"
+    %case "uint16_T"
+    %case "int32_T"
+    %case "uint32_T"
+      %return "Integer"
+    %case "boolean_T"
+      %return "Boolean"
+    %default 
+      %return "" 
+  %endswitch
+%endfunction
+
+%function GenerateSubsystemFMI(subSysIdx, vr) void
+  %selectfile xmlfile
+  %assign numVars = 0
+  %assign subsystem = ::CompiledModel.BlockHierarchyMap.Subsystem[subSysIdx]
+  %foreach bIdx = subsystem.NumBlocks
+    %assign vr = GenerateBlockFMI(subsystem.Block[bIdx], subSysIdx, bIdx, vr)
+  %endforeach
+  %foreach ssIdx = subsystem.NumChildSubsystems
+    %assign vr = GenerateSubsystemFMI(subsystem.ChildSubsystems[ssIdx], vr)
+  %endforeach
+  %return vr
+%endfunction
+
+%function GenerateBlockFMI(block, subSysIdx, blockIdx, vr) void
+  %foreach idx = block.NumParameters
+    %if block.Parameter[idx]._idx >= 0
+      %assign param = ::CompiledModel.ModelParameters.Parameter[block.Parameter[idx]._idx]
+      %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleVariables>")
+        %continue
+      %endif
+      %assign vr = OutputParameterFMI(param, vr)
+    %endif
+  %endforeach
+  %return vr
+%endfunction
+
+%function OutputParameterFMI(param, vr) Output
+  %assign parType      = ::CompiledModel.GlobalScope.tParametersType
+  %assign defParam     = ::CompiledModel.GlobalScope.tDefaultParameters
+  %assign sigSrc       = param.OwnerSysIdx
+  %assign dtypeID      = LibGetRecordDataTypeId(param)
+  %assign dataTypeName = SLibGetRecordDataTypeName(param, "")
+  %assign valueType    = TYPE(param.Value)
+  %assign width        = LibGetRecordWidth(param)
+  %assign fmiType      = GetFMIType(dataTypeName)
+  %if fmiType == ""
+    %return vr
+  %endif
+  %foreach index = width
+    %if width > 1
+      %assign variableName = "%<param.Identifier>[%<index+1>]"        
+    %else
+      %assign variableName = "%<param.Identifier>"  
+    %endif
+    %if valueType == "Vector" || valueType == "Matrix"
+      %assign startValue = param.Value[index]
+    %else
+      %assign startValue = param.Value
+    %endif
+    %if sigSrc[1] < 0
+      %assign identifier = param.Identifier
+    %else
+      %assign varGroupIdx = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1]) 
+      %assign identifier = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name + "." + param.Identifier
+    %endif
+    %selectfile xmlfile
+    %switch dataTypeName
+      %case "real_T"
+      %case "real32_T"
+        %if "%<startValue>" == "rtInf"
+          %assign startValue = "INF"
+        %elseif "%<startValue>" == "rtMinusInf"
+          %assign startValue = "-INF"
+        %elseif "%<startValue>" == "rtNaN"
+          %assign startValue = "NAN"
+        %else
+          %assign startValue = FEVAL("strrep", "%<startValue>", "F", "")       
+        %endif
+        %break
+      %case "uint8_T"
+      %case "uint16_T"
+      %case "uint32_T"
+        %assign startValue = FEVAL("strrep", "%<startValue>", "U", "")
+        %break
+      %default
+        %break
+    %endswitch
+    %assign startValue = FEVAL("strrep", "%<startValue>", "[", "")
+    %assign startValue = FEVAL("strrep", "%<startValue>", "]", "")
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="parameter" variability="fixed">
+      <%<fmiType> start="%<startValue>"/>
+    </ScalarVariable>
+    %selectfile incfile
+    case %<vr>:
+      *dtypeID = %<dtypeID>;
+      return &(rtmGetDefaultParam(S)->%<identifier>);
+    %assign vr = vr + 1
+  %endforeach
+  %return vr
+%endfunction

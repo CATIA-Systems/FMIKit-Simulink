@@ -1,0 +1,184 @@
+%% Starting generation of modelDescription.xml
+%openfile xmlfile = "modelDescription.xml"
+%openfile incfile = "fmiwrapper.inc"
+%with CompiledModel
+  %assign reusableFunction = ISFIELD(ConfigSet, "CodeInterfacePackaging") && ConfigSet.CodeInterfacePackaging == "Reusable function"
+  %selectfile STDOUT
+### Writing modelDescription.xml
+
+  %selectfile xmlfile
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="%<OrigName>"
+  guid=""
+  generationTool="Simulink %<Version> with FMI Kit (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  %assign XMLdate = FEVAL("grtfmi_xml_datetime")
+  generationDateAndTime="%<XMLdate>"
+  %assign description = FEVAL("get_param", "%<OrigName>", "Description")
+  description="%<description>"
+  version="%<ModelVersion>"
+  numberOfEventIndicators="%<ZCVectorlength>">
+  
+  <CoSimulation
+    modelIdentifier="%<OrigName>"
+%if !reusableFunction
+    canBeInstantiatedOnlyOncePerProcess="true"
+%endif
+    canHandleVariableCommunicationStepSize="true">
+    <SourceFiles>
+      <File name="%<OrigName>.c"/>
+      <File name="%<OrigName>_data.c"/>
+      <File name="fmi2Functions.c"/>
+      <File name="rt_logging.c"/>
+      <File name="rt_logging_mmi.c"/>
+      <File name="rt_nonfinite.c"/>
+      <File name="rtGetInf.c"/>
+      <File name="rtGetNaN.c"/>
+      <File name="rtw_modelmap_utils.c"/>
+  %assign sourceFiles = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
+  %foreach i = SIZE(sourceFiles, 1)
+      <File name="%<sourceFiles[i]>"/>
+  %endforeach
+    </SourceFiles>
+  </CoSimulation>
+
+  <DefaultExperiment startTime="%<StartTime>" stopTime="%<StopTime>" stepSize="%<FixedStepOpts.FixedStep>"/>
+
+  <ModelVariables>
+  %assign vr = 1
+  %assign outputIndices = []
+
+  %selectfile incfile
+#include "%<OrigName>.h"
+#include "%<OrigName>_private.h"
+
+#define MODEL            %<OrigName>
+#define MODEL_INITIALIZE %<OrigName>_initialize
+#define MODEL_STEP       %<OrigName>_step
+#define MODEL_TERMINATE  %<OrigName>_terminate
+#define RT_MDL_TYPE      %<GlobalScope.tSimStructType>
+
+/* R2019a defines the block parameters as extern */
+#ifndef rtmGetDefaultParam
+#define rtmGetDefaultParam(S) (&%<OrigName>_P)
+#endif
+
+%if reusableFunction
+#define REUSABLE_FUNCTION
+%else
+/* Definitions for non-reusable models */
+#define RT_MDL_INSTANCE     %<OrigName>_M
+#define rtmGetY(S)          (&%<OrigName>_Y)
+#define rtmGetStepSize(rtm) (rtm->Timing.stepSize0)
+%endif
+
+void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
+  switch(vr) {
+  %% Parameters
+  %selectfile xmlfile
+    <!-- Parameters -->
+  %assign vr = GenerateSubsystemFMI(0, vr) 
+  %% Inputs
+  %with ExternalInputs
+    %if NumExternalInputs > 0
+      %selectfile xmlfile
+
+    <!-- Inputs -->
+      %foreach portid = NumExternalInputs
+        %assign port         = ExternalInput[portid]
+        %if FEVAL("grtfmi_exclude_variable", "%<port.Identifier>", "%<VisibleVariables>")
+          %continue
+        %endif
+        %assign dtypeID      = LibGetRecordDataTypeId(port)
+        %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
+        %assign dims         = LibGetRecordDimensions(port)
+        %assign width        = LibGetRecordWidth(port)
+        %assign fmiType      = GetFMIType(dataTypeName)
+        %foreach index = width
+            %if width == 1
+              %assign dataName     = "%<port.Identifier>"
+              %assign variableName = "%<port.Identifier>"
+            %else
+              %assign dataName     = "%<port.Identifier>[%<index>]"
+              %assign variableName = "%<port.Identifier>[%<index+1>]"
+            %endif
+            %selectfile incfile
+    case %<vr>:
+      *dtypeID = %<dtypeID>;
+      return &(rtmGetU(S)->%<dataName>);
+            %selectfile xmlfile
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input">
+      <%<fmiType> start="0"/>
+    </ScalarVariable>
+            %assign vr = vr + 1
+          %endforeach
+       %endforeach
+    %endif
+  %endwith
+  %% Outputs
+  %with ExternalOutputs
+    %if NumExternalOutputs > 0
+      %selectfile xmlfile
+
+    <!-- Outputs -->
+      %foreach portid = NumExternalOutputs
+        %assign outp         = ExternalOutput[portid]
+        %assign sysid        = outp.Block[0]
+        %assign blkid        = outp.Block[1]
+        %assign outportBlock = System[sysid].Block[blkid]
+        %with outportBlock
+          %if FEVAL("grtfmi_exclude_variable", "%<Identifier>", "%<VisibleVariables>")
+            %continue
+          %endif
+          %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
+          %assign fmiType      = GetFMIType(dataTypeName)
+          %assign dtypeID      = LibGetRecordDataTypeId(outp)
+          %assign width        = LibGetRecordWidth(outp)
+          %foreach index = width
+            %if width == 1
+              %assign dataName     = "%<Identifier>"
+              %assign variableName = "%<Identifier>"
+            %else
+              %assign dataName     = "%<Identifier>[%<index>]"
+              %assign variableName = "%<Identifier>[%<index+1>]"
+            %endif
+            %selectfile incfile
+    case %<vr>:
+      *dtypeID = %<dtypeID>;
+      return &(rtmGetY(S)->%<dataName>);
+            %selectfile xmlfile
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output">
+      <%<fmiType>/>
+    </ScalarVariable>
+            %assign outputIndices = outputIndices + vr
+            %assign vr = vr + 1
+          %endforeach
+        %endwith
+      %endforeach
+    %endif
+  %endwith
+  %selectfile incfile
+    default:
+      return NULL;
+  }
+}
+  %selectfile xmlfile
+
+  </ModelVariables>
+
+  <ModelStructure>
+  %if SIZE(outputIndices,1) > 0
+    <Outputs>
+    %foreach iOutputIndex = SIZE(outputIndices,1)
+      <Unknown index="%<outputIndices[iOutputIndex]>"/>
+    %endforeach
+    </Outputs>
+  %endif
+  </ModelStructure>
+
+</fmiModelDescription>
+%endwith
+
+%closefile incfile
+%closefile xmlfile

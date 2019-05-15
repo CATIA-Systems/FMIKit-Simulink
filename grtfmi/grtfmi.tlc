@@ -1,0 +1,86 @@
+%% SYSTLC: FMU based on GRT (Functional Mock-up Unit) \
+%%    TMF: none MAKE: make_rtw EXTMODE: no_ext_comm
+%%
+%selectfile NULL_FILE
+
+%assign TargetType = "RT"
+%assign Language   = "C"
+%assign GenRTModel = 1
+%assign _GRT_      = 1
+%assign TargetRegistMutexOp   = 1 
+%assign TargetRegistSynchroOp = 1
+
+%include "codegenentry.tlc"
+%include "grtfmilib.tlc"
+%include "grtfmixml.tlc"
+
+
+%% The contents between 'BEGIN_RTW_OPTIONS' and 'END_RTW_OPTIONS' in this file
+%% are used to maintain backward compatibility to R13 and preR13 custom target 
+%% file only.
+%%
+/%
+  BEGIN_RTW_OPTIONS
+
+  i = 1;
+  rtwoptions(i).prompt        = 'FMI';
+  rtwoptions(i).type          = 'Category';
+  rtwoptions(i).enable        = 'on';
+  rtwoptions(i).default       = 3;   % number of items under this category
+                                     % excluding this one.
+  rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
+  rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
+  rtwoptions(i).tooltip       = '';
+  rtwoptions(i).callback      = '';
+  rtwoptions(i).makevariable  = '';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'CMake Generator';
+  rtwoptions(i).type          = 'Popup';
+  rtwoptions(i).default       = 'Visual Studio 14 2015 Win64';
+  rtwoptions(i).popupstrings  = ['Visual Studio 15 2017|' ...
+                                'Visual Studio 15 2017 Win64|' ...
+                                'Visual Studio 14 2015|' ...
+                                'Visual Studio 14 2015 Win64|' ...
+                                'Visual Studio 12 2013|' ...
+                                'Visual Studio 12 2013 Win64|' ...
+                                'Visual Studio 11 2012|' ...
+                                'Visual Studio 11 2012 Win64|' ...
+                                'Visual Studio 10 2010|' ...
+                                'Visual Studio 10 2010 Win64|' ...
+                                'Visual Studio 9 2008|' ...
+                                'Visual Studio 9 2008 Win64|' ...
+                                'NMake Makefiles|' ...
+                                'NMake Makefiles JOM|' ...
+                                'MSYS Makefiles|' ...
+                                'MinGW Makefiles|' ...
+                                'Unix Makefiles'];
+  rtwoptions(i).tlcvariable   = 'CMakeGenerator';
+  rtwoptions(i).tooltip       = ['CMake generator to build the shared library'];
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'CMake Command';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = 'cmake';
+  rtwoptions(i).tlcvariable   = 'CMakeCommand';
+  rtwoptions(i).tooltip       = 'CMake command or path the executable';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Visible Variables';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'VisibleVariables';
+  rtwoptions(i).tooltip       = 'Variables to include in the model description (leave empty to include all variables)';
+
+  %----------------------------------------%
+  % Configure code generation settings %
+  %----------------------------------------%
+  
+  rtwgensettings.BuildDirSuffix = '_grt_fmi_rtw';
+  rtwgensettings.DerivedFrom    = 'grt.tlc';
+  rtwgensettings.Version        = '1';
+
+  rtwgensettings.SelectCallback = 'grtfmi_selectcallback(hDlg, hSrc)';
+  
+  END_RTW_OPTIONS 
+ %/
