@@ -26,7 +26,7 @@
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 3;   % number of items under this category
+  rtwoptions(i).default       = 4;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
@@ -64,6 +64,13 @@
   rtwoptions(i).default       = 'cmake';
   rtwoptions(i).tlcvariable   = 'CMakeCommand';
   rtwoptions(i).tooltip       = 'CMake command or path the executable';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'CMake Options';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'CMakeOptions';
+  rtwoptions(i).tooltip       = 'Additional command line options for CMake';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Visible Variables';

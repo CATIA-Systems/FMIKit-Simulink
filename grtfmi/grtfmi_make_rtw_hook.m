@@ -18,8 +18,10 @@ switch hookMethod
 
         pathstr = which('grtfmi.tlc');
         [grtfmi_dir, ~, ~] = fileparts(pathstr);
+        
         command   = get_param(modelName, 'CMakeCommand');
         generator = get_param(modelName, 'CMakeGenerator');
+        options   = get_param(modelName, 'CMakeOptions');
 
         % check for cmake executable
         status = system(command);
@@ -67,6 +69,7 @@ switch hookMethod
         ' -DMATLAB_ROOT="'   strrep(matlabroot,    '\', '/') '"' ...
         ' -DCUSTOM_INCLUDE="' build_path_list(custom_include) '"' ...
         ' -DCUSTOM_SOURCE="' build_path_list(custom_source) '"' ...
+        ' ' options ...
         ' "'                 strrep(grtfmi_dir,    '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
