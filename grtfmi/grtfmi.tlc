@@ -61,9 +61,9 @@
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake Command';
   rtwoptions(i).type          = 'Edit';
-  rtwoptions(i).default       = 'cmake';
+  rtwoptions(i).default       = '';
   rtwoptions(i).tlcvariable   = 'CMakeCommand';
-  rtwoptions(i).tooltip       = 'CMake command or path the executable';
+  rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake Options';

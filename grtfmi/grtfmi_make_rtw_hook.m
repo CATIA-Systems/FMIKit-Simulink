@@ -19,15 +19,10 @@ switch hookMethod
         pathstr = which('grtfmi.tlc');
         [grtfmi_dir, ~, ~] = fileparts(pathstr);
         
-        command   = get_param(modelName, 'CMakeCommand');
+        command = get_param(modelName, 'CMakeCommand');
+        command = grtfmi_find_cmake(command);
         generator = get_param(modelName, 'CMakeGenerator');
-        options   = get_param(modelName, 'CMakeOptions');
-
-        % check for cmake executable
-        status = system(command);
-        assert(status == 0, ['Failed to run CMake command: ' command '. ' ...
-            'Install CMake (https://cmake.org/) and set the CMake command in ' ...
-            'Configuration Parameters > Code Generation > CMake Build > CMake Command.'])
+        options = get_param(modelName, 'CMakeOptions');
 
         disp('### Running CMake generator')
         custom_include = get_param(gcs, 'CustomInclude');
