@@ -160,6 +160,13 @@ public class FMUBlockDialog extends JDialog {
         // get rid of the "colors, food, sports" default model
         variablesTree.setModel(null);
         outportsTree.setModel(null);
+
+        // disable the "Direct Input" when "Model Exchange" is selected
+        cmbbxRunAsKind.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                chckbxDirectInput.setEnabled(cmbbxRunAsKind.getSelectedIndex() == 1);
+            }
+        });
     }
 
     public void showAsync() {
@@ -834,7 +841,7 @@ public class FMUBlockDialog extends JDialog {
         if (generic) {
             // input
             params.add("[" + Util.join(inputPortWidths, " ") + "]"); // input port widths
-            params.add(chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
+            params.add(cmbbxRunAsKind.getSelectedIndex() == 0 || chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
             params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");  // input port direct feed through
             params.add("[" + Util.join(inputPortTypes, " ") + "]");  // input port types
             params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");  // input port variable VRs
