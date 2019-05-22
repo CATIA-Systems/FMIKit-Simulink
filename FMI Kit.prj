@@ -72,6 +72,20 @@
       <file>${PROJECT_ROOT}\fmikit.jar</file>
       <file>${PROJECT_ROOT}\FMIKit_blocks.slx</file>
       <file>${PROJECT_ROOT}\forms_rt.jar</file>
+      <file>${PROJECT_ROOT}\grtfmi\CMakeLists.txt</file>
+      <file>${PROJECT_ROOT}\grtfmi\fmi2Functions.c</file>
+      <file>${PROJECT_ROOT}\grtfmi\fmi2Functions.h</file>
+      <file>${PROJECT_ROOT}\grtfmi\fmi2FunctionTypes.h</file>
+      <file>${PROJECT_ROOT}\grtfmi\fmi2TypesPlatform.h</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi.tlc</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_cmake_default_generator.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_exclude_variable.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_find_cmake.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_make_rtw_hook.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_selectcallback.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_xml_datetime.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmilib.tlc</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmixml.tlc</file>
       <file>${PROJECT_ROOT}\include\fmi1.h</file>
       <file>${PROJECT_ROOT}\include\fmi2Functions.h</file>
       <file>${PROJECT_ROOT}\include\fmi2FunctionTypes.h</file>
