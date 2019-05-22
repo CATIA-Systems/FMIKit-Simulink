@@ -73,11 +73,11 @@
   rtwoptions(i).tooltip       = 'Additional command line options for CMake';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Visible Variables';
+  rtwoptions(i).prompt        = 'Visible Parameters';
   rtwoptions(i).type          = 'Edit';
   rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'VisibleVariables';
-  rtwoptions(i).tooltip       = 'Variables to include in the model description (leave empty to include all variables)';
+  rtwoptions(i).tlcvariable   = 'VisibleParameters';
+  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
 
   %----------------------------------------%
   % Configure code generation settings %

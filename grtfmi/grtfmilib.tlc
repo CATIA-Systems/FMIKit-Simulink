@@ -39,7 +39,7 @@
   %foreach idx = block.NumParameters
     %if block.Parameter[idx]._idx >= 0
       %assign param = ::CompiledModel.ModelParameters.Parameter[block.Parameter[idx]._idx]
-      %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleVariables>")
+      %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleParameters>")
         %continue
       %endif
       %assign vr = OutputParameterFMI(param, vr)

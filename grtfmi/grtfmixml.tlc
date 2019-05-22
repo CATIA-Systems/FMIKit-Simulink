@@ -87,9 +87,6 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
         %assign port         = ExternalInput[portid]
-        %if FEVAL("grtfmi_exclude_variable", "%<port.Identifier>", "%<VisibleVariables>")
-          %continue
-        %endif
         %assign dtypeID      = LibGetRecordDataTypeId(port)
         %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
         %assign dims         = LibGetRecordDimensions(port)
@@ -128,9 +125,6 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
         %assign blkid        = outp.Block[1]
         %assign outportBlock = System[sysid].Block[blkid]
         %with outportBlock
-          %if FEVAL("grtfmi_exclude_variable", "%<Identifier>", "%<VisibleVariables>")
-            %continue
-          %endif
           %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
           %assign fmiType      = GetFMIType(dataTypeName)
           %assign dtypeID      = LibGetRecordDataTypeId(outp)
