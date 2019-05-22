@@ -6,7 +6,7 @@ function initialize()
 
 msg = false;
 
-info = what('FMIKit');
+info = what('+FMIKit');
 [folder, ~, ~] = fileparts(info(1).path);
       
 % initialize the RTWSFCNFMI
