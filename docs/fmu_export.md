@@ -29,14 +29,6 @@ FMI-specific options then become available in the Code Generation category as `F
 
 specifies FMI type (ModelExchange or CoSimulation)
 
-### Zip utility
-
-Zip utility used to build the FMU archive (default: 7-Zip on Windows, zip on Linux)
-
-### Zip options
-
-Command line options passed to the Zip utility
-
 ### Model author
 
 specifies model author for FMU XML description
@@ -91,9 +83,10 @@ Model Exchange export: Both Variable-step and Fixed-step solvers supported
 
 - recommended to use Variable-step to support accurate event detection using non-sampled zero-crossings
 Co-Simulation export: Requires a Fixed-step solver
+
 - the selected solver is then compiled into the FMU
+
 It is also recommended to set the Tasking mode to SingleTasking
-<br>
 
 ### Start the Real-time Workshop build process by pressing Ctrl-B.
 
@@ -141,27 +134,23 @@ In the flat view, the variable names are appended with `_xc`, `_xd`, `_pm` and `
 
 Below follows a short description of the included files
 
-| File                          | Description
-|-------------------------------|------------
-| `bin`                         | Pre-compiled Visual Studio and GCC binaries of the FMI implementation for the supported MATLAB releases
-| `c/fmi`                       | Folder containing the official C headers of the FMI specification
-| `c/fmi{1,2}Functions.c`       | Wrapper of Simulink Coder-generated model code for Co-Simulation (FMI 1.0 and 2.0)
-| `c/fmi{1,2}Functions_.h`      | Forward declarations for FMI Co-Simulation implementation
-| `c/fmi{1,2}ModelFunctions.c`  | Wrapper of Simulink Coder-generated model code for Model Exchange (FMI 1.0 and 2.0)
-| `c/fmi{1,2}ModelFunctions_.h` | Forward declarations for Model Exchange implementation
-| `m/makeBlockPath.p`           | help utility to construct hierarchical block path for XML file
-| `m/makeDateAndDoc.p`          | help utility to make the XML date attribute and copy resources
-| `m/makeGUID.mex*`             | MEX file to make a globally unique identifier (GUID) for the XML file
-| `m/makeMatlabBin.p`           | help utility to find Matlab bin directory for the current architecture
-| `m/makeValueRef.p`            | help utility to construct a value reference
-| `m/revert2013b.m`             | to execute revertInlineParametersOffToR2013b in base workspace
-| `m/rtwsfcnfmi_init.m`         | m-file to initialize the FMI Kit export target (rtwsfcnfmi)
-| `m/rtwsfcnfmi_tmf.m`          | m-file to get the template makefile
-| `tlc/ rtwsfcnfmi.tlc`         | Main target language compiler (TLC) script for S-function FMI Target
-| `tlc/rtwsfcnfmi_unix.tmf`     | Template makefile for GCC on UNIX-based systems
-| `tlc/rtwsfcnfmi_vc.tmf`       | Template makefile for 32-bit Visual Studio compilers
-| `tlc/rtwsfcnfmi_vcx64.tmf`    | Template makefile for 64-bit Visual Studio compilers
-| `tlc/sfcnfmilib.tlc`          | TLC utility library for the FMU generation
-| `tlc/sfcnmdi1.tlc`            | TLC script to build modelDescription.xml for FMI 1.0
-| `tlc/sfcnmdi2.tlc`            | TLC script to build modelDescription.xml for FMI 2.0
-| `tlc/sfcnmei.tlc`             | TLC script to construct model-specific header
+| File                           | Description
+|--------------------------------|------------
+| `c/fmi`                        | folder containing the official C headers of the FMI specification
+| `m/makeBlockPath.m`            | helper function to construct hierarchical block path for XML file
+| `m/makeDateAndDoc.m`           | helper function to make the XML date attribute and copy resources
+| `m/makeGUID.m`                 | helper function to make a globally unique identifier (GUID) for the XML file
+| `m/makeMatlabBin.m`            | helper function to find Matlab bin directory for the current architecture
+| `m/makeValueRef.m`             | helper function to construct a value reference
+| `m/revert2013b.m`              | to execute revertInlineParametersOffToR2013b in base workspace
+| `m/rtwsfcnfmi_init.m`          | function to initialize the S-function FMI target
+| `m/rtwsfcnfmi_tmf.m`           | helper function to get the template makefile
+| `tlc/rtwsfcnfmi.tlc`           | main target language compiler (TLC) script for the S-function FMI target
+| `tlc/rtwsfcnfmi_unix.tmf`      | Template makefile for GCC on UNIX-based systems
+| `tlc/rtwsfcnfmi_vc.tmf`        | Template makefile for 32-bit Visual Studio compilers
+| `tlc/rtwsfcnfmi_vcx64.tmf`     | Template makefile for 64-bit Visual Studio compilers (before R2018b)
+| `tlc/rtwsfcnfmi_18b_vcx64.tmf` | Template makefile for 64-bit Visual Studio compilers (R2018b)
+| `tlc/sfcnfmilib.tlc`           | TLC utility library for the FMU generation
+| `tlc/sfcnmdi2.tlc`             | TLC script to build modelDescription.xml for FMI 2.0
+| `tlc/sfcnmei.tlc`              | TLC script to construct model-specific header
+| `CMakeLists.txt`               | CMake configuration to build the generated code
