@@ -60,3 +60,11 @@ Prerequisites: [CMake](https://cmake.org)
 ## Debugging the block dialog
 
 TODO
+
+## Building the app installer
+
+- download & extract the zip file
+- run build.bat
+- copy sfun_fmurun.mexa64
+- build the app installer project
+- rename the app installer (e.g. `FMIKit-2.6-alpha.2.mlappinstall`)
