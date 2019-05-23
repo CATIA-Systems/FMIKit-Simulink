@@ -105,6 +105,11 @@ file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
 ")
 file(APPEND ${RTW_DIR}/Temp/simstruc_rt.h "${CONTENTS}")
 
+# remove FMU_BUILD_DIR from previous build
+add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
+  ${FMU_BUILD_DIR}
+)
+
 # modelDescription.xml
 add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${RTW_DIR}/modelDescription.xml
