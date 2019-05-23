@@ -22,10 +22,11 @@
   
   <CoSimulation
     modelIdentifier="%<OrigName>"
-%if !reusableFunction
+  %if !reusableFunction
     canBeInstantiatedOnlyOncePerProcess="true"
-%endif
+  %endif
     canHandleVariableCommunicationStepSize="true">
+  %if SourceCodeFMU
     <SourceFiles>
       <File name="%<OrigName>.c"/>
       <File name="%<OrigName>_data.c"/>
@@ -36,11 +37,12 @@
       <File name="rtGetInf.c"/>
       <File name="rtGetNaN.c"/>
       <File name="rtw_modelmap_utils.c"/>
-  %assign sourceFiles = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
-  %foreach i = SIZE(sourceFiles, 1)
+    %assign sourceFiles = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
+    %foreach i = SIZE(sourceFiles, 1)
       <File name="%<sourceFiles[i]>"/>
-  %endforeach
+    %endforeach
     </SourceFiles>
+  %endif
   </CoSimulation>
 
   <DefaultExperiment startTime="%<StartTime>" stopTime="%<StopTime>" stepSize="%<FixedStepOpts.FixedStep>"/>

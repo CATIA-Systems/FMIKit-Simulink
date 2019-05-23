@@ -5,6 +5,7 @@ set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install di
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
+set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
 set(FMU_BUILD_DIR FMUArchive)
 
 project (${MODEL})
@@ -116,24 +117,31 @@ add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_FILE_NAME:${MODEL}>
 )
 
-# source code
-foreach (SOURCE_FILE ${HEADERS} ${SOURCES})
-  get_filename_component(BASE_NAME ${SOURCE_FILE} NAME)
-  add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-    ${SOURCE_FILE}
-    ${FMU_BUILD_DIR}/sources/${BASE_NAME}
-  )
-endforeach(SOURCE_FILE)
+set (ARCHIVE_FILES modelDescription.xml binaries)
 
-# copy simstruc.h with RT definitions
-add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-  ${RTW_DIR}/Temp/simstruc_rt.h
-  ${FMU_BUILD_DIR}/sources/simstruc.h
-)
+if (SOURCE_CODE_FMU)
+  # source code
+  foreach (SOURCE_FILE ${HEADERS} ${SOURCES})
+    get_filename_component(BASE_NAME ${SOURCE_FILE} NAME)
+    add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+      ${SOURCE_FILE}
+      ${FMU_BUILD_DIR}/sources/${BASE_NAME}
+    )
+  endforeach(SOURCE_FILE)
+
+  # copy simstruc.h with RT definitions
+  add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+    ${RTW_DIR}/Temp/simstruc_rt.h
+    ${FMU_BUILD_DIR}/sources/simstruc.h
+  )
+
+  # sources directory
+  set (ARCHIVE_FILES ${ARCHIVE_FILES} sources)
+endif ()
 
 # create ZIP archive
 add_custom_command(TARGET ${MODEL} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E tar "cfv" ${CMAKE_CURRENT_BINARY_DIR}/${MODEL}.fmu --format=zip
-  modelDescription.xml binaries sources
+  ${ARCHIVE_FILES}
   WORKING_DIRECTORY ${FMU_BUILD_DIR}
 )

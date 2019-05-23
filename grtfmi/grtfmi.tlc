@@ -84,6 +84,13 @@
   rtwoptions(i).tlcvariable   = 'VisibleParameters';
   rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
 
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Include sources in FMU';
+  rtwoptions(i).type          = 'Checkbox';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
+  rtwoptions(i).tooltip       = 'Add model sources to FMU';
+
   %----------------------------------------%
   % Configure code generation settings %
   %----------------------------------------%
