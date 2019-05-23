@@ -22,7 +22,6 @@ switch hookMethod
         command = get_param(modelName, 'CMakeCommand');
         command = grtfmi_find_cmake(command);
         generator = get_param(modelName, 'CMakeGenerator');
-        options = get_param(modelName, 'CMakeOptions');
 
         disp('### Running CMake generator')
         custom_include = get_param(gcs, 'CustomInclude');
@@ -64,7 +63,6 @@ switch hookMethod
         ' -DMATLAB_ROOT="'   strrep(matlabroot,    '\', '/') '"' ...
         ' -DCUSTOM_INCLUDE="' build_path_list(custom_include) '"' ...
         ' -DCUSTOM_SOURCE="' build_path_list(custom_source) '"' ...
-        ' ' options ...
         ' "'                 strrep(grtfmi_dir,    '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 

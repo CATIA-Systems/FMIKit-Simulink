@@ -66,11 +66,16 @@
   rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'CMake Options';
-  rtwoptions(i).type          = 'Edit';
-  rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'CMakeOptions';
-  rtwoptions(i).tooltip       = 'Additional command line options for CMake';
+  rtwoptions(i).prompt        = 'Compiler Optimization';
+  rtwoptions(i).type          = 'Popup';
+  rtwoptions(i).enable        = 'off';
+  rtwoptions(i).default       = 'Disabled';
+  rtwoptions(i).popupstrings  = ['Disabled|' ...
+                                'Minimize size|' ...
+                                'Maximize speed|' ...
+                                'Full optimization'];
+  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimization';
+  rtwoptions(i).tooltip       = ['Compiler optimization level'];
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Visible Parameters';
