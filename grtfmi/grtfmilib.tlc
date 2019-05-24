@@ -56,17 +56,29 @@
   %assign dataTypeName = SLibGetRecordDataTypeName(param, "")
   %assign valueType    = TYPE(param.Value)
   %assign width        = LibGetRecordWidth(param)
+  %assign dims         = LibGetRecordDimensions(param)
+  %assign nRows        = dims[0]
+  %assign nCols        = SIZE(dims, 1) == 1 ? 1 : dims[1]
   %assign fmiType      = GetFMIType(dataTypeName)
   %if fmiType == ""
     %return vr
   %endif
-  %foreach index = width
-    %if width > 1
-      %assign variableName = "%<param.Identifier>[%<index+1>]"        
+  %if SIZE(dims, 1) > 2
+    %return vr
+  %endif
+  %assign index = 0
+  %foreach colid = nCols
+  %foreach rowid = nRows
+    %if nCols > 1 && nRows > 1
+      %assign variableName = "%<param.Identifier>[%<rowid+1>,%<colid+1>]"
+    %elseif width > 1
+      %assign variableName = "%<param.Identifier>[%<index+1>]"
     %else
       %assign variableName = "%<param.Identifier>"  
     %endif
-    %if valueType == "Vector" || valueType == "Matrix"
+    %if valueType == "Matrix"
+      %assign startValue = param.Value[rowid][colid]
+    %elseif valueType == "Vector"
       %assign startValue = param.Value[index]
     %else
       %assign startValue = param.Value
@@ -108,7 +120,9 @@
     case %<vr>:
       *dtypeID = %<dtypeID>;
       return &(rtmGetDefaultParam(S)->%<identifier>);
+    %assign index = index + 1
     %assign vr = vr + 1
+  %endforeach
   %endforeach
   %return vr
 %endfunction
