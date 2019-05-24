@@ -59,7 +59,7 @@
 #define MODEL_INITIALIZE %<OrigName>_initialize
 #define MODEL_STEP       %<OrigName>_step
 #define MODEL_TERMINATE  %<OrigName>_terminate
-#define RT_MDL_TYPE      %<GlobalScope.tSimStructType>
+#define RT_MDL_TYPE      %<tSimStructType>
 
 /* R2019a defines the block parameters as extern */
 #ifndef rtmGetDefaultParam
@@ -70,8 +70,9 @@
 #define REUSABLE_FUNCTION
 %else
 /* Definitions for non-reusable models */
-#define RT_MDL_INSTANCE     %<OrigName>_M
-#define rtmGetY(S)          (&%<OrigName>_Y)
+#define RT_MDL_INSTANCE     %<tSimStruct>
+#define rtmGetU(S)          (&%<tInput>)
+#define rtmGetY(S)          (&%<tOutput>)
 #define rtmGetStepSize(rtm) (rtm->Timing.stepSize0)
 %endif
 
