@@ -36,6 +36,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	fmi2Boolean visible,
 	fmi2Boolean loggingOn) {
 
+	RT_MDL_TYPE **c = malloc(sizeof(RT_MDL_TYPE *));
+
 #ifdef REUSABLE_FUNCTION
 	RT_MDL_TYPE *S = MODEL();
 
@@ -46,16 +48,18 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	MODEL_INITIALIZE(S);
 
-	return S;
+	*c = S;
 #else
 	MODEL_INITIALIZE();
 
-	return RT_MDL_INSTANCE;
+	*c = RT_MDL_INSTANCE;
 #endif
+
+	return c;
 }
 
 void fmi2FreeInstance(fmi2Component c) {
-
+	free(c);
 }
 
 /* Enter and exit initialization mode, terminate and reset */
@@ -78,20 +82,46 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 
 fmi2Status fmi2Terminate(fmi2Component c) {
 #ifdef REUSABLE_FUNCTION
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	MODEL_TERMINATE(S);
 #else
 	MODEL_TERMINATE();
 #endif
+
+	*(RT_MDL_TYPE **)c = NULL;
+
 	return fmi2OK;
 }
 
-fmi2Status fmi2Reset(fmi2Component c) { return fmi2Error; }
+fmi2Status fmi2Reset(fmi2Component c) {
+
+#ifdef REUSABLE_FUNCTION
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	
+	MODEL_TERMINATE(S);
+
+	S = MODEL();
+
+	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(S),
+		rtmGetTFinal(S),
+		rtmGetStepSize(S),
+		&rtmGetErrorStatus(S));
+
+	MODEL_INITIALIZE(S);
+
+	*(RT_MDL_TYPE **)c = S;
+#else
+	MODEL_TERMINATE();
+	MODEL_INITIALIZE();
+#endif
+
+	return fmi2OK;
+}
 
 /* Getting and setting variable values */
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -115,7 +145,7 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -150,7 +180,7 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -172,7 +202,7 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -195,7 +225,7 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -230,7 +260,7 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
@@ -309,7 +339,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Real      communicationStepSize,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
-	RT_MDL_TYPE *S = c;
+	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
 
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
