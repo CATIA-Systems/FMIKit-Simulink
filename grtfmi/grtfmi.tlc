@@ -11,6 +11,7 @@
 %assign TargetRegistSynchroOp = 1
 
 %include "codegenentry.tlc"
+%assign GUID = FEVAL("grtfmi_generate_guid")
 %include "grtfmilib.tlc"
 %include "grtfmixml.tlc"
 

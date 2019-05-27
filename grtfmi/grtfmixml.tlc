@@ -11,7 +11,7 @@
 <fmiModelDescription
   fmiVersion="2.0"
   modelName="%<OrigName>"
-  guid=""
+  guid="%<GUID>" 
   generationTool="Simulink %<Version> with FMI Kit (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
@@ -56,6 +56,7 @@
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
 
+#define MODEL_GUID       "%<GUID>"
 #define MODEL            %<OrigName>
 #define MODEL_INITIALIZE %<OrigName>_initialize
 #define MODEL_STEP       %<OrigName>_step

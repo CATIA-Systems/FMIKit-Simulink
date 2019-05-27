@@ -36,6 +36,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	fmi2Boolean visible,
 	fmi2Boolean loggingOn) {
 
+	/* check GUID */
+	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
+		return NULL;
+	}
+
 	RT_MDL_TYPE **c = malloc(sizeof(RT_MDL_TYPE *));
 
 #ifdef REUSABLE_FUNCTION
