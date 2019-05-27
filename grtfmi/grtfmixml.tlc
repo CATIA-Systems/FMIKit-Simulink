@@ -52,7 +52,6 @@
   <ModelVariables>
   %assign vr = 1
   %assign outputIndices = []
-
   %selectfile incfile
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
@@ -81,9 +80,18 @@
 void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
   switch(vr) {
   %% Parameters
-  %selectfile xmlfile
+  %if !ConfigSet.InlineParams
+    %selectfile xmlfile
+
     <!-- Parameters -->
-  %assign vr = GenerateSubsystemFMI(0, vr) 
+    %with ModelParameters
+      %foreach paramid = NumParameters
+        %assign param = Parameter[paramid]
+        %assign vr = OutputParameterFMI(param, vr)
+      %endforeach
+    %endwith
+  %endif
+  %selectfile xmlfile
   %% Inputs
   %with ExternalInputs
     %if NumExternalInputs > 0

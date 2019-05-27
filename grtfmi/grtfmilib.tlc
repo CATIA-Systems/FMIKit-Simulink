@@ -60,6 +60,9 @@
   %assign nRows        = dims[0]
   %assign nCols        = SIZE(dims, 1) == 1 ? 1 : dims[1]
   %assign fmiType      = GetFMIType(dataTypeName)
+  %if ISFIELD(param, "IsPseudoWorkspaceVar") && param.IsPseudoWorkspaceVar == "yes"
+    %return vr
+  %endif
   %if fmiType == ""
     %return vr
   %endif
@@ -113,7 +116,7 @@
     %endswitch
     %assign startValue = FEVAL("strrep", "%<startValue>", "[", "")
     %assign startValue = FEVAL("strrep", "%<startValue>", "]", "")
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="parameter" variability="fixed">
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="parameter" variability="tunable">
       <%<fmiType> start="%<startValue>"/>
     </ScalarVariable>
     %selectfile incfile
