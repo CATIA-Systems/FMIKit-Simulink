@@ -7,18 +7,18 @@ FMI Kit provides two Simulink Coder targets to export Simulink models as FMUs:
 
 The table below gives an overview of the different capabilities:
 
-|                  |      GRT      |   S-Function  |
-|------------------|:-------------:|:-------------:|
-| MATLAB Version   | R2012b-R2019a | R2012b-R2018b |
-| Model References |      yes      |       no      |
-| Source Code      |      yes      |       no      |
-| Co-Simulation    |      yes      |      yes      |
-| Model Exchange   |       no      |      yes      |
-| Requires CMake   |      yes      |       no      |
+|                  |      GRT        |   S-Function    |
+|------------------|:---------------:|:---------------:|
+| MATLAB Version   | R2012b - R2019a | R2012b - R2018b |
+| Model References |      yes        |       no        |
+| Source Code      |      yes        |       no        |
+| Co-Simulation    |      yes        |      yes        |
+| Model Exchange   |       no        |      yes        |
+| Requires CMake   |      yes        |       no        |
 
 **Supported compilers**
 
-`grtfmi.tlc`: all compilers supported by CMake
+`grtfmi.tlc`: all compilers supported by [CMake](https://cmake.org/)
 
 `rtwsfcnfmi.tlc`: all Visual Studio versions supported by MATLAB on Windows or GCC on Linux
 
