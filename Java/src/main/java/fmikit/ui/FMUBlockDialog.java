@@ -1235,7 +1235,7 @@ public class FMUBlockDialog extends JDialog {
 
         // documentation
         File htmlFile = new File(Util.joinPath(getUnzipDirectory(), "documentation",
-                modelDescription.fmiVersion == "1.0" ? "_main.html" : "index.html"));
+                "1.0".equals(modelDescription.fmiVersion) ? "_main.html" : "index.html"));
 
         if (htmlFile.isFile()) {
             try {
