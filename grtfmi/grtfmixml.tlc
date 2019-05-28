@@ -47,7 +47,12 @@
   %endif
   </CoSimulation>
 
-  <DefaultExperiment startTime="%<StartTime>" stopTime="%<StopTime>" stepSize="%<FixedStepOpts.FixedStep>"/>
+  <DefaultExperiment
+    startTime="%<StartTime>"
+  %if "%<StopTime>" != "rtInf"
+    stopTime="%<StopTime>"
+  %endif
+    stepSize="%<FixedStepOpts.FixedStep>"/>
 
   <ModelVariables>
   %assign vr = 1

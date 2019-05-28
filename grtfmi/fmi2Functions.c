@@ -8,6 +8,13 @@ int rtPrintfNoOp(const char *fmt, ...) {
 	return 0;  // do nothing
 }
 
+typedef struct {
+	RT_MDL_TYPE *S;
+	const char *instanceName;
+	fmi2CallbackLogger logger;
+	fmi2ComponentEnvironment componentEnvironment;
+} ModelInstance;
+
 
 /***************************************************
 Types for Common Functions
@@ -41,30 +48,36 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 		return NULL;
 	}
 
-	RT_MDL_TYPE **c = malloc(sizeof(RT_MDL_TYPE *));
+	ModelInstance *instance = malloc(sizeof(ModelInstance));
+
+	size_t len = strlen(instanceName);
+	instance->instanceName = malloc((len + 1) * sizeof(char));
+	strncpy(instance->instanceName, instanceName, len + 1);
+	instance->logger = functions->logger;
+	instance->componentEnvironment = functions->componentEnvironment;
 
 #ifdef REUSABLE_FUNCTION
-	RT_MDL_TYPE *S = MODEL();
+	instance->S = MODEL();
 
-	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(S),
-		rtmGetTFinal(S),
-		rtmGetStepSize(S),
-		&rtmGetErrorStatus(S));
+	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(instance->S),
+		rtmGetTFinal(instance->S),
+		rtmGetStepSize(instance->S),
+		&rtmGetErrorStatus(instance->S));
 
-	MODEL_INITIALIZE(S);
-
-	*c = S;
+	MODEL_INITIALIZE(instance->S);
 #else
 	MODEL_INITIALIZE();
 
-	*c = RT_MDL_INSTANCE;
+	instance->S = RT_MDL_INSTANCE;
 #endif
 
-	return c;
+	return instance;
 }
 
 void fmi2FreeInstance(fmi2Component c) {
-	free(c);
+	ModelInstance *instance = (ModelInstance *)c;
+	free(instance->instanceName);
+	free(instance);
 }
 
 /* Enter and exit initialization mode, terminate and reset */
@@ -86,14 +99,16 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 }
 
 fmi2Status fmi2Terminate(fmi2Component c) {
+
+	ModelInstance *instance = (ModelInstance *)c;
+
 #ifdef REUSABLE_FUNCTION
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
-	MODEL_TERMINATE(S);
+	MODEL_TERMINATE(instance->S);
 #else
 	MODEL_TERMINATE();
 #endif
 
-	*(RT_MDL_TYPE **)c = NULL;
+	instance->S = NULL;
 
 	return fmi2OK;
 }
@@ -101,20 +116,18 @@ fmi2Status fmi2Terminate(fmi2Component c) {
 fmi2Status fmi2Reset(fmi2Component c) {
 
 #ifdef REUSABLE_FUNCTION
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
-	
-	MODEL_TERMINATE(S);
+	ModelInstance *instance = (ModelInstance *)c;
 
-	S = MODEL();
+	MODEL_TERMINATE(instance->S);
 
-	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(S),
-		rtmGetTFinal(S),
-		rtmGetStepSize(S),
-		&rtmGetErrorStatus(S));
+	instance->S = MODEL();
 
-	MODEL_INITIALIZE(S);
+	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(instance->S),
+		rtmGetTFinal(instance->S),
+		rtmGetStepSize(instance->S),
+		&rtmGetErrorStatus(instance->S));
 
-	*(RT_MDL_TYPE **)c = S;
+	MODEL_INITIALIZE(instance->S);
 #else
 	MODEL_TERMINATE();
 	MODEL_INITIALIZE();
@@ -126,12 +139,12 @@ fmi2Status fmi2Reset(fmi2Component c) {
 /* Getting and setting variable values */
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_DOUBLE:
@@ -150,11 +163,11 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_INT8:
@@ -185,11 +198,11 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_BOOLEAN:
@@ -207,11 +220,11 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_DOUBLE:
@@ -230,11 +243,11 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_INT8:
@@ -265,11 +278,11 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
 
 	for (size_t i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
 		case SS_BOOLEAN:
@@ -344,12 +357,17 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Real      communicationStepSize,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
-	RT_MDL_TYPE *S = *(RT_MDL_TYPE **)c;
+	ModelInstance *instance = (ModelInstance *)c;
 
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
-	while (rtmGetT(S) + rtmGetStepSize(S) < tNext + DBL_EPSILON) {
-		MODEL_STEP(S);
+	while (rtmGetT(instance->S) + rtmGetStepSize(instance->S) < tNext + DBL_EPSILON) {
+		MODEL_STEP(instance->S);
+		const char *errorStatus = rtmGetErrorStatus(instance->S);
+		if (errorStatus) {
+			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
+			return fmi2Error;
+		}
 	}
 	
 	return fmi2OK;

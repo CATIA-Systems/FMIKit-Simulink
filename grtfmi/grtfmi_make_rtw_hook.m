@@ -1,6 +1,16 @@
 function grtfmi_make_rtw_hook(hookMethod, modelName, rtwRoot, templateMakefile, buildOpts, buildArgs, buildInfo)
 
 switch hookMethod
+    
+    case 'entry'
+        
+        stop_time = get_param(modelName, 'StopTime');
+        stop_time = str2double(stop_time);
+        
+        if isfinite(stop_time)
+            warning(['The model has a finite stop time and cannot be simulated beyond that time. ' ...
+                'Set inf as stop time for arbitrary simulation times.']);
+        end
 
     case 'after_make'
 
