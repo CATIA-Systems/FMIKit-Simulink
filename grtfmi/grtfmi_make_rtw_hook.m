@@ -27,8 +27,15 @@ switch hookMethod
         disp('### Running CMake generator')
         custom_include = get_param(gcs, 'CustomInclude');
         custom_include = regexp(custom_include, '\s+', 'split');
-        custom_source = get_param(gcs, 'CustomSource');
-        custom_source = { which(custom_source) };
+        source_files = get_param(gcs, 'CustomSource');
+        source_files = regexp(source_files, '\s+', 'split');
+        custom_source = {};
+        for i = 1:length(source_files)
+             source_file = which(source_files{i});
+             if ~isempty(source_file)
+                custom_source{end+1} = source_file; %#ok<AGROW>
+             end
+        end
 
         if isfield(buildOpts, 'libsToCopy') && ~isempty(buildOpts.libsToCopy)
             [parent_dir, ~, ~] = fileparts(pwd);
@@ -36,8 +43,8 @@ switch hookMethod
             for i = 1:numel(buildOpts.libsToCopy)
                 [~, refmodel, ~] = fileparts(buildOpts.libsToCopy{i});
                 refmodel = refmodel(1:end-7);
-                custom_include{end+1} = fullfile(parent_dir, 'slprj', 'grtfmi', refmodel);
-                custom_source{end+1}  = fullfile(parent_dir, 'slprj', 'grtfmi', refmodel, [refmodel '.c']);
+                custom_include{end+1} = fullfile(parent_dir, 'slprj', 'grtfmi', refmodel); %#ok<AGROW>
+                custom_source{end+1}  = fullfile(parent_dir, 'slprj', 'grtfmi', refmodel, [refmodel '.c']); %#ok<AGROW>
             end
         end
 
@@ -50,7 +57,7 @@ switch hookMethod
                 for j = 1:numel(src_file_ext)
                     ext = src_file_ext{j};
                     if exist(fullfile(sfcn_dir, [sfcn_name ext]), 'file') == 2
-                        custom_source{end+1} = fullfile(sfcn_dir, [sfcn_name ext]);
+                        custom_source{end+1} = fullfile(sfcn_dir, [sfcn_name ext]); %#ok<AGROW>
                         break
                     end
                 end
@@ -88,7 +95,7 @@ for i = 1:numel(segments)
     if isempty(list)
       list = segment;
     else
-      list = [segment ';' list];
+      list = [segment ';' list]; %#ok<AGROW>
     end
   end
 end
