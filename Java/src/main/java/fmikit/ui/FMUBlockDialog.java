@@ -1137,7 +1137,13 @@ public class FMUBlockDialog extends JDialog {
 
         lblFmiVersion.setText(modelDescription.fmiVersion);
         lblModelName.setText(modelDescription.modelName);
-        lblDescription.setText(modelDescription.description);
+        String description = modelDescription.description;
+        // clip long descriptions so it does not break the layout
+        if (description != null && description.length() > 90) {
+            description = description.substring(0, 90) + "...";
+            lblDescription.setToolTipText(modelDescription.description);
+        }
+        lblDescription.setText(description);
         lblGenerationTool.setText(modelDescription.generationTool);
         lblGenerationDate.setText(modelDescription.generationDateAndTime);
         lblContinuousStates.setText(Integer.toString(modelDescription.numberOfContinuousStates));
