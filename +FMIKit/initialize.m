@@ -8,6 +8,17 @@ msg = false;
 
 info = what('+FMIKit');
 [folder, ~, ~] = fileparts(info(1).path);
+
+% avoid "fix" message in library browser
+if strcmp(version('-release'), '2016b')
+  h = load_system('FMIKit_blocks');
+  if strcmp(get_param(h, 'EnableLBRepository'), 'off')
+    set_param(h, 'Lock', 'off');
+    set_param(h, 'EnableLBRepository', 'on');
+    set_param(h, 'Lock', 'on');
+    save_system(h);
+  end
+end
       
 % initialize the RTWSFCNFMI
 if isempty(which('rtwsfcnfmi_init'))
