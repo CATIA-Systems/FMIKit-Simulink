@@ -52,7 +52,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 	size_t len = strlen(instanceName);
 	instance->instanceName = malloc((len + 1) * sizeof(char));
-	strncpy(instance->instanceName, instanceName, len + 1);
+	strncpy((char *)instance->instanceName, instanceName, len + 1);
 	instance->logger = functions->logger;
 	instance->componentEnvironment = functions->componentEnvironment;
 
@@ -76,7 +76,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 void fmi2FreeInstance(fmi2Component c) {
 	ModelInstance *instance = (ModelInstance *)c;
-	free(instance->instanceName);
+	free((void *)instance->instanceName);
 	free(instance);
 }
 
