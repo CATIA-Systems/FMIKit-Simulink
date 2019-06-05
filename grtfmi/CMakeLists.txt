@@ -91,6 +91,9 @@ target_include_directories (${MODEL} PUBLIC
   ${MATLAB_ROOT}/rtw/c/src/ext_mode/common
 )
 
+# don't add the "lib" prefix to the shared library on Linux
+set_target_properties(${MODEL} PROPERTIES PREFIX "")
+
 target_compile_definitions(${MODEL} PUBLIC
   _CRT_SECURE_NO_WARNINGS
   RT
