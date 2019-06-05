@@ -5,7 +5,7 @@
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 
 int rtPrintfNoOp(const char *fmt, ...) {
-	return 0;  // do nothing
+	return 0;  /* do nothing */
 }
 
 typedef struct {
@@ -141,8 +141,9 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
@@ -165,8 +166,9 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
@@ -200,8 +202,9 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
@@ -222,8 +225,9 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
@@ -245,8 +249,9 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
@@ -280,8 +285,9 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
+	size_t i;
 
-	for (size_t i = 0; i < nvr; i++) {
+	for (i = 0; i < nvr; i++) {
 		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
 		switch (dtypeID) {
