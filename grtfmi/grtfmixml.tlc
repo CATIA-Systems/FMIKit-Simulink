@@ -12,7 +12,7 @@
   fmiVersion="2.0"
   modelName="%<OrigName>"
   guid="%<GUID>" 
-  generationTool="Simulink %<Version> with FMI Kit (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  generationTool="Simulink %<Version> with FMI Kit 2.6 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
   %assign description = FEVAL("get_param", "%<OrigName>", "Description")
