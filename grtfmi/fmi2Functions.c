@@ -1,3 +1,4 @@
+#include <float.h>  /* for DBL_EPSILON */
 #include "fmi2Functions.h"
 
 #include "fmiwrapper.inc"
@@ -58,12 +59,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 #ifdef REUSABLE_FUNCTION
 	instance->S = MODEL();
-
-	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(instance->S),
-		rtmGetTFinal(instance->S),
-		rtmGetStepSize(instance->S),
-		&rtmGetErrorStatus(instance->S));
-
 	MODEL_INITIALIZE(instance->S);
 #else
 	MODEL_INITIALIZE();
@@ -121,12 +116,6 @@ fmi2Status fmi2Reset(fmi2Component c) {
 	MODEL_TERMINATE(instance->S);
 
 	instance->S = MODEL();
-
-	const char_T *errmsg = rt_StartDataLogging(rtmGetRTWLogInfo(instance->S),
-		rtmGetTFinal(instance->S),
-		rtmGetStepSize(instance->S),
-		&rtmGetErrorStatus(instance->S));
-
 	MODEL_INITIALIZE(instance->S);
 #else
 	MODEL_TERMINATE();
@@ -365,17 +354,21 @@ fmi2Status fmi2DoStep(fmi2Component c,
 
 	ModelInstance *instance = (ModelInstance *)c;
 
+#ifndef DISCRETE
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
-	while (rtmGetT(instance->S) + rtmGetStepSize(instance->S) < tNext + DBL_EPSILON) {
+	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
+#endif
 		MODEL_STEP(instance->S);
 		const char *errorStatus = rtmGetErrorStatus(instance->S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
 		}
+#ifndef DISCRETE
 	}
-	
+#endif
+
 	return fmi2OK;
 }
 

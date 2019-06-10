@@ -9,6 +9,10 @@ if isfield(params, 'CodeInterfacePackaging')
     slConfigUISetVal(hDlg, hSrc, 'CodeInterfacePackaging', 'Reusable function');
 end
 
+% disable Mat file logging
+slConfigUISetVal(hDlg, hSrc, 'MatFileLogging', 'off');
+slConfigUISetEnabled(hDlg, hSrc, 'MatFileLogging', false);
+
 % declare model reference compliance
 slConfigUISetVal(hDlg, hSrc, 'ModelReferenceCompliant', 'on');
 slConfigUISetEnabled(hDlg, hSrc, 'ModelReferenceCompliant', false);

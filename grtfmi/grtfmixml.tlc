@@ -67,6 +67,10 @@
 #define MODEL_STEP       %<OrigName>_step
 #define MODEL_TERMINATE  %<OrigName>_terminate
 #define RT_MDL_TYPE      %<tSimStructType>
+#define STEP_SIZE        %<FixedStepOpts.FixedStep>
+  %if Solver == "FixedStepDiscrete"
+#define DISCRETE
+  %endif
 
 /* R2019a defines the block parameters as extern */
 #ifndef rtmGetDefaultParam
@@ -80,7 +84,6 @@
 #define RT_MDL_INSTANCE     %<tSimStruct>
 #define rtmGetU(S)          (&%<tInput>)
 #define rtmGetY(S)          (&%<tOutput>)
-#define rtmGetStepSize(rtm) (rtm->Timing.stepSize0)
 %endif
 
 void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {

@@ -67,9 +67,6 @@ set(SOURCES
   ${REFMODEL_SOURCES}
   ${RTW_DIR}/fmiwrapper.inc
   ${CMAKE_SOURCE_DIR}/fmi2Functions.c
-  ${MATLAB_ROOT}/rtw/c/src/rt_logging.c
-  ${MATLAB_ROOT}/rtw/c/src/rt_logging_mmi.c
-  ${MATLAB_ROOT}/rtw/c/src/rtw_modelmap_utils.c
   ${CUSTOM_SOURCE}
 )
 
