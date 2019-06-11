@@ -47,7 +47,8 @@
   rtwoptions(i).prompt        = 'CMake generator';
   rtwoptions(i).type          = 'Popup';
   rtwoptions(i).default       = grtfmi_cmake_default_generator();
-  rtwoptions(i).popupstrings  = ['Visual Studio 15 2017|' ...
+  rtwoptions(i).popupstrings  = ['Visual Studio 16 2019|' ...
+                                'Visual Studio 15 2017|' ...
                                 'Visual Studio 15 2017 Win64|' ...
                                 'Visual Studio 14 2015|' ...
                                 'Visual Studio 14 2015 Win64|' ...
@@ -65,7 +66,7 @@
                                 'MinGW Makefiles|' ...
                                 'Unix Makefiles'];
   rtwoptions(i).tlcvariable   = 'CMakeGenerator';
-  rtwoptions(i).tooltip       = ['CMake generator to build the shared library'];
+  rtwoptions(i).tooltip       = 'CMake generator to build the shared library';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake command';
@@ -84,7 +85,7 @@
                                 'Maximize speed|' ...
                                 'Full optimization'];
   rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimization';
-  rtwoptions(i).tooltip       = ['Compiler optimization level'];
+  rtwoptions(i).tooltip       = 'Compiler optimization level';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Visible parameters';
