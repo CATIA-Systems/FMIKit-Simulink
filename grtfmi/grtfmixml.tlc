@@ -9,9 +9,14 @@
   %selectfile xmlfile
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
+  %if FMIVersion == "2"
   fmiVersion="2.0"
-  modelName="%<OrigName>"
   guid="%<GUID>" 
+  %else
+  fmiVersion="3.0-dev"
+  instantiationToken="%<GUID>" 
+  %endif
+  modelName="%<OrigName>"
   generationTool="Simulink %<Version> with FMI Kit 2.6 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
@@ -86,7 +91,7 @@
 #define rtmGetY(S)          (&%<tOutput>)
 %endif
 
-void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
+void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID, size_t *size) {
   switch(vr) {
   %% Parameters
   %if !ConfigSet.InlineParams
@@ -96,7 +101,11 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
     %with ModelParameters
       %foreach paramid = NumParameters
         %assign param = Parameter[paramid]
-        %assign vr = OutputParameterFMI(param, vr)
+        %if FMIVersion == "2"
+          %assign vr = OutputParameterFMI2(param, vr)
+        %else
+          %assign vr = OutputParameterFMI3(param, vr)
+        %endif
       %endforeach
     %endwith
   %endif
@@ -108,31 +117,13 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
 
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
-        %assign port         = ExternalInput[portid]
-        %assign dtypeID      = LibGetRecordDataTypeId(port)
-        %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
-        %assign dims         = LibGetRecordDimensions(port)
-        %assign width        = LibGetRecordWidth(port)
-        %assign fmiType      = GetFMIType(dataTypeName)
-        %foreach index = width
-            %if width == 1
-              %assign dataName     = "%<port.Identifier>"
-              %assign variableName = "%<port.Identifier>"
-            %else
-              %assign dataName     = "%<port.Identifier>[%<index>]"
-              %assign variableName = "%<port.Identifier>[%<index+1>]"
-            %endif
-            %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      return &(rtmGetU(S)->%<dataName>);
-            %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input">
-      <%<fmiType> start="0"/>
-    </ScalarVariable>
-            %assign vr = vr + 1
-          %endforeach
-       %endforeach
+        %assign port = ExternalInput[portid]
+        %if FMIVersion == "2"
+          %assign vr = ExternalInputFMI2(port, vr)
+        %else
+          %assign vr = ExternalInputFMI3(port, vr)
+        %endif
+      %endforeach
     %endif
   %endwith
   %% Outputs
@@ -142,35 +133,16 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
 
     <!-- Outputs -->
       %foreach portid = NumExternalOutputs
-        %assign outp         = ExternalOutput[portid]
-        %assign sysid        = outp.Block[0]
-        %assign blkid        = outp.Block[1]
-        %assign outportBlock = System[sysid].Block[blkid]
-        %with outportBlock
-          %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
-          %assign fmiType      = GetFMIType(dataTypeName)
-          %assign dtypeID      = LibGetRecordDataTypeId(outp)
-          %assign width        = LibGetRecordWidth(outp)
-          %foreach index = width
-            %if width == 1
-              %assign dataName     = "%<Identifier>"
-              %assign variableName = "%<Identifier>"
-            %else
-              %assign dataName     = "%<Identifier>[%<index>]"
-              %assign variableName = "%<Identifier>[%<index+1>]"
-            %endif
-            %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      return &(rtmGetY(S)->%<dataName>);
-            %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output">
-      <%<fmiType>/>
-    </ScalarVariable>
-            %assign outputIndices = outputIndices + vr
-            %assign vr = vr + 1
-          %endforeach
-        %endwith
+        %assign outp = ExternalOutput[portid]
+        %if FMIVersion == "2"
+          %assign nextVR = ExternalOutputFMI2(outp, vr)   
+        %else
+          %assign nextVR = ExternalOutputFMI3(outp, vr)
+        %endif
+        %foreach vrIdx = nextVR - vr
+          %assign outputIndices = outputIndices + (vr + vrIdx)
+        %endforeach
+        %assign vr = nextVR
       %endforeach
     %endif
   %endwith
@@ -187,7 +159,11 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID) {
   %if SIZE(outputIndices,1) > 0
     <Outputs>
     %foreach iOutputIndex = SIZE(outputIndices,1)
+      %if FMIVersion == "2"
       <Unknown index="%<outputIndices[iOutputIndex]>"/>
+      %else
+      <Unknown valueReference="%<outputIndices[iOutputIndex]>"/>
+      %endif
     %endforeach
     </Outputs>
   %endif

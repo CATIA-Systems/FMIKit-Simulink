@@ -27,13 +27,21 @@
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 4;   % number of items under this category
+  rtwoptions(i).default       = 5;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
   rtwoptions(i).tooltip       = '';
   rtwoptions(i).callback      = '';
   rtwoptions(i).makevariable  = '';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'FMI version';
+  rtwoptions(i).type           = 'Popup';
+  rtwoptions(i).default        = '2';
+  rtwoptions(i).tlcvariable    = 'FMIVersion';
+  rtwoptions(i).popupstrings   = '2|3';
+  rtwoptions(i).tooltip        = 'FMI version';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake generator';

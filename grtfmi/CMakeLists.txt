@@ -7,21 +7,43 @@ set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
 set(FMU_BUILD_DIR FMUArchive)
+set(FMI_VERSION 2 CACHE STRING "FMI Version")
+set_property(CACHE FMI_VERSION PROPERTY STRINGS 2 3)
 
 project (${MODEL})
 
-if (WIN32)
-  set(FMI_PLATFORM win)
-elseif (APPLE)
-  set(FMI_PLATFORM darwin)
-else ()
-  set(FMI_PLATFORM linux)
-endif ()
+if ("${FMI_VERSION}" STREQUAL "3")
 
-if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-  set (FMI_PLATFORM ${FMI_PLATFORM}64)
+  if (WIN32)
+    set(FMI_PLATFORM windows)
+  elseif (APPLE)
+    set(FMI_PLATFORM darwin)
+  else ()
+    set(FMI_PLATFORM linux)
+  endif ()
+
+  if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set (FMI_PLATFORM x86_64-${FMI_PLATFORM})
+  else ()
+    set (FMI_PLATFORM i686-${FMI_PLATFORM})
+  endif ()
+
 else ()
-  set (FMI_PLATFORM ${FMI_PLATFORM}32)
+
+  if (WIN32)
+    set(FMI_PLATFORM win)
+  elseif (APPLE)
+    set(FMI_PLATFORM darwin)
+  else ()
+    set(FMI_PLATFORM linux)
+  endif ()
+
+  if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set (FMI_PLATFORM ${FMI_PLATFORM}64)
+  else ()
+    set (FMI_PLATFORM ${FMI_PLATFORM}32)
+  endif ()
+
 endif ()
 
 if (MSVC)
@@ -66,7 +88,7 @@ set(SOURCES
   ${SHARED_SOURCES}
   ${REFMODEL_SOURCES}
   ${RTW_DIR}/fmiwrapper.inc
-  ${CMAKE_SOURCE_DIR}/fmi2Functions.c
+  ${CMAKE_SOURCE_DIR}/fmi${FMI_VERSION}Functions.c
   ${CUSTOM_SOURCE}
 )
 

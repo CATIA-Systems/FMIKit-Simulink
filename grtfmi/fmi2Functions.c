@@ -130,11 +130,11 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_DOUBLE:
@@ -155,10 +155,11 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_INT8:
@@ -191,10 +192,11 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_BOOLEAN:
@@ -214,10 +216,11 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_DOUBLE:
@@ -238,10 +241,11 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_INT8:
@@ -274,10 +278,11 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, size;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+
+		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
 
 		switch (dtypeID) {
 		case SS_BOOLEAN:

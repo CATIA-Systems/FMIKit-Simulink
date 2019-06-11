@@ -23,6 +23,7 @@ switch hookMethod
         command = grtfmi_find_cmake(command);
         generator = get_param(modelName, 'CMakeGenerator');
         source_code_fmu = get_param(modelName, 'SourceCodeFMU');
+        fmi_version = get_param(modelName, 'FMIVersion');
 
         disp('### Running CMake generator')
         custom_include = get_param(gcs, 'CustomInclude');
@@ -63,7 +64,7 @@ switch hookMethod
                 end
             end
         end
-
+        
         status = system(['"' command '"' ...
         ' -G "' generator '"' ...
         ' -DMODEL='            modelName ...
@@ -72,6 +73,7 @@ switch hookMethod
         ' -DCUSTOM_INCLUDE="'  build_path_list(custom_include) '"' ...
         ' -DCUSTOM_SOURCE="'   build_path_list(custom_source)  '"' ...
         ' -DSOURCE_CODE_FMU="' source_code_fmu                 '"' ...
+        ' -DFMI_VERSION="'     fmi_version                     '"' ...
         ' "'                   strrep(grtfmi_dir,    '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
