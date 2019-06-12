@@ -25,6 +25,8 @@ fmikit.jar
 
 # CMake build directories
 build*/
+win32/
+win64/
 
 # Distribution files
 dist/
