@@ -27,6 +27,8 @@ public class ModelDescription {
 	public int numberOfContinuousStates;
 	public int numberOfEventIndicators;
 
+	public DefaultExperiment defaultExperiment;
+
 	public List<ScalarVariable> scalarVariables = new ArrayList<ScalarVariable>();
 
 	public CoSimulation coSimulation;

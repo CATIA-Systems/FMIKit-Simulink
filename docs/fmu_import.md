@@ -186,6 +186,14 @@ Use `FMIKit.setSourceCode()` to use FMU´s source code (if available):
 FMIKit.setSourceCode(gcb, true)
 ```
 
+### Set the Relative Tolerance
+
+Use `FMIKit.setRelativeTolerance()` to set the relative tolerance for the embedded solver of a Co-Simulation FMU:
+
+```
+FMIKit.setRelativeTolerance(gcb, '1e-3')
+```
+
 ### Enable Direct Input
 
 Use `FMIKit.setDirectInput()` to enable direct input:
@@ -228,21 +236,22 @@ ans =
     variables: {'iAC[1]'  'iAC[2]'  'iAC[3]'}
 ```
 
-| Field            | Type           | Description                                                      |
-|------------------|----------------|------------------------------------------------------------------|
-| fmiKitVersion    | char           | FMI Kit version that imported the FMU                            |
-| fmuFile          | char           | Path to the imported FMU                                         |
-| fmuLastModified  | double         | Last modification data of the FMU                                |
-| unzipDirectory   | char           | Path to the extracted FMU                                        |
-| runAsKind        | int            | The FMI Type of the FMU (0 = Model Exchange, 1 = Co-Simuliation) |
-| sampleTime       | char           | The sample time of the block                                     |
-| inputPorts       | struct         | Struct that holds the input ports and associated variables       |
-| outputPorts      | struct         | Struct that holds the output ports and associated variables      |
-| startValues      | containers.Map | Map of variable names -> start values                            |
-| debugLogging     | bool           | Enable debug logging on the FMU instance                         |
-| errorDiagnostics | char           | Diagnostics level ('ignore', 'warning', 'error')                 |
-| useSourceCode    | bool           | Compile the FMU from source code                                 |
-| setBlockName     | bool           | Set the FMU name as block name                                   |
-| functionName     | char           | Name of the S-function                                           |
-| parameters       | char           | Parameters for the S-function                                    |
-| directInput      | bool           | Use direct input                                                 |
+| Field             | Type           | Description                                                      |
+|-------------------|----------------|------------------------------------------------------------------|
+| fmiKitVersion     | char           | FMI Kit version that imported the FMU                            |
+| fmuFile           | char           | Path to the imported FMU                                         |
+| fmuLastModified   | double         | Last modification data of the FMU                                |
+| unzipDirectory    | char           | Path to the extracted FMU                                        |
+| runAsKind         | int            | The FMI Type of the FMU (0 = Model Exchange, 1 = Co-Simuliation) |
+| sampleTime        | char           | The sample time of the block                                     |
+| relativeTolerance | char           | Relative tolerance for the solver of co-simulation FMUs          |
+| inputPorts        | struct         | Struct that holds the input ports and associated variables       |
+| outputPorts       | struct         | Struct that holds the output ports and associated variables      |
+| startValues       | containers.Map | Map of variable names -> start values                            |
+| debugLogging      | bool           | Enable debug logging on the FMU instance                         |
+| errorDiagnostics  | char           | Diagnostics level ('ignore', 'warning', 'error')                 |
+| useSourceCode     | bool           | Compile the FMU from source code                                 |
+| setBlockName      | bool           | Set the FMU name as block name                                   |
+| functionName      | char           | Name of the S-function                                           |
+| parameters        | char           | Parameters for the S-function                                    |
+| directInput       | bool           | Use direct input                                                 |

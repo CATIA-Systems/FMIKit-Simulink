@@ -21,9 +21,11 @@ public class UserData {
 	public String unzipDirectory;
 	
 	public int runAsKind;
-	
+
 	public String sampleTime;
-	
+
+	public String relativeTolerance;
+
 	public ArrayList<Port> inputPorts = new ArrayList<Port>();
 
 	public ArrayList<Port> outputPorts = new ArrayList<Port>();

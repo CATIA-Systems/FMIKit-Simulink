@@ -3,12 +3,13 @@ function userData = userDataFromStruct(ud)
 
 userData = fmikit.ui.UserData;
 
-userData.fmiKitVersion = ud.fmiKitVersion;
-userData.fmuFile = ud.fmuFile;
-userData.fmuLastModified = ud.fmuLastModified;
-userData.unzipDirectory = ud.unzipDirectory;
-userData.runAsKind = ud.runAsKind;
-userData.sampleTime = ud.sampleTime;
+userData.fmiKitVersion     = ud.fmiKitVersion;
+userData.fmuFile           = ud.fmuFile;
+userData.fmuLastModified   = ud.fmuLastModified;
+userData.unzipDirectory    = ud.unzipDirectory;
+userData.runAsKind         = ud.runAsKind;
+userData.sampleTime        = ud.sampleTime;
+userData.relativeTolerance = ud.relativeTolerance;
 
 for i = 1:numel(ud.inputPorts)
     p = ud.inputPorts(i);
@@ -33,15 +34,17 @@ for i = 1:numel(ud.outputPorts)
 end
 
 for key = keys(ud.startValues)
-    userData.startValues.put(java.lang.String(key{1}), java.lang.String(ud.startValues(key{1}))); 
+    userData.startValues.put(...
+      java.lang.String(key{1}), ...
+      java.lang.String(ud.startValues(key{1}))); 
 end
 
-userData.debugLogging = ud.debugLogging;
+userData.debugLogging     = ud.debugLogging;
 userData.errorDiagnostics = ud.errorDiagnostics;
-userData.useSourceCode = ud.useSourceCode;
-userData.setBlockName = ud.setBlockName;
-userData.functionName = ud.functionName;
-userData.parameters = ud.parameters;
-userData.directInput = ud.directInput;
+userData.useSourceCode    = ud.useSourceCode;
+userData.setBlockName     = ud.setBlockName;
+userData.functionName     = ud.functionName;
+userData.parameters       = ud.parameters;
+userData.directInput      = ud.directInput;
 
 end

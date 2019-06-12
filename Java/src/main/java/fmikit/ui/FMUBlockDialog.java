@@ -63,6 +63,7 @@ public class FMUBlockDialog extends JDialog {
     private JXTreeTable treeTable;
     private JPanel pnlDocumentation;
     private JButton addScalarOutputPortButton;
+    private JTextField txtRelativeTolerance;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.6";
@@ -166,7 +167,9 @@ public class FMUBlockDialog extends JDialog {
         // disable the "Direct Input" when "Model Exchange" is selected
         cmbbxRunAsKind.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                chckbxDirectInput.setEnabled(cmbbxRunAsKind.getSelectedIndex() == 1);
+                boolean isCoSimulation = cmbbxRunAsKind.getSelectedIndex() == 1;
+                chckbxDirectInput.setEnabled(isCoSimulation);
+                txtRelativeTolerance.setEnabled(isCoSimulation);
             }
         });
     }
@@ -237,10 +240,18 @@ public class FMUBlockDialog extends JDialog {
     }
 
 
-    public static void main(String[] args) {
-        FMUBlockDialog dialog = new FMUBlockDialog();
+    public static void main(String[] args) throws Exception {
+
+        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+
+        final FMUBlockDialog dialog = new FMUBlockDialog();
         dialog.pack();
         dialog.setVisible(true);
+        dialog.btnApply.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println(dialog.getSFunctionParameters());
+            }
+        });
         //System.exit(0);
     }
 
@@ -479,6 +490,7 @@ public class FMUBlockDialog extends JDialog {
         userData.unzipDirectory = txtUnzipDirectory.getText();
         userData.runAsKind = cmbbxRunAsKind.getSelectedIndex();
         userData.sampleTime = txtSampleTime.getText();
+        userData.relativeTolerance = txtRelativeTolerance.getText();
 
         if (modelDescription != null) {
 
@@ -563,6 +575,7 @@ public class FMUBlockDialog extends JDialog {
         txtUnzipDirectory.setText(userData.unzipDirectory);
         cmbbxRunAsKind.setSelectedIndex(userData.runAsKind);
         txtSampleTime.setText(userData.sampleTime);
+        txtRelativeTolerance.setText(userData.relativeTolerance);
         startValues.putAll(userData.startValues);
 
         if ("ignore".equals(userData.errorDiagnostics)) {
@@ -715,7 +728,7 @@ public class FMUBlockDialog extends JDialog {
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
-            String startValue = variable.startValue;
+            String startValue;
 
             if (startValues.containsKey(variable.name)) {
                 startValue = startValues.get(variable.name);
@@ -777,6 +790,7 @@ public class FMUBlockDialog extends JDialog {
 
         boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
+        boolean runAsModelExchange = cmbbxRunAsKind.getSelectedIndex() == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
@@ -812,7 +826,11 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // relative tolerance
-        params.add("0");
+        if (runAsModelExchange) {
+            params.add("FMIKit.getSolverRelativeTolerance(gcs)");
+        } else {
+            params.add(txtRelativeTolerance.getText());
+        }
 
         // sample time
         params.add(txtSampleTime.getText());
@@ -1253,6 +1271,13 @@ public class FMUBlockDialog extends JDialog {
             }
         } else {
             tabbedPane.remove(pnlDocumentation);
+        }
+
+        // advanced
+        if (userData != null) {
+            txtRelativeTolerance.setText(userData.relativeTolerance);
+        } else if (modelDescription.defaultExperiment != null && modelDescription.defaultExperiment.tolerance != null) {
+            txtRelativeTolerance.setText(modelDescription.defaultExperiment.tolerance);
         }
 
         // update the platforms

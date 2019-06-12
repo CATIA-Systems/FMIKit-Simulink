@@ -35,4 +35,11 @@ if ~isfield(userData, 'directInput')
     save_system
 end
 
+if ~isfield(userData, 'relativeTolerance')
+    disp(['adding userData.relativeTolerance to ' block])
+    userData.relativeTolerance = '0';
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
 end

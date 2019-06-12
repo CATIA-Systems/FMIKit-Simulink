@@ -50,6 +50,7 @@
       <file>${PROJECT_ROOT}\+FMIKit\getInportLabels.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\getModelDescription.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\getOutportLabels.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\getSolverRelativeTolerance.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\getStartValue.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\getUnzipDirectory.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\getVariableNames.m</file>
@@ -64,6 +65,7 @@
       <file>${PROJECT_ROOT}\+FMIKit\private\userDataToStruct.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setDirectInput.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setOutputPorts.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\setRelativeTolerance.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setSFunctionParameters.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setStartValue.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setUseSourceCode.m</file>
