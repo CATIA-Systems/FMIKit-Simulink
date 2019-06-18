@@ -28,6 +28,12 @@ if ispc
     if status == 0
         return
     end
+elseif ismac
+    command = '/usr/local/bin/cmake';
+    [status, ~] = system(command);
+    if status == 0
+        return
+    end
 end
 
 error(['Failed to run CMake. ' ...
