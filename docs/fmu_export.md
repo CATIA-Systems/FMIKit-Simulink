@@ -70,9 +70,6 @@ It is recommended to set the `Tasking mode` to `SingleTasking`.
 
 ### Limitations and Trouble-Shooting
 
-- This version of the package supports 32- and 64-bit MATLAB releases
-from R2010a to R2018a.
-
 - On Windows, the package supports Visual Studio 2008 (9.0) and later compilers as supported with the respective MATLAB releases.
 
 - On Linux, the package should support the versions of gcc supported with the respective MATLAB releases.
