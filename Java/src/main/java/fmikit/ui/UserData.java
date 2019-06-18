@@ -17,25 +17,31 @@ public class UserData {
 	public String fmuFile;
 	
 	public long fmuLastModified;
-	
-	public String unzipDirectory;
-	
+
 	public int runAsKind;
 
-	public String sampleTime;
+	public String unzipDirectory;
+
+	public boolean debugLogging = false;
+
+	public boolean logFMICalls = false;
+
+	public int logLevel = 0;
+
+	public String logFile;
+
+	public boolean logToFile = false;
 
 	public String relativeTolerance;
+
+	public String sampleTime;
 
 	public ArrayList<Port> inputPorts = new ArrayList<Port>();
 
 	public ArrayList<Port> outputPorts = new ArrayList<Port>();
 	
 	public HashMap<String, String> startValues = new HashMap<String, String>();
-	
-	public boolean debugLogging = false;
-	
-	public String errorDiagnostics = "error";
-	
+
 	public boolean useSourceCode = false;
 	
 	public boolean setBlockName = true;

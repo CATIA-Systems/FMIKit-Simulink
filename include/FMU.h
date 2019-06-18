@@ -54,12 +54,6 @@ namespace fmikit {
         FATAL = 4
     };
 
-	enum ErrorDiagnostics {
-		ErrorDiagnosticsIgnore,
-		ErrorDiagnosticsWarning,
-		ErrorDiagnosticsError
-	};
-
 	enum Type {
 		REAL,
 		INTEGER,
@@ -67,9 +61,13 @@ namespace fmikit {
 		STRING
 	};
 
+	class FMU;
+
 	typedef unsigned int ValueReference;
 
-	typedef void MessageLogger(LogLevel level, const char* category, const char* message, va_list args);
+	typedef void MessageLogger(FMU *instance, LogLevel level, const char* category, const char* message);
+
+	typedef void FMICallLogger(FMU *instance, const char* message);
 
 	typedef void * allocateMemoryCallback(size_t count, size_t size);
 
@@ -106,11 +104,11 @@ namespace fmikit {
 
 	public:
 		static MessageLogger *m_messageLogger;
+		FMICallLogger *m_fmiCallLogger = nullptr;
 
 		static const char *platform();
 		static LogLevel logLevel() { return m_logLevel; }
 		static void setLogLevel(LogLevel level) { m_logLevel = level; }
-		static void setErrorDiagnostics(ErrorDiagnostics m_errorDiagnostics) { m_errorDiagnostics = m_errorDiagnostics; }
 
 		explicit FMU(const std::string &guid,
 			const std::string &modelIdentifier,
@@ -118,6 +116,8 @@ namespace fmikit {
 			const std::string &instanceName);
 
 		virtual ~FMU();
+
+        void *m_userData = nullptr;
 
 		double getTime() const { return m_time; }
 
@@ -144,7 +144,6 @@ namespace fmikit {
 	protected:
 		static LogLevel m_logLevel;
 
-		ErrorDiagnostics m_errorDiagnostics;
 		HMODULE m_libraryHandle;
 		double m_time;
 		FMIVersion m_fmiVersion;
@@ -155,9 +154,9 @@ namespace fmikit {
 
 		void logDebug(const char *message, ...);
 		void logInfo(const char *message, ...);
-		static void error(const char *message, ...);
+		void error(const char *message, ...);
 
-		static void logFMUMessage(LogLevel level, const char* category, const char* message, va_list args);
+		static void logFMUMessage(FMU *instance, LogLevel level, const char* category, const char* message, va_list args);
 
 		void logGetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]);
 		void logSetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]);

@@ -14,6 +14,7 @@ import org.jdesktop.swingx.JXTreeTable;
 
 import javax.swing.*;
 //import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -54,7 +55,7 @@ public class FMUBlockDialog extends JDialog {
     private JTextField txtUnzipDirectory;
     private JTextField txtSampleTime;
     private JCheckBox chckbxDebugLogging;
-    private JComboBox cmbbxErrorLevel;
+    private JComboBox cmbbxLogLevel;
     private JCheckBox chckbxUseSourceCode;
     private JCheckBox chckbxSetBlockName;
     private JCheckBox chckbxDirectInput;
@@ -64,6 +65,9 @@ public class FMUBlockDialog extends JDialog {
     private JPanel pnlDocumentation;
     private JButton addScalarOutputPortButton;
     private JTextField txtRelativeTolerance;
+    private JTextField txtLogFile;
+    private JCheckBox chckbxLogToFile;
+    private JCheckBox chckbxLogFMICalls;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.6";
@@ -172,6 +176,13 @@ public class FMUBlockDialog extends JDialog {
                 txtRelativeTolerance.setEnabled(isCoSimulation);
             }
         });
+
+        // enable "Log file" when "Log to file" is selected
+        chckbxLogToFile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                txtLogFile.setEnabled(chckbxLogToFile.isSelected());
+            }
+        });
     }
 
     public void showAsync() {
@@ -219,6 +230,15 @@ public class FMUBlockDialog extends JDialog {
         return dialog;
     }
 
+    public void setBlockPath(String blockPath) {
+        setTitle(blockPath);
+        if (txtLogFile.getText().isEmpty()) {
+            // replace non-alphanumeric characters with underscores
+            String logFileName = blockPath.replaceAll("[^A-Za-z0-9]", "_");
+            txtLogFile.setText(logFileName + ".txt");
+        }
+    }
+
     public static void closeDialog(double blockHandle) {
         if (dialogs.containsKey(blockHandle)) {
             FMUBlockDialog dialog = dialogs.get(blockHandle);
@@ -240,9 +260,13 @@ public class FMUBlockDialog extends JDialog {
     }
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
-        UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        }  catch (Exception e) {
+            // ignore
+        }
 
         final FMUBlockDialog dialog = new FMUBlockDialog();
         dialog.pack();
@@ -487,8 +511,13 @@ public class FMUBlockDialog extends JDialog {
         userData.fmiKitVersion = FMI_KIT_VERSION;
         userData.fmuFile = txtFMUPath.getText();
         userData.fmuLastModified = getFMULastModified();
-        userData.unzipDirectory = txtUnzipDirectory.getText();
         userData.runAsKind = cmbbxRunAsKind.getSelectedIndex();
+        userData.unzipDirectory = txtUnzipDirectory.getText();
+        userData.debugLogging = chckbxDebugLogging.isSelected();
+        userData.logFMICalls = chckbxLogFMICalls.isSelected();
+        userData.logLevel = cmbbxLogLevel.getSelectedIndex();
+        userData.logFile = txtLogFile.getText();
+        userData.logToFile = chckbxLogToFile.isSelected();
         userData.sampleTime = txtSampleTime.getText();
         userData.relativeTolerance = txtRelativeTolerance.getText();
 
@@ -528,19 +557,6 @@ public class FMUBlockDialog extends JDialog {
         }
 
         userData.startValues = new HashMap<String, String>(startValues);
-        userData.debugLogging = chckbxDebugLogging.isSelected();
-
-        switch (cmbbxErrorLevel.getSelectedIndex()) {
-            case 0:
-                userData.errorDiagnostics = "ignore";
-                break;
-            case 1:
-                userData.errorDiagnostics = "warning";
-                break;
-            default:
-                userData.errorDiagnostics = "error";
-                break;
-        }
 
         userData.useSourceCode = chckbxUseSourceCode.isSelected();
         userData.setBlockName = chckbxSetBlockName.isSelected();
@@ -567,29 +583,28 @@ public class FMUBlockDialog extends JDialog {
         this.userData = userData;
 
         // check the format version
-        if (!userData.fmiKitVersion.startsWith("2.3") && !userData.fmiKitVersion.startsWith(FMI_KIT_VERSION)) {
-            throw new RuntimeException("Wrong FMI Kit version. Expected " + FMI_KIT_VERSION + " or 2.3 but was " + userData.fmiKitVersion);
+        if (!userData.fmiKitVersion.startsWith(FMI_KIT_VERSION)) {
+            throw new RuntimeException("Wrong FMI Kit version. Expected " + FMI_KIT_VERSION + " but was " + userData.fmiKitVersion);
         }
 
+        // Overview tab
         txtFMUPath.setText(userData.fmuFile);
-        txtUnzipDirectory.setText(userData.unzipDirectory);
         cmbbxRunAsKind.setSelectedIndex(userData.runAsKind);
-        txtSampleTime.setText(userData.sampleTime);
-        txtRelativeTolerance.setText(userData.relativeTolerance);
+
         startValues.putAll(userData.startValues);
 
-        if ("ignore".equals(userData.errorDiagnostics)) {
-            cmbbxErrorLevel.setSelectedIndex(0);
-        } else if ("warning".equals(userData.errorDiagnostics)) {
-            cmbbxErrorLevel.setSelectedIndex(1);
-        } else {
-            cmbbxErrorLevel.setSelectedIndex(2);
-        }
-
+        // Advanced tab
+        txtUnzipDirectory.setText(userData.unzipDirectory);
+        txtSampleTime.setText(userData.sampleTime);
+        txtRelativeTolerance.setText(userData.relativeTolerance);
+        txtLogFile.setText(userData.logFile);
+        txtLogFile.setEnabled(userData.logToFile);
+        chckbxLogToFile.setSelected(userData.logToFile);
+        cmbbxLogLevel.setSelectedIndex(userData.logLevel);
         chckbxDebugLogging.setSelected(userData.debugLogging);
+        chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
         chckbxSetBlockName.setSelected(userData.setBlockName);
-
         chckbxDirectInput.setSelected(userData.directInput);
 
         // TODO: restore outports?
@@ -728,7 +743,7 @@ public class FMUBlockDialog extends JDialog {
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
-            String startValue;
+            String startValue = variable.startValue;
 
             if (startValues.containsKey(variable.name)) {
                 startValue = startValues.get(variable.name);
@@ -790,7 +805,6 @@ public class FMUBlockDialog extends JDialog {
 
         boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
-        boolean runAsModelExchange = cmbbxRunAsKind.getSelectedIndex() == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
@@ -803,34 +817,37 @@ public class FMUBlockDialog extends JDialog {
 
         params.add("FMIKit.getUnzipDirectory(gcb)");
 
+        // debug logging
+        params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
+
+        // log FMI calls
+        params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
+
         // log level
-        if (chckbxDebugLogging.isSelected()) {
-            params.add("1");
-        } else {
-            params.add("3");
+        switch (cmbbxLogLevel.getSelectedIndex()) {
+            case 0: // info
+                params.add("0");
+                break;
+            case 1: // warning
+                params.add("1");
+                break;
+            case 2: // error
+                params.add("2");
+                break;
+            default: // none
+                params.add("3");
+                break;
         }
 
-        // error diagnostics
-        if (generic) {
-            switch (cmbbxErrorLevel.getSelectedIndex()) {
-                case 0:
-                    params.add("'ignore'");
-                    break;
-                case 1:
-                    params.add("'warning'");
-                    break;
-                default:
-                    params.add("'error'");
-                    break;
-            }
+        // log file
+        if (chckbxLogToFile.isSelected()) {
+            params.add("'" + txtLogFile.getText() + "'");
+        } else {
+            params.add("''");
         }
 
         // relative tolerance
-        if (runAsModelExchange) {
-            params.add("FMIKit.getSolverRelativeTolerance(gcs)");
-        } else {
-            params.add(txtRelativeTolerance.getText());
-        }
+        params.add("0");
 
         // sample time
         params.add(txtSampleTime.getText());
@@ -861,7 +878,7 @@ public class FMUBlockDialog extends JDialog {
         if (generic) {
             // input
             params.add("[" + Util.join(inputPortWidths, " ") + "]"); // input port widths
-            params.add(cmbbxRunAsKind.getSelectedIndex() == 0 || chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
+            params.add(chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
             params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");  // input port direct feed through
             params.add("[" + Util.join(inputPortTypes, " ") + "]");  // input port types
             params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");  // input port variable VRs
@@ -1718,13 +1735,13 @@ public class FMUBlockDialog extends JDialog {
         panel12.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         panel12.setBackground(new Color(-1));
         panel11.add(panel12, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        cmbbxErrorLevel = new JComboBox();
+        cmbbxLogLevel = new JComboBox();
         final DefaultComboBoxModel defaultComboBoxModel2 = new DefaultComboBoxModel();
         defaultComboBoxModel2.addElement("Ignore");
         defaultComboBoxModel2.addElement("Warning");
         defaultComboBoxModel2.addElement("Error");
-        cmbbxErrorLevel.setModel(defaultComboBoxModel2);
-        panel12.add(cmbbxErrorLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        cmbbxLogLevel.setModel(defaultComboBoxModel2);
+        panel12.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer8 = new Spacer();
         panel12.add(spacer8, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         chckbxDebugLogging = new JCheckBox();

@@ -60,7 +60,7 @@ namespace fmikit {
 		m_callbackFunctions.logger               = logFMU2Message;
 		m_callbackFunctions.allocateMemory       = allocateMemory ? allocateMemory : calloc;
 		m_callbackFunctions.freeMemory           = freeMemory ? freeMemory : free;
-		m_callbackFunctions.componentEnvironment = nullptr;
+		m_callbackFunctions.componentEnvironment = this;
 		m_callbackFunctions.stepFinished         = nullptr;
 	}
 
@@ -129,31 +129,28 @@ namespace fmikit {
 		va_list args;
 		va_start(args, message);
 
-		if (status > fmi2Warning) {
-			logFMUMessage(FATAL, category, message, args);
-		} else if (status == fmi2Warning) {
-			logFMUMessage(WARNING, category, message, args);
-		} else {
-			logFMUMessage(INFO, category, message, args);
+		auto instance = static_cast<FMU *>(environment);
+			
+		switch (status) {
+		case fmi2OK:
+			logFMUMessage(instance, INFO, category, message, args);
+			break;
+		case fmi2Warning:
+		case fmi2Discard:
+			logFMUMessage(instance, WARNING, category, message, args);
+			break;
+		case fmi2Error:
+		case fmi2Fatal:
+		case fmi2Pending:
+			logFMUMessage(instance, FATAL, category, message, args);
+			break;
 		}
 
 		va_end(args);
 	}
 
 	void FMU2::assertNoError(fmi2Status status, const char *message) {
-
-		if (status < fmi2Error) return;
-
-		switch(m_errorDiagnostics) {
-		case ErrorDiagnosticsError:
-			error(message);
-			break;
-		case ErrorDiagnosticsWarning:
-			// TODO: warning
-			break;
-		default:
-			break; // do nothing
-		}
+		if (status >= fmi2Error) error(message);
 	}
 
 	double FMU2::getReal(const ValueReference vr) {

@@ -571,7 +571,7 @@
                   </grid>
                 </children>
               </grid>
-              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
+              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="12" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
                 <margin top="15" left="15" bottom="15" right="15"/>
                 <constraints>
                   <tabbedpane title="Advanced"/>
@@ -591,7 +591,7 @@
                   </component>
                   <vspacer id="8f529">
                     <constraints>
-                      <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
                   <component id="123b1" class="javax.swing.JLabel">
@@ -622,7 +622,7 @@
                   </component>
                   <component id="87d38" class="javax.swing.JCheckBox" binding="chckbxUseSourceCode">
                     <constraints>
-                      <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <background color="-1"/>
@@ -631,7 +631,7 @@
                   </component>
                   <component id="71c93" class="javax.swing.JCheckBox" binding="chckbxDirectInput">
                     <constraints>
-                      <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <background color="-1"/>
@@ -648,15 +648,16 @@
                     </properties>
                     <border type="none"/>
                     <children>
-                      <component id="43c0e" class="javax.swing.JComboBox" binding="cmbbxErrorLevel">
+                      <component id="43c0e" class="javax.swing.JComboBox" binding="cmbbxLogLevel">
                         <constraints>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <model>
-                            <item value="Ignore"/>
+                            <item value="Info"/>
                             <item value="Warning"/>
                             <item value="Error"/>
+                            <item value="None"/>
                           </model>
                         </properties>
                       </component>
@@ -669,7 +670,7 @@
                   </grid>
                   <component id="8713" class="javax.swing.JCheckBox" binding="chckbxDebugLogging">
                     <constraints>
-                      <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <background color="-1"/>
@@ -681,12 +682,12 @@
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Error Diagnostics"/>
+                      <text value="Log Level"/>
                     </properties>
                   </component>
                   <component id="3d580" class="javax.swing.JCheckBox" binding="chckbxSetBlockName">
                     <constraints>
-                      <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <background color="-1"/>
@@ -709,6 +710,43 @@
                     </constraints>
                     <properties>
                       <text value="0"/>
+                    </properties>
+                  </component>
+                  <component id="66e84" class="javax.swing.JTextField" binding="txtLogFile">
+                    <constraints>
+                      <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <enabled value="false"/>
+                      <text value=""/>
+                    </properties>
+                  </component>
+                  <component id="edb03" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Log File"/>
+                    </properties>
+                  </component>
+                  <component id="e190d" class="javax.swing.JCheckBox" binding="chckbxLogToFile">
+                    <constraints>
+                      <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <background color="-1"/>
+                      <text value="Log to file"/>
+                    </properties>
+                  </component>
+                  <component id="efe29" class="javax.swing.JCheckBox" binding="chckbxLogFMICalls">
+                    <constraints>
+                      <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <background color="-1"/>
+                      <text value="Log FMI calls"/>
                     </properties>
                   </component>
                 </children>

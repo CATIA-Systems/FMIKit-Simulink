@@ -6,10 +6,15 @@ userData = fmikit.ui.UserData;
 userData.fmiKitVersion     = ud.fmiKitVersion;
 userData.fmuFile           = ud.fmuFile;
 userData.fmuLastModified   = ud.fmuLastModified;
-userData.unzipDirectory    = ud.unzipDirectory;
 userData.runAsKind         = ud.runAsKind;
-userData.sampleTime        = ud.sampleTime;
+userData.unzipDirectory    = ud.unzipDirectory;
+userData.debugLogging      = ud.debugLogging;
+userData.logFMICalls       = ud.logFMICalls;
+userData.logLevel          = ud.logLevel;
+userData.logFile           = ud.logFile;
+userData.logToFile         = ud.logToFile;
 userData.relativeTolerance = ud.relativeTolerance;
+userData.sampleTime        = ud.sampleTime;
 
 for i = 1:numel(ud.inputPorts)
     p = ud.inputPorts(i);
@@ -39,8 +44,6 @@ for key = keys(ud.startValues)
       java.lang.String(ud.startValues(key{1}))); 
 end
 
-userData.debugLogging     = ud.debugLogging;
-userData.errorDiagnostics = ud.errorDiagnostics;
 userData.useSourceCode    = ud.useSourceCode;
 userData.setBlockName     = ud.setBlockName;
 userData.functionName     = ud.functionName;

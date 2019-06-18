@@ -92,11 +92,14 @@ namespace fmikit {
 		switch (status) {
 		case fmi1Fatal:
 		case fmi1Error:
-			logFMUMessage(FATAL, category, message, args); break;
+			logFMUMessage(nullptr, FATAL, category, message, args);
+			break;
 		case fmi1Warning:
-			logFMUMessage(WARNING, category, message, args); break;
+			logFMUMessage(nullptr, WARNING, category, message, args);
+			break;
 		default:
-			logFMUMessage(INFO, category, message, args); break;
+			logFMUMessage(nullptr, INFO, category, message, args);
+			break;
 		}
 
 		va_end(args);
@@ -129,19 +132,7 @@ namespace fmikit {
 	FMU1::~FMU1() {}
 
 	void FMU1::assertNoError(fmi1Status status, const char *message) {
-
-		if (status < fmi1Error) return;
-
-		switch(m_errorDiagnostics) {
-		case ErrorDiagnosticsError:
-			error(message);
-			break;
-		case ErrorDiagnosticsWarning:
-			// TODO: warning
-			break;
-		default:
-			break; // do nothing
-		}
+		if (status >= fmi1Error) return;
 	}
 
 	double FMU1::getReal(const ValueReference vr) {

@@ -81,7 +81,6 @@ static std::string lastSystemErrorMessage() {
 
 
 FMU::FMU(const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName) :
-	m_errorDiagnostics(ErrorDiagnosticsError),
 	m_libraryHandle(nullptr),
 	m_time(0.0),
 	m_logFMICalls(false),
@@ -164,21 +163,21 @@ FMU::~FMU() {
 }
 
 void FMU::logDebug(const char *message, ...) {
-	if (!m_logFMICalls) return;
-	va_list args;
-	va_start(args, message);
-	char buf[MAX_MESSAGE_SIZE];
-	vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
-	string s = instanceName() + ": " + buf;
-	m_messageLogger(DEBUG, nullptr, s.c_str(), args);
-	va_end(args);
+	if (m_fmiCallLogger) {
+		va_list args;
+		va_start(args, message);
+		char buf[MAX_MESSAGE_SIZE];
+		vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
+		m_fmiCallLogger(this, buf);
+		va_end(args);
+	}
 }
 
 void FMU::logInfo(const char *message, ...) {
 	if (m_logLevel > INFO) return;
 	va_list args;
 	va_start(args, message);
-	logFMUMessage(INFO, nullptr, message, args);
+	logFMUMessage(this, INFO, nullptr, message, args);
 	va_end(args);
 }
 
@@ -188,13 +187,17 @@ void FMU::error(const char *message, ...) {
 	char buf[MAX_MESSAGE_SIZE];
 	vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
 	cout << buf << endl;
-	logFMUMessage(FATAL, nullptr, message, args);
+	logFMUMessage(this, FATAL, nullptr, message, args);
 	va_end(args);
 	throw runtime_error(buf);
 }
 
-void FMU::logFMUMessage(LogLevel level, const char* category, const char* message, va_list args) {
-	if (level >= logLevel() && m_messageLogger) m_messageLogger(level, category, message, args);
+void FMU::logFMUMessage(FMU *instance, LogLevel level, const char* category, const char* message, va_list args) {
+	if (level >= logLevel() && m_messageLogger) {
+		char buf[MAX_MESSAGE_SIZE];
+		vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
+		m_messageLogger(instance, level, category, buf);
+	}
 }
 
 // ValueReferenc array to debug text

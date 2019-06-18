@@ -40,7 +40,6 @@ public class EditTest {
 					userData.sampleTime = "-1";
 					userData.startValues = new HashMap<String, String>();
 					userData.startValues.put("f", "55");
-					userData.errorDiagnostics = "ignore";
 
                     userData.inputPorts.add(new Port("a", "b"));
                     userData.outputPorts.add(new Port("Losses", "Losses"));

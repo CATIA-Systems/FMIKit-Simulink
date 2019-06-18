@@ -28,7 +28,7 @@ end
 
 
 if ~isfield(userData, 'directInput')
-    disp(['adding userData.directInput to ' block])
+    disp(['Adding userData.directInput to ' getfullname(block)])
     userData.directInput = false;
     userData.parameters = strrep(userData.parameters, 'logical(',  'false logical(');
     set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
@@ -36,8 +36,36 @@ if ~isfield(userData, 'directInput')
 end
 
 if ~isfield(userData, 'relativeTolerance')
-    disp(['adding userData.relativeTolerance to ' block])
+    disp(['Adding userData.relativeTolerance to ' getfullname(block)])
     userData.relativeTolerance = '0';
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logFMICalls')
+    disp(['Adding userData.logFMICalls to ' getfullname(block)])
+    userData.logFMICalls = false;
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logLevel')
+    disp(['Adding userData.logLevel to ' getfullname(block)])
+    userData.logLevel = 0;
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logFile')
+    disp(['Adding userData.logFile to ' getfullname(block)])
+    userData.logFile = '';
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logToFile')
+    disp(['Adding userData.logToFile to ' getfullname(block)])
+    userData.logToFile = false;
     set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
     save_system
 end

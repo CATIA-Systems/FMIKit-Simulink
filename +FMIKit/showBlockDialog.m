@@ -31,7 +31,7 @@ end
 set(handle(dialog.btnApply, 'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
 set(handle(dialog.btnOK, 'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
 
-dialog.setTitle(getfullname(gcbh));
+dialog.setBlockPath(getfullname(gcbh));
 dialog.setLocationRelativeTo([]);
 
 if numel(varargin) == 0 || varargin{1}
