@@ -25,7 +25,9 @@ if (WIN32)
     link_directories(${MATLAB_DIR}/extern/lib/win32/microsoft)
 	endif ()
 elseif (APPLE)
+  set(MATLAB_DIR "/Applications/MATLAB_R2018b.app" CACHE STRING "MATLAB install directory")
   set(TARGET_SUFFIX mexmaci64)
+  set (CMAKE_SHARED_LINKER_FLAGS "-Wl,-exported_symbols_list,${MATLAB_DIR}/extern/lib/maci64/mexFunction.map")
 else ()
   set(TARGET_SUFFIX mexa64)
 endif ()
@@ -61,6 +63,12 @@ target_include_directories(sfun_fmurun PUBLIC
 
 if (WIN32)
   target_link_libraries(sfun_fmurun libmx libmat libmex shlwapi)
+elseif (APPLE)
+  target_link_libraries(sfun_fmurun
+    ${MATLAB_DIR}/bin/maci64/libmx.dylib
+    ${MATLAB_DIR}/bin/maci64/libmex.dylib
+    ${MATLAB_DIR}/bin/maci64/libmat.dylib
+  )
 endif ()
 
 set_target_properties(sfun_fmurun PROPERTIES SUFFIX ".${TARGET_SUFFIX}")
