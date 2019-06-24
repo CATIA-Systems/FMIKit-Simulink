@@ -101,6 +101,9 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID, size_t 
     %with ModelParameters
       %foreach paramid = NumParameters
         %assign param = Parameter[paramid]
+        %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleParameters>")
+          %continue
+        %endif
         %if FMIVersion == "2"
           %assign vr = OutputParameterFMI2(param, vr)
         %else
