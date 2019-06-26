@@ -48,7 +48,7 @@ endif ()
 
 if (MSVC)
   # link statically against the Visual C runtime
-  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE TYPE INTERNAL FORCE)
+  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING INTERNAL FORCE)
 
   string(REPLACE "/MD"  "/MT"  CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}")
   string(REPLACE "/MD"  "/MT"  CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -78,13 +78,12 @@ set(HEADERS ${HEADERS} ${RTW_HEADERS})
 set(HEADERS ${HEADERS} ${MATLAB_HEADERS})
 set(HEADERS ${HEADERS} ${SIMULINK_HEADERS})
 
-FILE(GLOB SOURCES "${RTW_DIR}/*.c")
-
+FILE(GLOB RTW_SOURCES      "${RTW_DIR}/*.c")
 FILE(GLOB SHARED_SOURCES   "${RTW_DIR}/../slprj/grtfmi/_sharedutils/*.c")
 FILE(GLOB REFMODEL_SOURCES "${RTW_DIR}/../slprj/grtfmi/sldemo_mdlref_counter_bus/*.c")
 
 set(SOURCES
-  ${SOURCES}
+  ${RTW_SOURCES}
   ${SHARED_SOURCES}
   ${REFMODEL_SOURCES}
   ${RTW_DIR}/fmiwrapper.inc

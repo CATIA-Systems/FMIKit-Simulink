@@ -48,33 +48,41 @@ switch hookMethod
                 custom_source{end+1}  = fullfile(parent_dir, 'slprj', 'grtfmi', refmodel, [refmodel '.c']); %#ok<AGROW>
             end
         end
-
-        % add S-function sources
+        
+        % get non-inlined S-functions
         if isfield(buildOpts, 'noninlinedSFcns')
-            for i = 1:numel(buildOpts.noninlinedSFcns)
-                sfcn = which(buildOpts.noninlinedSFcns{i});
-                [sfcn_dir, sfcn_name, ~] = fileparts(sfcn);
-                src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
-                for j = 1:numel(src_file_ext)
-                    ext = src_file_ext{j};
-                    if exist(fullfile(sfcn_dir, [sfcn_name ext]), 'file') == 2
-                        custom_source{end+1} = fullfile(sfcn_dir, [sfcn_name ext]); %#ok<AGROW>
-                        break
-                    end
+            sfuns = buildOpts.noninlinedSFcns;
+        else
+            sfuns = Simulink.sfunction.analyzer.findSfunctions(modelName);
+        end
+        
+        % add S-function sources
+        for i = 1:numel(sfuns)
+            sfcn = which(sfuns{i});
+            [sfcn_dir, sfcn_name, ~] = fileparts(sfcn);
+            src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
+            for j = 1:numel(src_file_ext)
+                ext = src_file_ext{j};
+                if exist(fullfile(sfcn_dir, [sfcn_name ext]), 'file') == 2
+                    custom_source{end+1} = fullfile(sfcn_dir, [sfcn_name ext]); %#ok<AGROW>
+                    break
                 end
             end
         end
+
+        % write the CMakeCache.txt file
+        fid = fopen('CMakeCache.txt', 'w');
+        fprintf(fid, 'MODEL:STRING=%s\n', modelName);
+        fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
+        fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
+        fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', build_path_list(custom_include));
+        fprintf(fid, 'SOURCE_CODE_FMU:BOOL='); if source_code_fmu, fprintf(fid, 'ON\n'); else, fprintf(fid, 'OFF\n'); end
+        fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
+        fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
+        fclose(fid);
         
-        status = system(['"' command '"' ...
-        ' -G "' generator '"' ...
-        ' -DMODEL='            modelName ...
-        ' -DRTW_DIR="'         strrep(pwd,           '\', '/') '"' ...
-        ' -DMATLAB_ROOT="'     strrep(matlabroot,    '\', '/') '"' ...
-        ' -DCUSTOM_INCLUDE="'  build_path_list(custom_include) '"' ...
-        ' -DCUSTOM_SOURCE="'   build_path_list(custom_source)  '"' ...
-        ' -DSOURCE_CODE_FMU="' source_code_fmu                 '"' ...
-        ' -DFMI_VERSION="'     fmi_version                     '"' ...
-        ' "'                   strrep(grtfmi_dir,    '\', '/') '"']);
+        disp('### Generating project')
+        status = system(['"' command '" -G "' generator '" "' strrep(grtfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
