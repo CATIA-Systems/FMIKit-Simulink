@@ -202,33 +202,29 @@
 %endfunction
 
 %function ExternalInputFMI2(port, vr)
-      %selectfile xmlfile
-      %foreach portid = NumExternalInputs
-        %assign port         = ExternalInput[portid]
-        %assign dtypeID      = LibGetRecordDataTypeId(port)
-        %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
-        %assign dims         = LibGetRecordDimensions(port)
-        %assign width        = LibGetRecordWidth(port)
-        %assign fmiType      = GetFMIType(dataTypeName)
-        %foreach index = width
-            %if width == 1
-              %assign dataName     = "%<port.Identifier>"
-              %assign variableName = "%<port.Identifier>"
-            %else
-              %assign dataName     = "%<port.Identifier>[%<index>]"
-              %assign variableName = "%<port.Identifier>[%<index+1>]"
-            %endif
-            %selectfile incfile
+  %assign dtypeID      = LibGetRecordDataTypeId(port)
+  %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
+  %assign dims         = LibGetRecordDimensions(port)
+  %assign width        = LibGetRecordWidth(port)
+  %assign fmiType      = GetFMIType(dataTypeName)
+  %foreach index = width
+    %if width == 1
+      %assign dataName     = "%<port.Identifier>"
+      %assign variableName = "%<port.Identifier>"
+    %else
+      %assign dataName     = "%<port.Identifier>[%<index>]"
+      %assign variableName = "%<port.Identifier>[%<index+1>]"
+    %endif
+    %selectfile incfile
     case %<vr>:
       *dtypeID = %<dtypeID>;
       return &(rtmGetU(S)->%<dataName>);
-            %selectfile xmlfile
+    %selectfile xmlfile
     <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input">
       <%<fmiType> start="0"/>
     </ScalarVariable>
-            %assign vr = vr + 1
-          %endforeach
-       %endforeach
+    %assign vr = vr + 1
+  %endforeach
   %return vr
 %endfunction
 
