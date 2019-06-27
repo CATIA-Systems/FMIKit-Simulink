@@ -76,7 +76,7 @@ switch hookMethod
         fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', build_path_list(custom_include));
-        fprintf(fid, 'SOURCE_CODE_FMU:BOOL='); if source_code_fmu, fprintf(fid, 'ON\n'); else, fprintf(fid, 'OFF\n'); end
+        fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
         fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
         fclose(fid);
