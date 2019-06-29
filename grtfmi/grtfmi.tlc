@@ -27,7 +27,7 @@
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 5;   % number of items under this category
+  rtwoptions(i).default       = 3;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
@@ -42,6 +42,32 @@
   rtwoptions(i).tlcvariable    = 'FMIVersion';
   rtwoptions(i).popupstrings   = '2|3';
   rtwoptions(i).tooltip        = 'FMI version';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Visible parameters';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'VisibleParameters';
+  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Include sources in FMU';
+  rtwoptions(i).type          = 'Checkbox';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
+  rtwoptions(i).tooltip       = 'Add model sources to FMU';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'CMake';
+  rtwoptions(i).type          = 'Category';
+  rtwoptions(i).enable        = 'on';
+  rtwoptions(i).default       = 2;   % number of items under this category
+                                     % excluding this one.
+  rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
+  rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
+  rtwoptions(i).tooltip       = '';
+  rtwoptions(i).callback      = '';
+  rtwoptions(i).makevariable  = '';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake generator';
@@ -74,32 +100,6 @@
   rtwoptions(i).default       = '';
   rtwoptions(i).tlcvariable   = 'CMakeCommand';
   rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
-
-  i = i + 1;
-  rtwoptions(i).prompt        = 'Compiler optimization';
-  rtwoptions(i).type          = 'Popup';
-  rtwoptions(i).enable        = 'off';
-  rtwoptions(i).default       = 'Disabled';
-  rtwoptions(i).popupstrings  = ['Disabled|' ...
-                                'Minimize size|' ...
-                                'Maximize speed|' ...
-                                'Full optimization'];
-  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimization';
-  rtwoptions(i).tooltip       = 'Compiler optimization level';
-
-  i = i + 1;
-  rtwoptions(i).prompt        = 'Visible parameters';
-  rtwoptions(i).type          = 'Edit';
-  rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'VisibleParameters';
-  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
-
-  i = i + 1;
-  rtwoptions(i).prompt        = 'Include sources in FMU';
-  rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'on';
-  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
-  rtwoptions(i).tooltip       = 'Add model sources to FMU';
 
   %----------------------------------------%
   % Configure code generation settings %
