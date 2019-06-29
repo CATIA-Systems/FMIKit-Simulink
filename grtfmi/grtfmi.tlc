@@ -27,7 +27,7 @@
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 3;   % number of items under this category
+  rtwoptions(i).default       = 4;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
@@ -49,6 +49,15 @@
   rtwoptions(i).default       = '';
   rtwoptions(i).tlcvariable   = 'VisibleParameters';
   rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'Model author';
+  rtwoptions(i).type           = 'Edit';
+  rtwoptions(i).default        = getenv('username');
+  rtwoptions(i).tlcvariable    = 'ModelAuthor';
+  rtwoptions(i).makevariable   = '';
+  rtwoptions(i).tooltip        = ...
+    'Model author to be written to the model description';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Include sources in FMU';

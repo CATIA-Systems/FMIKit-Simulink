@@ -24,6 +24,9 @@
   %if !ISEMPTY(description)
   description="%<description>"
   %endif
+  %if !ISEMPTY(ModelAuthor)
+  author="%<ModelAuthor>"
+  %endif
   version="%<ModelVersion>"
   numberOfEventIndicators="%<ZCVectorlength>">
   
