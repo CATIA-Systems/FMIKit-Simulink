@@ -79,6 +79,8 @@ switch hookMethod
         fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
         fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
+        fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationLevel'));
+        fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));
         fclose(fid);
         
         disp('### Generating project')

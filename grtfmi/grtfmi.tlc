@@ -70,7 +70,7 @@
   rtwoptions(i).prompt        = 'CMake';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 2;   % number of items under this category
+  rtwoptions(i).default       = 4;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
@@ -109,6 +109,25 @@
   rtwoptions(i).default       = '';
   rtwoptions(i).tlcvariable   = 'CMakeCommand';
   rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Compiler optimization level';
+  rtwoptions(i).type          = 'Popup';
+  rtwoptions(i).default       = 'Disabled';
+  rtwoptions(i).popupstrings  = ['Disabled|' ...
+                                'Minimize size|' ...
+                                'Maximize speed|' ...
+                                'Full optimization|' ...
+                                'Custom'];
+  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimizationLevel';
+  rtwoptions(i).tooltip       = 'Compiler optimization level';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Custom compiler optimization flags';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimizationFlags';
+  rtwoptions(i).tooltip       = 'Custom compiler optimization flags';
 
   %----------------------------------------%
   % Configure code generation settings %
