@@ -70,6 +70,18 @@
   %return attributes
 %endfunction
 
+%function DescriptionAttribute(block)
+  %assign attribute = ""
+  %if !ISFIELD(block, "BlockName")
+    %return attribute
+  %endif
+  %assign description = FEVAL("get_param", "%<block.BlockName>", "Description")
+  %if !ISEMPTY(description)
+    %assign attribute = " description=\"%<description>\""
+  %endif
+  %return attribute
+%endfunction
+
 %function GenerateSubsystemFMI(subSysIdx, vr) void
   %selectfile xmlfile
   %assign numVars = 0
@@ -230,6 +242,7 @@
   %assign dims         = LibGetRecordDimensions(port)
   %assign width        = LibGetRecordWidth(port)
   %assign fmiType      = GetFMIType(dataTypeName)
+  %assign description  = DescriptionAttribute(port)
   %assign attributes   = MinMaxAttributes(port, fmiType)
   %foreach index = width
     %if width == 1
@@ -244,7 +257,7 @@
       *dtypeID = %<dtypeID>;
       return &(rtmGetU(S)->%<dataName>);
     %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input">
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input"%<description>>
       <%<fmiType> start="0"%<attributes>/>
     </ScalarVariable>
     %assign vr = vr + 1
@@ -281,6 +294,7 @@
   %assign sysid        = outp.Block[0]
   %assign blkid        = outp.Block[1]
   %assign outportBlock = System[sysid].Block[blkid]
+  %assign description  = DescriptionAttribute(outp)
   %with outportBlock
     %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
     %assign fmiType      = GetFMIType(dataTypeName)
@@ -301,7 +315,7 @@
       *size = 1;
       return &(rtmGetY(S)->%<dataName>);
       %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output">
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output"%<description>>
       <%<fmiType>%<attributes>/>
     </ScalarVariable>
       %assign outputIndices = outputIndices + vr
