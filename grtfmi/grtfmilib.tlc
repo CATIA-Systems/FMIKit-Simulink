@@ -47,6 +47,29 @@
   %endswitch
 %endfunction
 
+%function MinMaxAttributes(port, fmiType)
+  %assign attributes = ""
+  %if !ISFIELD(port, "BlockName")
+    %return attributes
+  %endif
+  %switch fmiType
+    %case "Real"
+    %case "Float32"
+    %case "Float64"
+      %assign outmin       = FEVAL("get_param", "%<port.BlockName>", "Outmin")
+      %assign outmin       = FEVAL("str2num", "%<outmin>")
+      %if !ISEMPTY(outmin)
+        %assign attributes = "%<attributes> min=\"%<outmin>\""
+      %endif
+      %assign outmax       = FEVAL("get_param", "%<port.BlockName>", "Outmax")
+      %assign outmax       = FEVAL("str2num", "%<outmax>")
+      %if !ISEMPTY(outmax)
+        %assign attributes = "%<attributes> max=\"%<outmax>\""
+      %endif
+  %endswitch
+  %return attributes
+%endfunction
+
 %function GenerateSubsystemFMI(subSysIdx, vr) void
   %selectfile xmlfile
   %assign numVars = 0
@@ -207,6 +230,7 @@
   %assign dims         = LibGetRecordDimensions(port)
   %assign width        = LibGetRecordWidth(port)
   %assign fmiType      = GetFMIType(dataTypeName)
+  %assign attributes   = MinMaxAttributes(port, fmiType)
   %foreach index = width
     %if width == 1
       %assign dataName     = "%<port.Identifier>"
@@ -221,7 +245,7 @@
       return &(rtmGetU(S)->%<dataName>);
     %selectfile xmlfile
     <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input">
-      <%<fmiType> start="0"/>
+      <%<fmiType> start="0"%<attributes>/>
     </ScalarVariable>
     %assign vr = vr + 1
   %endforeach
@@ -234,6 +258,7 @@
   %assign dims         = LibGetRecordDimensions(port)
   %assign width        = LibGetRecordWidth(port)
   %assign fmiType      = GetFMI3Type(dataTypeName)
+  %assign attributes   = MinMaxAttributes(port, fmiType)
   %selectfile incfile
     case %<vr>:
       *dtypeID = %<dtypeID>;
@@ -241,9 +266,9 @@
       return &(rtmGetU(S)->%<port.Identifier>);
   %selectfile xmlfile
     %if width == 1    
-    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"/>
+    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>/>
     %else
-    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0">
+    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>>
       <Dimensions>
         <Dimension start="%<width>"/>
       </Dimensions>
@@ -261,6 +286,7 @@
     %assign fmiType      = GetFMIType(dataTypeName)
     %assign dtypeID      = LibGetRecordDataTypeId(outp)
     %assign width        = LibGetRecordWidth(outp)
+    %assign attributes   = MinMaxAttributes(outp, fmiType)
     %foreach index = width
       %if width == 1
         %assign dataName     = "%<Identifier>"
@@ -276,7 +302,7 @@
       return &(rtmGetY(S)->%<dataName>);
       %selectfile xmlfile
     <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output">
-      <%<fmiType>/>
+      <%<fmiType>%<attributes>/>
     </ScalarVariable>
       %assign outputIndices = outputIndices + vr
       %assign vr = vr + 1
@@ -294,6 +320,7 @@
     %assign fmiType      = GetFMI3Type(dataTypeName)
     %assign dtypeID      = LibGetRecordDataTypeId(outp)
     %assign width        = LibGetRecordWidth(outp)
+    %assign attributes   = MinMaxAttributes(outp, fmiType)
     %selectfile incfile
     case %<vr>:
       *dtypeID = %<dtypeID>;
@@ -301,9 +328,9 @@
       return &(rtmGetY(S)->%<Identifier>);
     %selectfile xmlfile
     %if width == 1
-    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"/>
+    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>/>
     %else
-    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output">
+    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>>
       <Dimensions>
         <Dimension start="%<width>"/>
       </Dimensions>
