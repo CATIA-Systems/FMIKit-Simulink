@@ -230,7 +230,7 @@ fmi3Status fmi3GetBinary(fmi3Component c,
 	NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetString(fmi3Component c, const fmi3ValueReference vr[], size_t nvr, fmi3String  value[]) { NOT_IMPLEMENTED }
+fmi3Status fmi3GetString(fmi3Component c, const fmi3ValueReference vr[], size_t nvr, fmi3String  value[], size_t nValues) { NOT_IMPLEMENTED }
 
 static fmi3Status setVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
@@ -348,10 +348,14 @@ fmi3Status fmi3DeSerializeFMUstate(fmi3Component c, const fmi3Byte serializedSta
 
 /* Getting partial derivatives */
 fmi3Status fmi3GetDirectionalDerivative(fmi3Component c,
-	const fmi3ValueReference vUnknown_ref[], size_t nUnknown,
-	const fmi3ValueReference vKnown_ref[], size_t nKnown,
-	const fmi3Float64 dvKnown[],
-	fmi3Float64 dvUnknown[]) { NOT_IMPLEMENTED }
+                                        const fmi3ValueReference vrUnknown[],
+                                        size_t nUnknown,
+                                        const fmi3ValueReference vrKnown[],
+                                        size_t nKnown,
+                                        const fmi3Float64 dvKnown[],
+                                        size_t nDvKnown,
+                                        fmi3Float64 dvUnknown[],
+                                        size_t nDvUnknown) { NOT_IMPLEMENTED }
 
 /***************************************************
 Types for Functions for FMI3 for Model Exchange
