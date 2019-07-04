@@ -9,6 +9,10 @@
 *.lib
 *.pdb
 
+# help files
+*.html
+html/images/
+
 # MATLAB App Installers
 *.mlappinstall
 

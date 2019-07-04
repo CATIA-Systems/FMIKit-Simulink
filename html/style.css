@@ -1,0 +1,40 @@
+body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; margin: 20px; line-height:1.384 !important; -webkit-font-smoothing: antialiased; }
+
+h1 { padding:0 61px 2px 0; margin-bottom: 16px; border-bottom: 1px solid #cbcbcb; background-position: right bottom; color: #c45400; font: normal normal 22px/1.136 Arial,Helvetica,sans-serif; }
+h2 { padding-top: 5px; margin-bottom: 8px; color: #404040; font: normal bold 17px/1.35 Arial, Helvetica, sans-serif; border-bottom: 1px solid #ccc; }
+h3 { padding-top: 5px; padding-bottom: 2px; margin-bottom: 5px; color: #c45400; font: normal bold 15px/1.333 Arial,Helvetica,sans-serif; }
+h4 { padding-top: 5px; margin-bottom: 5px; color: #3c3c3c; font: normal bold 13px/1.385 Arial,Helvetica,sans-serif; }
+h5 { margin-bottom: 0; color: #3c3c3c; font: normal normal 13px/1.385 Arial,Helvetica,sans-serif; }
+h6 { margin-bottom: 8px; font: italic normal 13px/1.385 Arial,Helvetica,sans-serif; }
+.title { margin-bottom: 0; }
+.subtitle { padding: 3px 125px 0 0; margin: 0 0 15px; border-bottom: none; color: #6a6a6a; line-height: 1.3; overflow:hidden; }
+
+p, li, td, th { font-size: 13px; }
+
+pre, code { font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
+
+b, strong { font-weight: 700; }
+
+li { margin-bottom: 10px; margin-top: 10px; }
+
+ol, ul { padding-left: 1em; }
+
+table { border-collapse: collapse; margin: 20px 20px 20px 0; }
+table, th, td { border: 1px solid #cbcbcb; }
+th, td { padding: 3px 8px 3px 8px; }
+th { background-color: #eeeeee; }
+td img { margin: 0px; }
+
+img { margin: 20px; max-width: 90%; height: auto; }
+
+div.source { border: 1px solid #cbcbcb; background-color: #eeeeee; padding: 0 15px 0 15px; }
+
+a { color: #0067b3; text-decoration: none; }
+a:visited { color: #005695; text-decoration: none; }
+a:hover { color: #007dd9; text-decoration: underline; }
+a:focus,
+a:active { outline: none }
+
+div.copyright  { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #666; margin-top: -15px; margin-bottom: 20px; }
+
+pre > code { width: calc(100% - 30px);  display: block; padding: 10px; border: 1px solid #ccc; background: #f6f6f6; }
