@@ -73,7 +73,6 @@ It is recommended to set the `Tasking mode` to `SingleTasking`.
 - On Windows, the package supports Visual Studio 2008 (9.0) and later compilers as supported with the respective MATLAB releases.
 
 - On Linux, the package should support the versions of gcc supported with the respective MATLAB releases.
-The object files shipped in the package have all been compiled using gcc 4.5.4
 
 - The FMU is compiled with dynamic loading of the C run-time on Windows.
 This may require installation of corresponding Visual Studio redistributables on the target platform.
