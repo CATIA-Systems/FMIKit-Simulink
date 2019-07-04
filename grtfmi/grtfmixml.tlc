@@ -54,6 +54,17 @@
     </SourceFiles>
   %endif
   </CoSimulation>
+  %if ISFIELD(CompiledModel, "Units")
+  
+  <UnitDefinitions>
+    %foreach unitIdx = Units.NumUnits
+      %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
+      %if !ISEMPTY(unitExpr)
+    <Unit name="%<unitExpr>"/>
+      %endif
+    %endforeach
+  </UnitDefinitions>
+  %endif
 
   <DefaultExperiment
     startTime="%<StartTime>"
