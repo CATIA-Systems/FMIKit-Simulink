@@ -123,7 +123,7 @@
                       </grid>
                     </constraints>
                     <properties>
-                      <text value="FMU"/>
+                      <text value="FMU:"/>
                     </properties>
                   </component>
                   <grid id="671e9" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="0">
@@ -182,7 +182,7 @@
                       </grid>
                     </constraints>
                     <properties>
-                      <text value="Interface"/>
+                      <text value="Interface:"/>
                     </properties>
                   </component>
                   <component id="1a996" class="javax.swing.JLabel">
@@ -190,7 +190,7 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="FMI Version"/>
+                      <text value="FMI version:"/>
                     </properties>
                   </component>
                   <component id="4a9d5" class="javax.swing.JLabel">
@@ -198,7 +198,7 @@
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Platforms"/>
+                      <text value="Platforms:"/>
                     </properties>
                   </component>
                   <component id="eaae2" class="javax.swing.JLabel">
@@ -206,7 +206,7 @@
                       <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Model Name"/>
+                      <text value="Model name:"/>
                     </properties>
                   </component>
                   <component id="29bea" class="javax.swing.JLabel">
@@ -214,7 +214,7 @@
                       <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Description"/>
+                      <text value="Description:"/>
                     </properties>
                   </component>
                   <component id="a4d5c" class="javax.swing.JLabel">
@@ -222,7 +222,7 @@
                       <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Generation Tool"/>
+                      <text value="Generation tool:"/>
                     </properties>
                   </component>
                   <component id="5cdc5" class="javax.swing.JLabel">
@@ -230,7 +230,7 @@
                       <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Generation Date"/>
+                      <text value="Generation date:"/>
                     </properties>
                   </component>
                   <component id="1d104" class="javax.swing.JLabel">
@@ -238,7 +238,7 @@
                       <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Continuous States"/>
+                      <text value="Continuous states:"/>
                     </properties>
                   </component>
                   <component id="384c9" class="javax.swing.JLabel">
@@ -246,7 +246,7 @@
                       <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Event Indicators"/>
+                      <text value="Event indicators:"/>
                     </properties>
                   </component>
                   <component id="857ee" class="javax.swing.JLabel">
@@ -254,7 +254,7 @@
                       <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Variables"/>
+                      <text value="Variables:"/>
                     </properties>
                   </component>
                   <component id="728db" class="javax.swing.JLabel" binding="lblFmiVersion">
@@ -609,7 +609,7 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Unzip Directory"/>
+                      <text value="Unzip directory:"/>
                     </properties>
                   </component>
                   <component id="b85a" class="javax.swing.JLabel">
@@ -617,7 +617,7 @@
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Sample Time"/>
+                      <text value="Sample time:"/>
                     </properties>
                   </component>
                   <component id="da891" class="javax.swing.JTextField" binding="txtSampleTime">
@@ -636,7 +636,7 @@
                     </constraints>
                     <properties>
                       <opaque value="false"/>
-                      <text value="Use Source Code"/>
+                      <text value="Use source code"/>
                     </properties>
                   </component>
                   <component id="71c93" class="javax.swing.JCheckBox" binding="chckbxDirectInput">
@@ -645,7 +645,7 @@
                     </constraints>
                     <properties>
                       <opaque value="false"/>
-                      <text value="Direct Input"/>
+                      <text value="Direct input"/>
                     </properties>
                   </component>
                   <grid id="56ec3" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -684,7 +684,7 @@
                     </constraints>
                     <properties>
                       <opaque value="false"/>
-                      <text value="Debug Logging"/>
+                      <text value="Enable debug logging"/>
                     </properties>
                   </component>
                   <component id="a685d" class="javax.swing.JLabel">
@@ -692,7 +692,7 @@
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Log Level"/>
+                      <text value="Log level:"/>
                     </properties>
                   </component>
                   <component id="3d580" class="javax.swing.JCheckBox" binding="chckbxSetBlockName">
@@ -709,7 +709,7 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Relative Tolerance"/>
+                      <text value="Relative tolerance:"/>
                     </properties>
                   </component>
                   <component id="a83ab" class="javax.swing.JTextField" binding="txtRelativeTolerance">
@@ -738,7 +738,7 @@
                       <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Log File"/>
+                      <text value="Log file:"/>
                     </properties>
                   </component>
                   <component id="e190d" class="javax.swing.JCheckBox" binding="chckbxLogToFile">
