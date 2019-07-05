@@ -28,8 +28,9 @@ if ~isempty(userData)
     dialog.loadModelDescription();
 end
 
+set(handle(dialog.btnOK,    'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
+set(handle(dialog.btnHelp,  'CallbackProperties'), 'ActionPerformedCallback', @helpButtonClicked);
 set(handle(dialog.btnApply, 'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
-set(handle(dialog.btnOK, 'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
 
 dialog.setBlockPath(getfullname(gcbh));
 dialog.setLocationRelativeTo([]);
@@ -40,15 +41,6 @@ end
 
 end
 
-
-function applyButtonClicked(hObject, ~)
-
-dialog = hObject.getRootPane().getParent();
-applyDialog(dialog);            
-
-end
-
-
 function okButtonClicked(hObject, ~)
 
 dialog = hObject.getRootPane().getParent();
@@ -57,4 +49,15 @@ dialog.close();
 
 end
 
+function helpButtonClicked(~, ~)
 
+FMIKit.showBlockDialogHelp();
+
+end
+
+function applyButtonClicked(hObject, ~)
+
+dialog = hObject.getRootPane().getParent();
+applyDialog(dialog);            
+
+end

@@ -68,6 +68,7 @@ public class FMUBlockDialog extends JDialog {
     private JTextField txtLogFile;
     private JCheckBox chckbxLogToFile;
     private JCheckBox chckbxLogFMICalls;
+    public JButton btnHelp;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.6";
