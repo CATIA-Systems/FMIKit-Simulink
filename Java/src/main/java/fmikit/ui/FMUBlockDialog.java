@@ -1025,11 +1025,10 @@ public class FMUBlockDialog extends JDialog {
             JFileChooser fc = new JFileChooser();
 
             if (mdlDirectory != null) {
-                fmuFile = new File(new File(mdlDirectory) + File.separator + txtFMUPath.getText());
                 fc.setCurrentDirectory(new File(mdlDirectory));
             }
 
-            //fc.setFileFilter(new FileNameExtensionFilter("Functional Mockup Units (*.fmu)", "fmu"));
+            fc.setFileFilter(new FileNameExtensionFilter("FMUs (*.fmu)", "fmu"));
 
             if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
                 return;
