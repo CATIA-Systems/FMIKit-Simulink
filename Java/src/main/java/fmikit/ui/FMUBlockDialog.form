@@ -101,7 +101,9 @@
                 <preferred-size width="200" height="200"/>
               </grid>
             </constraints>
-            <properties/>
+            <properties>
+              <opaque value="false"/>
+            </properties>
             <border type="none"/>
             <children>
               <grid id="870ea" layout-manager="GridLayoutManager" row-count="12" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="15">
@@ -110,7 +112,7 @@
                   <tabbedpane title="Overview"/>
                 </constraints>
                 <properties>
-                  <background color="-1"/>
+                  <opaque value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -132,7 +134,7 @@
                       </grid>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                     </properties>
                     <border type="none"/>
                     <children>
@@ -333,7 +335,7 @@
                       <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                     </properties>
                     <border type="none"/>
                     <children>
@@ -364,7 +366,7 @@
                   <tabbedpane title="Variables"/>
                 </constraints>
                 <properties>
-                  <background color="-1"/>
+                  <opaque value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -392,7 +394,7 @@
                   <tabbedpane title="Documentation"/>
                 </constraints>
                 <properties>
-                  <background color="-1"/>
+                  <opaque value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -417,7 +419,7 @@
                   <tabbedpane title="Outputs"/>
                 </constraints>
                 <properties>
-                  <background color="-1"/>
+                  <opaque value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -443,7 +445,7 @@
                       <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                     </properties>
                     <border type="none"/>
                     <children>
@@ -501,7 +503,7 @@
                       <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                     </properties>
                     <border type="none"/>
                     <children>
@@ -585,7 +587,7 @@
                   <tabbedpane title="Advanced"/>
                 </constraints>
                 <properties>
-                  <background color="-1"/>
+                  <opaque value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -633,7 +635,7 @@
                       <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Use Source Code"/>
                     </properties>
                   </component>
@@ -642,7 +644,7 @@
                       <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Direct Input"/>
                     </properties>
                   </component>
@@ -652,7 +654,7 @@
                       <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                     </properties>
                     <border type="none"/>
                     <children>
@@ -681,7 +683,7 @@
                       <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Debug Logging"/>
                     </properties>
                   </component>
@@ -698,7 +700,7 @@
                       <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Set the model name as block name"/>
                     </properties>
                   </component>
@@ -744,7 +746,7 @@
                       <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Log to file"/>
                     </properties>
                   </component>
@@ -753,7 +755,7 @@
                       <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <background color="-1"/>
+                      <opaque value="false"/>
                       <text value="Log FMI calls"/>
                     </properties>
                   </component>
