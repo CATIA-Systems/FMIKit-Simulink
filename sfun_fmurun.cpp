@@ -894,31 +894,23 @@ static void mdlStart(SimStruct *S) {
 
 	bool toleranceDefined = relativeTolerance(S) > 0;
 
-//    auto level = logLevel(S);
-
-	FMU::setLogLevel(DEBUG);
-
-    bool loggingOn = debugLogging(S); //level == DEBUG;
-
-//    ErrorDiagnostics diagnostics = ErrorDiagnosticsError;
-
-//    if (errorDiagnostics(S) == "ignore") {
-//        diagnostics = ErrorDiagnosticsIgnore;
-//    } else if (errorDiagnostics(S) == "warning") {
-//        diagnostics = ErrorDiagnosticsWarning;
-//    }
+    bool loggingOn = debugLogging(S);
 
 	if (fmiVersion(S) == "1.0") {
 
 		if (runAsKind(S) == CO_SIMULATION) {
 			auto slave = new FMU1Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, 0.0, loggingOn, calloc, free);
-//            slave->setErrorDiagnostics(diagnostics);
+            slave->m_userData = S;
+            slave->setLogLevel(logLevel(S));
+            if (logFMICalls(S)) slave->m_fmiCallLogger = logFMICall;
 			setStartValues(S, slave);
 			slave->initializeSlave(time, true, ssGetTFinal(S));
 			p[0] = slave;
 		} else {
 			auto model = new FMU1Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, loggingOn, calloc, free);
-//            model->setErrorDiagnostics(diagnostics);
+            model->m_userData = S;
+            model->setLogLevel(logLevel(S));
+            if (logFMICalls(S)) model->m_fmiCallLogger = logFMICall;
 			setStartValues(S, model);
 			model->setTime(time);
 			model->initialize(toleranceDefined, relativeTolerance(S));
@@ -928,7 +920,7 @@ static void mdlStart(SimStruct *S) {
 
 	} else {
 
-		FMU2 *fmu;
+		FMU2 *fmu = nullptr;
 
 		if (runAsKind(S) == CO_SIMULATION) {
 			fmu = new FMU2Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
@@ -936,21 +928,18 @@ static void mdlStart(SimStruct *S) {
 			fmu = new FMU2Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
 		}
 
-		fmu->m_fmiCallLogger = logFMICall;
-		fmu->setLogFMICalls(true);
+        fmu->m_userData = S;
+        fmu->setLogLevel(logLevel(S));
+		if (logFMICalls(S)) fmu->m_fmiCallLogger = logFMICall;
 
 		fmu->instantiate(loggingOn);
-//        fmu->setErrorDiagnostics(diagnostics);
 		setStartValues(S, fmu);
 		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, true, ssGetTFinal(S));
 		fmu->enterInitializationMode();
 		fmu->exitInitializationMode();
 
-		fmu->m_userData = S;
-
 		p[0] = fmu;
 	}
-
 
 }
 #endif /* MDL_START */

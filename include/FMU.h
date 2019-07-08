@@ -48,10 +48,12 @@ namespace fmikit {
     };
 
     enum LogLevel {
-        DEBUG = 1,
-        INFO = 2,
-        WARNING = 3,
-        FATAL = 4
+        LOG_INFO    = 0,
+        LOG_WARNING = 1,
+        LOG_DISCARD = 2,
+        LOG_ERROR   = 3,
+        LOG_FATAL   = 4,
+        LOG_NONE    = 5,
     };
 
 	enum Type {
@@ -107,8 +109,8 @@ namespace fmikit {
 		FMICallLogger *m_fmiCallLogger = nullptr;
 
 		static const char *platform();
-		static LogLevel logLevel() { return m_logLevel; }
-		static void setLogLevel(LogLevel level) { m_logLevel = level; }
+		LogLevel logLevel() { return m_logLevel; }
+		void setLogLevel(LogLevel level) { m_logLevel = level; }
 
 		explicit FMU(const std::string &guid,
 			const std::string &modelIdentifier,
@@ -139,16 +141,12 @@ namespace fmikit {
 		const std::string& instanceName() const { return m_instanceName; }
 		const std::string& fmuLocation() const { return m_fmuLocation; }
 
-		void setLogFMICalls(bool log) { m_logFMICalls = log; }
-
 	protected:
-		static LogLevel m_logLevel;
-
+        LogLevel m_logLevel;
 		HMODULE m_libraryHandle;
 		double m_time;
 		FMIVersion m_fmiVersion;
 		Kind m_kind;
-		bool m_logFMICalls;
 		bool m_stopTimeDefined;
 		double m_stopTime;
 

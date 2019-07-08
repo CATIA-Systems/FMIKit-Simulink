@@ -130,21 +130,12 @@ namespace fmikit {
 		va_start(args, message);
 
 		auto instance = static_cast<FMU *>(environment);
-			
-		switch (status) {
-		case fmi2OK:
-			logFMUMessage(instance, INFO, category, message, args);
-			break;
-		case fmi2Warning:
-		case fmi2Discard:
-			logFMUMessage(instance, WARNING, category, message, args);
-			break;
-		case fmi2Error:
-		case fmi2Fatal:
-		case fmi2Pending:
-			logFMUMessage(instance, FATAL, category, message, args);
-			break;
-		}
+        
+        auto level = static_cast<LogLevel>(status);
+        
+        if (level >= instance->logLevel()) {
+            logFMUMessage(instance, level, category, message, args);
+        }
 
 		va_end(args);
 	}

@@ -84,33 +84,34 @@ namespace fmikit {
 	static const char *fmi1BooleanToString(fmi1Boolean value) {
 		return value ? "true" : "false";
 	}
+    
+    FMU1* FMU1::s_currentInstance = nullptr;
 
 	void FMU1::logFMU1Message(fmi1Component c, fmi1String instanceName, fmi1Status status, fmi1String category, fmi1String message, ...) {
-		va_list args;
-		va_start(args, message);
-
-		switch (status) {
-		case fmi1Fatal:
-		case fmi1Error:
-			logFMUMessage(nullptr, FATAL, category, message, args);
-			break;
-		case fmi1Warning:
-			logFMUMessage(nullptr, WARNING, category, message, args);
-			break;
-		default:
-			logFMUMessage(nullptr, INFO, category, message, args);
-			break;
-		}
-
-		va_end(args);
+        va_list args;
+        va_start(args, message);
+        
+        auto level = static_cast<LogLevel>(status);
+        
+        if (level >= s_currentInstance->logLevel()) {
+            logFMUMessage(s_currentInstance, level, category, message, args);
+        }
+        
+        va_end(args);
 	}
 
-	FMU1::FMU1(const std::string &guid, const std::string &modelIdentifier,  const std::string &unzipDirectory, const std::string &instanceName,
-		allocateMemoryCallback *allocateMemory, freeMemoryCallback *freeMemory) :
+	FMU1::FMU1(const std::string &guid,
+               const std::string &modelIdentifier,
+               const std::string &unzipDirectory,
+               const std::string &instanceName,
+               allocateMemoryCallback *allocateMemory,
+               freeMemoryCallback *freeMemory) :
 		FMU(guid, modelIdentifier, unzipDirectory, instanceName),
 		m_component(nullptr) {
 
-		m_fmiVersion = FMI_VERSION_1;
+        s_currentInstance = this;
+
+        m_fmiVersion = FMI_VERSION_1;
 
 		fmi1GetVersion      = getFunc<fmi1GetVersionTYPE>      ("fmiGetVersion");
 		fmi1GetReal         = getFunc<fmi1GetRealTYPE>         ("fmiGetReal");
@@ -136,6 +137,7 @@ namespace fmikit {
 	}
 
 	double FMU1::getReal(const ValueReference vr) {
+        s_currentInstance = this;
 		fmi1Real value;
 		ASSERT_NO_ERROR(fmi1GetReal(m_component, &vr, 1, &value), "Failed to get Real")
 		logDebug("fmi1GetReal(vr=[%d], nvr=1): value=[%.16g]", vr, value);
@@ -143,6 +145,7 @@ namespace fmikit {
 	}
 
 	int FMU1::getInteger(ValueReference vr) {
+        s_currentInstance = this;
 		fmi1Integer value;
 		ASSERT_NO_ERROR(fmi1GetInteger(m_component, &vr, 1, &value), "Failed to get Integer")
 		logDebug("fmi1GetInteger(vr=[%d], nvr=1): value=[%d]", vr, value);
@@ -150,6 +153,7 @@ namespace fmikit {
 	}
 
 	bool FMU1::getBoolean(ValueReference vr) {
+        s_currentInstance = this;
 		fmi1Boolean value;
 		ASSERT_NO_ERROR(fmi1GetBoolean(m_component, &vr, 1, &value), "Failed to get Boolean")
 		logDebug("fmi1GetBoolean(vr=[%d], nvr=1): value=[%d]", vr, value);
@@ -161,6 +165,7 @@ namespace fmikit {
 	}
 
 	string FMU1::getString(ValueReference vr) {
+        s_currentInstance = this;
 		char *value[1] = { nullptr };
 		getCString(vr, value[0]);
 		logDebug("fmi1GetString(vr=[%d], nvr=1): value=[\"%s\"]", vr, value[0]);
@@ -169,16 +174,19 @@ namespace fmikit {
 	}
 
 	void FMU1::setReal(const ValueReference vr, double value) {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1SetReal(m_component, &vr, 1, &value), "Failed to set Real");
 		logDebug("fmi1SetReal(vr=[%d], nvr=1, value=[%.16g])", vr, value);
 	}
 
 	void FMU1::setInteger(ValueReference vr, int value) {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1SetInteger(m_component, &vr, 1, &value), "Failed to set Integer value");
 		logDebug("fmi1SetInteger(vr=[%d], nvr=1, value=[%d])", vr, value);
 	}
 
 	void FMU1::setBoolean(ValueReference vr, bool value) {
+        s_currentInstance = this;
 		fmi1Boolean v = value ? fmi1True : fmi1False;
 		ASSERT_NO_ERROR(fmi1SetBoolean(m_component, &vr, 1, &v), "Failed to set Boolean value");
 		logDebug("fmi1SetBoolean(vr=[%d], nvr=1, value=[%d])", vr, v);
@@ -190,6 +198,7 @@ namespace fmikit {
 	}
 
 	void FMU1::setString(ValueReference vr, string value) {
+        s_currentInstance = this;
 		fmi1String s = value.c_str();
 		setCString(vr, s);
 		logDebug("fmi1SetString(vr=[%d], nvr=1, value=[\"%s\"])", vr, s);
@@ -235,21 +244,25 @@ namespace fmikit {
 	}
 
 	void FMU1Slave::terminateSlave() {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1TerminateSlave(m_component), "Failed to terminate slave")
 		logDebug("fmi1TerminateSlave()");
 	}
 
 	void FMU1Slave::freeSlaveInstance() {
+        s_currentInstance = this;
 		HANDLE_EXCEPTION(fmi1FreeSlaveInstance(m_component), "Failed to terminate slave")
 		logDebug("fmi1FreeSlaveInstance()");
 	}
 
 	FMU1Slave::~FMU1Slave() {
+        s_currentInstance = this;
 		terminateSlave();
 		freeSlaveInstance();
 	}
 
 	void FMU1Slave::initializeSlave(double startTime, bool stopTimeDefined, double stopTime) {
+        s_currentInstance = this;
 		m_time = startTime;
 		this->m_stopTimeDefined = stopTimeDefined;
 		this->m_stopTime = stopTime;
@@ -258,17 +271,17 @@ namespace fmikit {
 	}
 
 	void FMU1Slave::doStep(double h) {
-
+        s_currentInstance = this;
 		if (m_stopTimeDefined && m_time + h > m_stopTime - h / 1000) {
 			h = m_stopTime - m_time;
 		}
-
 		ASSERT_NO_ERROR(fmi1DoStep(m_component, m_time, h, fmi1True), "Failed to do step")
 		logDebug("fmi1DoStep(currentCommunicationPoint=%.16g, communicationStepSize=%.16g, newStep=fmi1True)", m_time, h);
 		m_time += h;
 	}
 
 	void FMU1Slave::setRealInputDerivative(ValueReference vr, int order, double value) {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1SetRealInputDerivatives(m_component, &vr, 1, &order, &value), "Failed to set real input derivatives")
 		logDebug("fmi1SetRealInputDerivatives(component, vr=[%d], nvr=1, order=[%d], value=[%.16g])", vr, order, value);
 	}
@@ -317,55 +330,65 @@ namespace fmikit {
 	}
 
 	void FMU1Model::terminate() {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1Terminate(m_component), "Failed to terminate");
 		logDebug("fmi1Terminate()");
 	}
 
 	void FMU1Model::freeModelInstance() {
+        s_currentInstance = this;
 		HANDLE_EXCEPTION(fmi1FreeModelInstance(m_component), "Failed to free model instance")
 		logDebug("fmi1FreeModelInstance()");
 	}
 
 	FMU1Model::~FMU1Model() {
+        s_currentInstance = this;
 		terminate();
 		freeModelInstance();
 	}
 
 	void FMU1Model::initialize(bool toleranceControlled, double relativeTolerance) {
+        s_currentInstance = this;
 		logDebug("fmi1Initialize(toleranceControlled=%s, relativeTolerance=%.16g)", btoa(toleranceControlled), relativeTolerance);
 		fmi1Initialize(m_component, toleranceControlled, relativeTolerance, &m_eventInfo);
 	}
 
 	void FMU1Model::setTime(double time) {
+        s_currentInstance = this;
 		logDebug("fmi1SetTime(time=%.16g)", time);
 		ASSERT_NO_ERROR(fmi1SetTime(m_component, time), "Failed to set time")
 		this->m_time = time;
 	}
 
 	void FMU1Model::setContinuousStates(const double states[], size_t size) {
+        s_currentInstance = this;
 		if (size < 1) return; // nothing to do
 		logDebug("fmi1SetContinuousStates(states=[...], size=%d)", size);
 		ASSERT_NO_ERROR(fmi1SetContinuousStates(m_component, states, size), "Failed to set continuous states")
 	}
 
 	void FMU1Model::getContinuousStates(double states[], size_t size) {
+        s_currentInstance = this;
 		if (size < 1) return; // nothing to do
 		ASSERT_NO_ERROR(fmi1GetContinuousStates(m_component, states, size), "Failed to get continuous states")
 		logDebug("fmi1GetContinuousStates(size=%d): states=[...]", size);
 	}
 
 	void FMU1Model::getNominalContinuousStates(double states[], size_t size) {
+        s_currentInstance = this;
 		if (size < 1) return; // nothing to do
 		ASSERT_NO_ERROR(fmi1GetNominalContinuousStates(m_component, states, size), "Failed to get nominal continuous states")
 			logDebug("fmi1GetNominalContinuousStates(size=%d): states=[...]", size);
 	}
 
 	void FMU1Model::getDerivatives(double derivatives[], size_t size) {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1GetDerivatives(m_component, derivatives, size), "Failed to get derivatives")
 		logDebug("fmi1GetDerivatives(size=%d): derivatives=[...]", size);
 	}
 
 	bool FMU1Model::completedIntegratorStep() {
+        s_currentInstance = this;
 		fmi1Boolean stepEvent;
 		ASSERT_NO_ERROR(fmi1CompletedIntegratorStep(m_component, &stepEvent), "Failed to complete integrator step")
 		logDebug("fmi1CompletedIntegratorStep(): stepEvent=%s", fmi1BooleanToString(stepEvent));
@@ -373,6 +396,7 @@ namespace fmikit {
 	}
 
 	void FMU1Model::eventUpdate() {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1EventUpdate(m_component, fmi1False, &m_eventInfo), "Event update failed")
 		logDebug("fmi1EventUpdate(intermediateResults=false): "
 				"eventInfo.iterationConverged=%s, "
@@ -390,6 +414,7 @@ namespace fmikit {
 	}
 
 	void FMU1Model::getEventIndicators(double eventIndicators[], size_t size) {
+        s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1GetEventIndicators(m_component, eventIndicators, size), "Failed to get event indicators")
 		logDebug("fmi1GetEventIndicators(size=%d): eventIndicators=[...]", size);
 	}

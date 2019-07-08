@@ -38,6 +38,8 @@ namespace fmikit {
 		void setString(ValueReference vr, std::string value) override;
 
 	protected:
+        static FMU1 *s_currentInstance;
+        
 		static void logFMU1Message(fmi1Component c, fmi1String instanceName, fmi1Status status, fmi1String category, fmi1String message, ...);
 
 		fmi1Component m_component ;
