@@ -231,16 +231,17 @@ namespace fmikit {
 		fmi1GetIntegerStatus         = getFunc<fmi1GetIntegerStatusTYPE>         ("fmiGetIntegerStatus");
 		fmi1GetBooleanStatus         = getFunc<fmi1GetBooleanStatusTYPE>         ("fmiGetBooleanStatus");
 		fmi1GetStringStatus          = getFunc<fmi1GetStringStatusTYPE>          ("fmiGetStringStatus");
-
-        instantiateSlave(instanceName.c_str(), guid.c_str(), fmuLocation().c_str(), "application/x-fmu-sharedlibrary", timeout, fmi1False, fmi1False, m_callbackFunctions, loggingOn);
-
-		if (!m_component) error("Failed to instantiate slave");
 	}
 
-	void FMU1Slave::instantiateSlave(fmi1String  instanceName, fmi1String  fmuGUID, fmi1String  fmuLocation, fmi1String  mimeType, fmi1Real timeout, fmi1Boolean visible, fmi1Boolean interactive, fmi1CallbackFunctions functions, fmi1Boolean loggingOn) {
+    void FMU1Slave::instantiateSlave(const std::string &fmuLocation, double timeout, bool loggingOn) {
+        instantiateSlave_(instanceName().c_str(), guid().c_str(), fmuLocation.c_str(), "application/x-fmu-sharedlibrary", timeout, fmi1False, fmi1False, m_callbackFunctions, loggingOn);
+    }
+
+	void FMU1Slave::instantiateSlave_(fmi1String  instanceName, fmi1String  fmuGUID, fmi1String  fmuLocation, fmi1String  mimeType, fmi1Real timeout, fmi1Boolean visible, fmi1Boolean interactive, fmi1CallbackFunctions functions, fmi1Boolean loggingOn) {
 		HANDLE_EXCEPTION(m_component = fmi1InstantiateSlave(instanceName, fmuGUID, fmuLocation, mimeType, timeout, visible, interactive, m_callbackFunctions, loggingOn), "Failed to instantiate slave")
 		logDebug("fmi1InstantiateSlave(instanceName=\"%s\", fmuGUID=\"%s\", fmuLocation=\"%s\", mimeType=\"%s\", timeout=%.16g, visible=visible, interactive=interactive, functions=0x%p, loggingOn=%d)",
 		instanceName, fmuGUID, fmuLocation, mimeType, timeout, visible, interactive, functions, loggingOn);
+        if (!m_component) error("Failed to instantiate slave");
 	}
 
 	void FMU1Slave::terminateSlave() {
@@ -318,15 +319,16 @@ namespace fmikit {
 		fmi1GetNominalContinuousStates  = getFunc<fmi1GetNominalContinuousStatesTYPE> ("fmiGetNominalContinuousStates");
 		fmi1GetStateValueReferences     = getFunc<fmi1GetStateValueReferencesTYPE>    ("fmiGetStateValueReferences");
 		fmi1Terminate                   = getFunc<fmi1TerminateTYPE>                  ("fmiTerminate");
-
-		instantiateModel(instanceName.c_str(), guid.c_str(), m_callbackFunctions, loggingOn);
-
-		if (!m_component) error("Failed to instantiate model");
 	}
+    
+    void FMU1Model::instantiateModel(bool loggingOn) {
+        instantiateModel_(instanceName().c_str(), guid().c_str(), m_callbackFunctions, loggingOn);
+    }
 
-	void FMU1Model::instantiateModel(fmi1String instanceName, fmi1String GUID, fmi1CallbackFunctions functions, fmi1Boolean loggingOn) {
+	void FMU1Model::instantiateModel_(fmi1String instanceName, fmi1String GUID, fmi1CallbackFunctions functions, fmi1Boolean loggingOn) {
 		HANDLE_EXCEPTION(m_component = fmi1InstantiateModel(instanceName, GUID, m_callbackFunctions, loggingOn), "Failed to instantiate model")
 		logDebug("fmi1InstantiateModel(instanceName=\"%s\", GUID=\"%s\", loggingOn=%d): component=0x%p", instanceName, GUID, loggingOn, m_component);
+        if (!m_component) error("Failed to instantiate model");
 	}
 
 	void FMU1Model::terminate() {
@@ -417,6 +419,6 @@ namespace fmikit {
         s_currentInstance = this;
 		ASSERT_NO_ERROR(fmi1GetEventIndicators(m_component, eventIndicators, size), "Failed to get event indicators")
 		logDebug("fmi1GetEventIndicators(size=%d): eventIndicators=[...]", size);
-	}
+    }
 
 }

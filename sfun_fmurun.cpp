@@ -903,6 +903,7 @@ static void mdlStart(SimStruct *S) {
             slave->m_userData = S;
             slave->setLogLevel(logLevel(S));
             if (logFMICalls(S)) slave->m_fmiCallLogger = logFMICall;
+            slave->instantiateSlave(unzipDirectory(S), 0, loggingOn);
 			setStartValues(S, slave);
 			slave->initializeSlave(time, true, ssGetTFinal(S));
 			p[0] = slave;
@@ -911,6 +912,7 @@ static void mdlStart(SimStruct *S) {
             model->m_userData = S;
             model->setLogLevel(logLevel(S));
             if (logFMICalls(S)) model->m_fmiCallLogger = logFMICall;
+            model->instantiateModel(loggingOn);
 			setStartValues(S, model);
 			model->setTime(time);
 			model->initialize(toleranceDefined, relativeTolerance(S));
