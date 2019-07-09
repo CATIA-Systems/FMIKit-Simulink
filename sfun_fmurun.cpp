@@ -899,7 +899,7 @@ static void mdlStart(SimStruct *S) {
 	if (fmiVersion(S) == "1.0") {
 
 		if (runAsKind(S) == CO_SIMULATION) {
-			auto slave = new FMU1Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, 0.0, loggingOn, calloc, free);
+			auto slave = new FMU1Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
             slave->m_userData = S;
             slave->setLogLevel(logLevel(S));
             if (logFMICalls(S)) slave->m_fmiCallLogger = logFMICall;
@@ -908,7 +908,7 @@ static void mdlStart(SimStruct *S) {
 			slave->initializeSlave(time, true, ssGetTFinal(S));
 			p[0] = slave;
 		} else {
-			auto model = new FMU1Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, loggingOn, calloc, free);
+			auto model = new FMU1Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
             model->m_userData = S;
             model->setLogLevel(logLevel(S));
             if (logFMICalls(S)) model->m_fmiCallLogger = logFMICall;

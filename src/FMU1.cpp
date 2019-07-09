@@ -208,8 +208,6 @@ namespace fmikit {
 						const std::string &modelIdentifier,
 						const std::string &unzipDirectory,
 						const std::string &instanceName,
-						double timeout,
-						bool loggingOn,
 						allocateMemoryCallback *allocateMemory,
 						freeMemoryCallback *freeMemory) :
 		FMU1(guid, modelIdentifier, unzipDirectory, instanceName, allocateMemory, freeMemory) {
@@ -291,7 +289,6 @@ namespace fmikit {
 		const std::string &modelIdentifier,
 		const std::string &unzipDirectory,
 		const std::string &instanceName,
-		bool loggingOn,
 		allocateMemoryCallback *allocateMemory,
 		freeMemoryCallback *freeMemory) :
 		FMU1(guid, modelIdentifier, unzipDirectory, instanceName, allocateMemory, freeMemory) {

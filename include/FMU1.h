@@ -93,7 +93,6 @@ namespace fmikit {
 				  const std::string &modelIdentifier,
 				  const std::string &unzipDirectory,
 				  const std::string &instanceName,
-				  double timeout, bool loggingOn,
 				  allocateMemoryCallback *allocateMemory = nullptr,
 				  freeMemoryCallback *freeMemory = nullptr);
 
@@ -138,7 +137,6 @@ namespace fmikit {
 							const std::string &modelIdentifier,
 							const std::string &unzipDirectory,
 							const std::string &instanceName,
-							bool loggingOn,
 							allocateMemoryCallback *allocateMemory = nullptr,
 							freeMemoryCallback *freeMemory = nullptr);
 
