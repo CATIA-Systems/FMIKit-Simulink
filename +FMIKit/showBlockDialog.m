@@ -28,11 +28,12 @@ if ~isempty(userData)
     dialog.loadModelDescription();
 end
 
-set(dialog.lblDocumentation, 'MouseClickedCallback', @documenationLableClicked);
+% set(dialog.lblDocumentation, 'MouseClickedCallback', @documenationLableClicked);
 
-set(handle(dialog.btnOK,    'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
-set(handle(dialog.btnHelp,  'CallbackProperties'), 'ActionPerformedCallback', @helpButtonClicked);
-set(handle(dialog.btnApply, 'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
+set(handle(dialog.lblDocumentation, 'CallbackProperties'), 'MouseClickedCallback',    @documenationLableClicked);
+set(handle(dialog.btnOK,            'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
+set(handle(dialog.btnHelp,          'CallbackProperties'), 'ActionPerformedCallback', @helpButtonClicked);
+set(handle(dialog.btnApply,         'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
 
 dialog.setBlockPath(getfullname(gcbh));
 dialog.setLocationRelativeTo([]);
