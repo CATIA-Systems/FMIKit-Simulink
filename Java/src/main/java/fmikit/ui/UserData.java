@@ -43,9 +43,7 @@ public class UserData {
 	public HashMap<String, String> startValues = new HashMap<String, String>();
 
 	public boolean useSourceCode = false;
-	
-	public boolean setBlockName = true;
-	
+
 	public String parameters;
 	
 	public String functionName;

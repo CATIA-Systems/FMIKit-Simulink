@@ -45,7 +45,6 @@ for key = keys(ud.startValues)
 end
 
 userData.useSourceCode    = ud.useSourceCode;
-userData.setBlockName     = ud.setBlockName;
 userData.functionName     = ud.functionName;
 userData.parameters       = ud.parameters;
 userData.directInput      = ud.directInput;

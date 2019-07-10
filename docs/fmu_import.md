@@ -249,7 +249,6 @@ ans =
 | `debugLogging`      | `bool`           | Enable debug logging on the FMU instance                         |
 | `errorDiagnostics`  | `char`           | Diagnostics level ('ignore', 'warning', 'error')                 |
 | `useSourceCode`     | `bool`           | Compile the FMU from source code                                 |
-| `setBlockName`      | `bool`           | Set the FMU name as block name                                   |
 | `functionName`      | `char`           | Name of the S-function                                           |
 | `parameters`        | `char`           | Parameters for the S-function                                    |
 | `directInput`       | `bool`           | Use direct input                                                 |

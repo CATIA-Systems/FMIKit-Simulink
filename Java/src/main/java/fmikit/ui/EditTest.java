@@ -49,8 +49,7 @@ public class EditTest {
 					userData.parameters = "";
 					userData.debugLogging = true;
 					userData.useSourceCode = false;
-					userData.setBlockName = false;
-					
+
 					dialog.setUserData(userData);
 					
 					//dialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

@@ -45,9 +45,4 @@ end
 
 FMIKit.setSFunctionParameters(dialog.blockHandle)
 
-% set the block name
-if userData.setBlockName
-    set_param(dialog.blockHandle, 'Name', char(dialog.modelDescription.modelName))
-end
-
 end
