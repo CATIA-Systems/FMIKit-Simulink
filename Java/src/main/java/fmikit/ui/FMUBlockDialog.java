@@ -43,7 +43,6 @@ public class FMUBlockDialog extends JDialog {
     private JLabel lblEventIndicators;
     private JLabel lblVariables;
     public JButton btnApply;
-    private JTextPane txtpnDocumentation;
     private JButton btnMoveUp;
     private JButton btnMoveDown;
     private JButton button3;
@@ -61,13 +60,13 @@ public class FMUBlockDialog extends JDialog {
     private JLabel lblMessageIcon;
     private JLabel lblMessage;
     private JXTreeTable treeTable;
-    private JPanel pnlDocumentation;
     private JButton addScalarOutputPortButton;
     private JTextField txtRelativeTolerance;
     private JTextField txtLogFile;
     private JCheckBox chckbxLogToFile;
     private JCheckBox chckbxLogFMICalls;
     public JButton btnHelp;
+    public JLabel lblDocumentation;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.6";
@@ -80,8 +79,8 @@ public class FMUBlockDialog extends JDialog {
     public HashMap<String, String> startValues = new HashMap<String, String>();
     private UserData userData;
     public String mdlDirectory;
-
     public double blockHandle;
+    public File htmlFile;
 
     private ImageIcon outportIcon = new ImageIcon(getClass().getResource("/icons/outport.png"));
 
@@ -1277,17 +1276,17 @@ public class FMUBlockDialog extends JDialog {
         chckbxUseSourceCode.setEnabled(canUseSourceCode());
 
         // documentation
-        File htmlFile = new File(Util.joinPath(getUnzipDirectory(), "documentation",
+        htmlFile = new File(Util.joinPath(getUnzipDirectory(), "documentation",
                 "1.0".equals(modelDescription.fmiVersion) ? "_main.html" : "index.html"));
 
         if (htmlFile.isFile()) {
-            try {
-                txtpnDocumentation.setPage(htmlFile.toURI().toURL());
-            } catch (Exception e) {
-                warning("Failed to load documentation. " + e.getMessage());
-            }
+            lblDocumentation.setText("<html><a href=\"#\">Open in browser...</a></html>");
+            lblDocumentation.setToolTipText(htmlFile.getAbsolutePath());
+            lblDocumentation.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         } else {
-            tabbedPane.remove(pnlDocumentation);
+            lblDocumentation.setText("not available");
+            lblDocumentation.setToolTipText(null);
+            lblDocumentation.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
 
         // advanced

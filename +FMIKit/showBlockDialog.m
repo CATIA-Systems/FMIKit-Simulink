@@ -28,6 +28,8 @@ if ~isempty(userData)
     dialog.loadModelDescription();
 end
 
+set(dialog.lblDocumentation, 'MouseClickedCallback', @documenationLableClicked);
+
 set(handle(dialog.btnOK,    'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
 set(handle(dialog.btnHelp,  'CallbackProperties'), 'ActionPerformedCallback', @helpButtonClicked);
 set(handle(dialog.btnApply, 'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
@@ -37,6 +39,16 @@ dialog.setLocationRelativeTo([]);
 
 if numel(varargin) == 0 || varargin{1}
     dialog.showAsync();
+end
+
+end
+
+function documenationLableClicked(hObject, ~)
+
+dialog = hObject.getRootPane().getParent();
+
+if dialog.htmlFile.isFile()
+  web(char(dialog.htmlFile.getAbsolutePath()));
 end
 
 end
