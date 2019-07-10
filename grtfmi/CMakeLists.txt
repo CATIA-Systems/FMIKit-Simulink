@@ -6,6 +6,7 @@ set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
+set(RESOURCES "" CACHE STRING "Files to copy to the resources directory of the FMU")
 set(FMU_BUILD_DIR FMUArchive)
 set(FMI_VERSION 2 CACHE STRING "FMI Version")
 set_property(CACHE FMI_VERSION PROPERTY STRINGS 2 3)
@@ -163,6 +164,20 @@ add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 )
 
 set (ARCHIVE_FILES modelDescription.xml binaries)
+
+if (RESOURCES)
+  # copy resources
+  foreach (RESOURCE_FILE ${RESOURCES})
+    get_filename_component(BASE_NAME ${RESOURCE_FILE} NAME)
+    add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+      ${RESOURCE_FILE}
+      ${FMU_BUILD_DIR}/resources/${BASE_NAME}
+    )  
+  endforeach(RESOURCE_FILE)
+
+  # sources directory
+  set (ARCHIVE_FILES ${ARCHIVE_FILES} resources)
+endif ()
 
 if (SOURCE_CODE_FMU)
   # source code

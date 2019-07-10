@@ -26,11 +26,14 @@ switch hookMethod
         fmi_version = get_param(modelName, 'FMIVersion');
 
         disp('### Running CMake generator')
+        resources      = get_param(gcs, 'FMUResources');
+        resources      = regexp(resources, '\s+', 'split');
         custom_include = get_param(gcs, 'CustomInclude');
         custom_include = regexp(custom_include, '\s+', 'split');
-        source_files = get_param(gcs, 'CustomSource');
-        source_files = regexp(source_files, '\s+', 'split');
-        custom_source = {};
+        source_files   = get_param(gcs, 'CustomSource');
+        source_files   = regexp(source_files, '\s+', 'split');
+        custom_source  = {};
+        
         for i = 1:length(source_files)
              source_file = which(source_files{i});
              if ~isempty(source_file)
@@ -75,6 +78,7 @@ switch hookMethod
         fprintf(fid, 'MODEL:STRING=%s\n', modelName);
         fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
+        fprintf(fid, 'RESOURCES:STRING=%s\n', build_path_list(resources));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', build_path_list(custom_include));
         fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
         fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
