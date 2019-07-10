@@ -231,7 +231,11 @@ public class FMUBlockDialog extends JDialog {
     }
 
     public void setBlockPath(String blockPath) {
-        setTitle(blockPath);
+
+        final String[] segments = blockPath.split("/");
+
+        setTitle("Block Parameters: " + segments[segments.length - 1]);
+
         if (txtLogFile.getText().isEmpty()) {
             // replace non-alphanumeric characters with underscores
             String logFileName = blockPath.replaceAll("[^A-Za-z0-9]", "_");
