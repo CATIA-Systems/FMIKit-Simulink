@@ -5,6 +5,9 @@
 
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 
+const char *FMU_RESOURCE_LOCATION = NULL;
+
+
 int rtPrintfNoOp(const char *fmt, ...) {
 	return 0;  /* do nothing */
 }
@@ -48,6 +51,10 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
 		return NULL;
 	}
+    
+    if (fmuResourceLocation && !FMU_RESOURCE_LOCATION) {
+        FMU_RESOURCE_LOCATION = strdup(fmuResourceLocation);
+    }
 
 	ModelInstance *instance = malloc(sizeof(ModelInstance));
 
@@ -73,6 +80,10 @@ void fmi2FreeInstance(fmi2Component c) {
 	ModelInstance *instance = (ModelInstance *)c;
 	free((void *)instance->instanceName);
 	free(instance);
+    if (FMU_RESOURCE_LOCATION) {
+        free((void *)FMU_RESOURCE_LOCATION);
+        FMU_RESOURCE_LOCATION = NULL;
+    }
 }
 
 /* Enter and exit initialization mode, terminate and reset */
