@@ -2,14 +2,14 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
   <configuration target="target.mlapps" target-name="Package App" name="FMI Kit" location="E:\Development\FMIKit-Simulink" file="E:\Development\FMIKit-Simulink\FMI Kit.prj" build-checksum="1932270851">
     <param.appname>FMI Kit</param.appname>
-    <param.authnamewatermark>Dassault Systemes</param.authnamewatermark>
+    <param.authnamewatermark />
     <param.email />
-    <param.company />
+    <param.company>Dassault Systemes</param.company>
     <param.icon>${PROJECT_ROOT}/docs/images/icon_24.png</param.icon>
     <param.icons>
-      <file>${PROJECT_ROOT}/docs/images/icon_48.png</file>
-      <file>${PROJECT_ROOT}/docs/images/icon_24.png</file>
-      <file>${PROJECT_ROOT}/docs/images/icon_16.png</file>
+      <file>${PROJECT_ROOT}/FMI Kit_resources/icon_48.png</file>
+      <file>${PROJECT_ROOT}/FMI Kit_resources/icon_24.png</file>
+      <file>${PROJECT_ROOT}/FMI Kit_resources/icon_16.png</file>
     </param.icons>
     <param.summary>Import and export Functional Mock-up Units</param.summary>
     <param.description />
@@ -18,7 +18,6 @@
     <param.products.name>
       <item>Simulink</item>
       <item>MATLAB</item>
-      <item>MATLAB Coder</item>
     </param.products.name>
     <param.products.id>
       <item>2</item>
@@ -30,11 +29,7 @@
       <item>8.0</item>
       <item>2.3</item>
     </param.products.version>
-    <param.platforms>
-      <item>glnxa64</item>
-      <item>win64</item>
-      <item>win32</item>
-    </param.platforms>
+    <param.platforms />
     <param.output>${PROJECT_ROOT}\FMI Kit.mlappinstall</param.output>
     <param.guid>f1520314-21d0-404a-928b-c5e76bc451b4</param.guid>
     <unset>
@@ -139,6 +134,7 @@
       <file>${PROJECT_ROOT}/rtwsfcnfmi/tlc/sfcnmei.tlc</file>
       <file>${PROJECT_ROOT}/sfun_fmurun.cpp</file>
       <file>${PROJECT_ROOT}/sfun_fmurun.mexa64</file>
+      <file>${PROJECT_ROOT}/sfun_fmurun.mexmaci64</file>
       <file>${PROJECT_ROOT}/sfun_fmurun.mexw32</file>
       <file>${PROJECT_ROOT}/sfun_fmurun.mexw64</file>
       <file>${PROJECT_ROOT}/slblocks.m</file>
