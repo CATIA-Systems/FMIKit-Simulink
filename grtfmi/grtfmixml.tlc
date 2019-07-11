@@ -54,8 +54,9 @@
     </SourceFiles>
   %endif
   </CoSimulation>
-  %if ISFIELD(CompiledModel, "Units")
+  %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
   
+
   <UnitDefinitions>
     %foreach unitIdx = Units.NumUnits
       %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
