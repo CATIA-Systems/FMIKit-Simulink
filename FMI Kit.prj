@@ -5,7 +5,12 @@
     <param.authnamewatermark>Dassault Systemes</param.authnamewatermark>
     <param.email />
     <param.company />
-    <param.icon />
+    <param.icon>${PROJECT_ROOT}/docs/images/icon_24.png</param.icon>
+    <param.icons>
+      <file>${PROJECT_ROOT}/docs/images/icon_48.png</file>
+      <file>${PROJECT_ROOT}/docs/images/icon_24.png</file>
+      <file>${PROJECT_ROOT}/docs/images/icon_16.png</file>
+    </param.icons>
     <param.summary>Import and export Functional Mock-up Units</param.summary>
     <param.description />
     <param.screenshot />
