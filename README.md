@@ -19,6 +19,21 @@ A Simulink library to import and export [Functional Mock-up Units](https://fmi-s
 - click on the app in the MATLAB app tool strip to initialize FMI Kit
 - learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs
 
+To run the FMI Kit app automatically, add the following lines to your [startup script](https://mathworks.com/help/matlab/ref/startup.html).
+
+```matlab
+% start FMI Kit
+apps = matlab.apputil.getInstalledAppInfo();
+
+for i = 1:numel(apps)
+    app = apps(i);
+    if strcmp(app.name, 'FMI Kit')
+        matlab.apputil.run(app.id);
+        return
+    end
+end
+```
+
 ## License
 
 Copyright &copy; 2019 Dassault Syst&egrave;mes.
