@@ -52,27 +52,32 @@ switch hookMethod
             end
         end
         
-        % get non-inlined S-functions
-        if isfield(buildOpts, 'noninlinedSFcns')
-            sfuns = buildOpts.noninlinedSFcns;
+        % get non-inlined S-Function modules
+        if all(isfield(buildOpts, {'noninlinedSFcns', 'noninlinednonSFcns'}))
+            % <= R2019a
+            modules = [buildOpts.noninlinedSFcns buildOpts.noninlinednonSFcns];
         else
-            sfuns = Simulink.sfunction.analyzer.findSfunctions(modelName);
+            modules = {};
+            sfcns = find_system(modelName, 'BlockType', 'S-Function');
+            for i = 1:numel(sfcns)
+                block = sfcns{i};
+                modules = [modules get_param(block, 'FunctionName') ...
+                  regexp(get_param(block, 'SFunctionModules'), '\s+', 'split')]; %#ok<AGROW>
+            end
         end
-        
+                
         % add S-function sources
-        for i = 1:numel(sfuns)
-            sfcn = which(sfuns{i});
-            [sfcn_dir, sfcn_name, ~] = fileparts(sfcn);
+        for i = 1:numel(modules)
             src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
             for j = 1:numel(src_file_ext)
-                ext = src_file_ext{j};
-                if exist(fullfile(sfcn_dir, [sfcn_name ext]), 'file') == 2
-                    custom_source{end+1} = fullfile(sfcn_dir, [sfcn_name ext]); %#ok<AGROW>
+                source_file = which([modules{i} src_file_ext{j}]);
+                if ~isempty(source_file)
+                    custom_source{end+1} = source_file; %#ok<AGROW>
                     break
                 end
             end
         end
-
+        
         % write the CMakeCache.txt file
         fid = fopen('CMakeCache.txt', 'w');
         fprintf(fid, 'MODEL:STRING=%s\n', modelName);
