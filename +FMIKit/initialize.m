@@ -37,11 +37,6 @@ if isempty(which('org.jdesktop.swingx.JXTreeTable'))
     msg = true;
 end
 
-if isempty(which('com.intellij.uiDesigner.core.GridLayoutManager'))
-    javaaddpath(fullfile(folder, 'forms_rt.jar'))
-    msg = true;
-end
-
 if isempty(which('fmikit.ui.FMUBlockDialog'))
     javaaddpath(fullfile(folder, 'fmikit.jar'))
     msg = true;
