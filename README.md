@@ -1,9 +1,6 @@
+![FMI Kit app](docs/images/toolstrip.png)
 
-<p align="center">
-  <img src="docs/images/fmikit-banner.svg" alt="FMIKit banner" width="65%">
-</p>
-
-# FMIKit for Simulink
+# FMI Kit for Simulink
 
 A Simulink library to import and export [Functional Mock-up Units](https://fmi-standard.org/) that supports...
 
