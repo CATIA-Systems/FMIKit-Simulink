@@ -57,6 +57,12 @@ if ~verLessThan('matlab', '8.4') % R2014b
   end
 end
 
+% add examples to MATLAB path
+if isempty(which('fmikit_demo_BouncingBall'))
+    addpath(fullfile(folder, 'examples'))
+    msg = true;
+end
+
 if msg
     disp(['Initializing FMI Kit ' [num2str(FMIKit.majorVersion) '.' ...
         num2str(FMIKit.minorVersion) '.' num2str(FMIKit.patchVersion)]])
