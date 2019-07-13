@@ -1,11 +1,13 @@
 #include <float.h>  /* for DBL_EPSILON */
+#include <string.h> /* for strcpy(), strncmp() */
 #include "fmi2Functions.h"
 
 #include "fmiwrapper.inc"
 
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 
-const char *FMU_RESOURCE_LOCATION = NULL;
+/* Path to the resources directory of the extracted FMU */
+const char *FMU_RESOURCE_DIR = NULL;
 
 
 int rtPrintfNoOp(const char *fmt, ...) {
@@ -19,6 +21,32 @@ typedef struct {
 	fmi2ComponentEnvironment componentEnvironment;
 } ModelInstance;
 
+static setResourcePath(const char *uri) {
+
+	if (!uri || FMU_RESOURCE_DIR) return;
+
+	const char *scheme1 = "file:///";
+	const char *scheme2 = "file:/";
+
+	char *path = strdup(uri);
+
+	if (strncmp(path, scheme1, strlen(scheme1)) == 0) {
+		strcpy(path, &path[strlen(scheme1)] - 1);
+	} else if (strncmp(path, scheme2, strlen(scheme2)) == 0) {
+		strcpy(path, &path[strlen(scheme2)] - 1);
+	} else {
+		free(path);
+	}
+
+#ifdef _WIN32
+	// strip any leading slashes
+	while (path[0] == '/') {
+		strcpy(path, &path[1]);
+	}
+#endif
+
+	FMU_RESOURCE_DIR = path;
+}
 
 /***************************************************
 Types for Common Functions
@@ -51,10 +79,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
 		return NULL;
 	}
-    
-    if (fmuResourceLocation && !FMU_RESOURCE_LOCATION) {
-        FMU_RESOURCE_LOCATION = strdup(fmuResourceLocation);
-    }
+
+	/* set the path to the resources directory */
+	setResourcePath(fmuResourceLocation);
 
 	ModelInstance *instance = malloc(sizeof(ModelInstance));
 
@@ -80,10 +107,8 @@ void fmi2FreeInstance(fmi2Component c) {
 	ModelInstance *instance = (ModelInstance *)c;
 	free((void *)instance->instanceName);
 	free(instance);
-    if (FMU_RESOURCE_LOCATION) {
-        free((void *)FMU_RESOURCE_LOCATION);
-        FMU_RESOURCE_LOCATION = NULL;
-    }
+    free((void *)FMU_RESOURCE_DIR);
+	FMU_RESOURCE_DIR = NULL;
 }
 
 /* Enter and exit initialization mode, terminate and reset */
