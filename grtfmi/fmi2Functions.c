@@ -7,7 +7,7 @@
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 
 /* Path to the resources directory of the extracted FMU */
-const char *FMU_RESOURCE_DIR = NULL;
+const char *FMU_RESOURCES_DIR = NULL;
 
 
 int rtPrintfNoOp(const char *fmt, ...) {
@@ -23,7 +23,7 @@ typedef struct {
 
 static setResourcePath(const char *uri) {
 
-	if (!uri || FMU_RESOURCE_DIR) return;
+	if (!uri || FMU_RESOURCES_DIR) return;
 
 	const char *scheme1 = "file:///";
 	const char *scheme2 = "file:/";
@@ -45,7 +45,7 @@ static setResourcePath(const char *uri) {
 	}
 #endif
 
-	FMU_RESOURCE_DIR = path;
+	FMU_RESOURCES_DIR = path;
 }
 
 /***************************************************
@@ -107,8 +107,8 @@ void fmi2FreeInstance(fmi2Component c) {
 	ModelInstance *instance = (ModelInstance *)c;
 	free((void *)instance->instanceName);
 	free(instance);
-    free((void *)FMU_RESOURCE_DIR);
-	FMU_RESOURCE_DIR = NULL;
+    free((void *)FMU_RESOURCES_DIR);
+	FMU_RESOURCES_DIR = NULL;
 }
 
 /* Enter and exit initialization mode, terminate and reset */
