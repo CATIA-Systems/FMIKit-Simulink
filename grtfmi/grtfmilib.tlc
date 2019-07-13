@@ -66,9 +66,11 @@
       %if !ISEMPTY(outmax)
         %assign attributes = "%<attributes> max=\"%<outmax>\""
       %endif
-      %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
-      %if !ISEMPTY(unit)
-        %assign attributes = "%<attributes> unit=\"%<unit>\""
+      %if ISFIELD(port, "UnitIdx")
+        %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
+        %if !ISEMPTY(unit)
+          %assign attributes = "%<attributes> unit=\"%<unit>\""
+        %endif
       %endif
   %endswitch
   %return attributes
