@@ -5,6 +5,7 @@ set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install di
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
+set(CUSTOM_LIBRARY "" CACHE STRING "Additional static libraries")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
 set(RESOURCES "" CACHE STRING "Files to copy to the resources directory of the FMU")
 set(FMU_BUILD_DIR FMUArchive)
@@ -138,6 +139,10 @@ target_compile_definitions(${MODEL} PUBLIC
   USE_RTMODEL
 )
 
+target_link_libraries(${MODEL}
+  ${CUSTOM_LIBRARY}
+)
+
 file(READ ${MATLAB_ROOT}/simulink/include/simstruc.h CONTENTS)
 file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
 /* Add definitions to allow compilation without compiler options */
@@ -172,7 +177,7 @@ if (RESOURCES)
     add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
       ${RESOURCE_FILE}
       ${FMU_BUILD_DIR}/resources/${BASE_NAME}
-    )  
+    )
   endforeach(RESOURCE_FILE)
 
   # sources directory

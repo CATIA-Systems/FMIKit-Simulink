@@ -32,6 +32,8 @@ switch hookMethod
         custom_include = regexp(custom_include, '\s+', 'split');
         source_files   = get_param(gcs, 'CustomSource');
         source_files   = regexp(source_files, '\s+', 'split');
+        custom_library = get_param(gcs, 'CustomLibrary');
+        custom_library = regexp(custom_library, '\s+', 'split');
         custom_source  = {};
         
         for i = 1:length(source_files)
@@ -85,9 +87,10 @@ switch hookMethod
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
         fprintf(fid, 'RESOURCES:STRING=%s\n', build_path_list(resources));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', build_path_list(custom_include));
+        fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
+        fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', build_path_list(custom_library));
         fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
         fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
-        fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
         fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationLevel'));
         fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));
         fclose(fid);
