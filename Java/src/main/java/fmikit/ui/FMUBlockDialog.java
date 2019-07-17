@@ -824,20 +824,7 @@ public class FMUBlockDialog extends JDialog {
         params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
 
         // log level
-        switch (cmbbxLogLevel.getSelectedIndex()) {
-            case 0: // info
-                params.add("0");
-                break;
-            case 1: // warning
-                params.add("1");
-                break;
-            case 2: // error
-                params.add("2");
-                break;
-            default: // none
-                params.add("3");
-                break;
-        }
+        params.add(Integer.toString(cmbbxLogLevel.getSelectedIndex()));
 
         // log file
         if (chckbxLogToFile.isSelected()) {

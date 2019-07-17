@@ -659,7 +659,9 @@
                           <model>
                             <item value="Info"/>
                             <item value="Warning"/>
+                            <item value="Discard"/>
                             <item value="Error"/>
+                            <item value="Fatal"/>
                             <item value="None"/>
                           </model>
                         </properties>
