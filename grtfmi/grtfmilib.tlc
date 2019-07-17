@@ -214,6 +214,9 @@
   %if fmiType == ""
     %return vr
   %endif
+  %if nRows == 0 || nCols == 0
+    %return vr
+  %endif
   %if sigSrc[1] < 0
     %assign identifier = param.Identifier
   %else
