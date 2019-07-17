@@ -1,25 +1,29 @@
 function test_grtfmi_export
 
-fmi_version = '3';
+for fmi_version = [2 3]
+  
+  fmi_version = num2str(fmi_version);
+  
+  build_model('sldemo_clutch', fmi_version);
 
-build_model('sldemo_clutch', fmi_version);
+  build_model('sldemo_fuelsys', fmi_version);
 
-build_model('sldemo_fuelsys', fmi_version);
+  ref_model = fullfile(pwd, 'sldemo_mdlref_counter_bus.slx');
+  if exist(ref_model, 'file')
+      delete(ref_model);
+  end
 
-ref_model = fullfile(pwd, 'sldemo_mdlref_counter_bus.slx');
-if exist(ref_model, 'file')
-    delete(ref_model);
+  h = load_system('sldemo_mdlref_counter_bus');
+  cs = getActiveConfigSet(h);
+  switchTarget(cs, 'grtfmi.tlc', []);
+  set_param(h, 'FMIVersion', fmi_version);
+  set_param(h, 'CMakeGenerator', 'Visual Studio 14 2015 Win64');
+  save_system(h, 'sldemo_mdlref_counter_bus');
+
+  build_model('sldemo_mdlref_bus', fmi_version);
+  
 end
-
-h = load_system('sldemo_mdlref_counter_bus');
-cs = getActiveConfigSet(h);
-switchTarget(cs, 'grtfmi.tlc', []);
-set_param(h, 'FMIVersion', fmi_version);
-set_param(h, 'CMakeGenerator', 'Visual Studio 14 2015 Win64');
-save_system(h, 'sldemo_mdlref_counter_bus');
-
-build_model('sldemo_mdlref_bus', fmi_version);
-
+  
 end
 
 
