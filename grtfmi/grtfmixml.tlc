@@ -38,18 +38,14 @@
     canHandleVariableCommunicationStepSize="true">
   %if SourceCodeFMU
     <SourceFiles>
-      <File name="%<OrigName>.c"/>
-      <File name="%<OrigName>_data.c"/>
       <File name="fmi2Functions.c"/>
-      <File name="rt_logging.c"/>
-      <File name="rt_logging_mmi.c"/>
-      <File name="rt_nonfinite.c"/>
-      <File name="rtGetInf.c"/>
-      <File name="rtGetNaN.c"/>
-      <File name="rtw_modelmap_utils.c"/>
-    %assign sourceFiles = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
-    %foreach i = SIZE(sourceFiles, 1)
-      <File name="%<sourceFiles[i]>"/>
+    %assign generatedSources = FEVAL("dir", "%<RTWGenSettings.RelativeBuildDir>/*.c")
+    %foreach i = SIZE(generatedSources, 1)
+      <File name="%<generatedSources[i].name>"/>
+    %endforeach
+    %assign customSources = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
+    %foreach i = SIZE(customSources, 1)
+      <File name="%<customSources[i]>"/>
     %endforeach
     </SourceFiles>
   %endif
