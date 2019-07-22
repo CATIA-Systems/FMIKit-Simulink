@@ -23,12 +23,13 @@ typedef struct {
 
 static void setResourcePath(const char *uri) {
 
-	if (!uri || FMU_RESOURCES_DIR) return;
-
 	const char *scheme1 = "file:///";
 	const char *scheme2 = "file:/";
+	char *path;
 
-	char *path = strdup(uri);
+	if (!uri || FMU_RESOURCES_DIR) return;
+
+	path = strdup(uri);
 
 	if (strncmp(path, scheme1, strlen(scheme1)) == 0) {
 		strcpy(path, &path[strlen(scheme1)] - 1);
@@ -75,6 +76,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	fmi2Boolean visible,
 	fmi2Boolean loggingOn) {
 
+	ModelInstance *instance;
+	size_t len;
+
 	/* check GUID */
 	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
 		return NULL;
@@ -83,9 +87,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	/* set the path to the resources directory */
 	setResourcePath(fmuResourceLocation);
 
-	ModelInstance *instance = malloc(sizeof(ModelInstance));
+	instance = malloc(sizeof(ModelInstance));
 
-	size_t len = strlen(instanceName);
+	len = strlen(instanceName);
 	instance->instanceName = malloc((len + 1) * sizeof(char));
 	strncpy((char *)instance->instanceName, instanceName, len + 1);
 	instance->logger = functions->logger;
@@ -394,6 +398,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
 	ModelInstance *instance = (ModelInstance *)c;
+	const char *errorStatus;
 
 #ifndef DISCRETE
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
@@ -401,7 +406,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
 #endif
 		MODEL_STEP(instance->S);
-		const char *errorStatus = rtmGetErrorStatus(instance->S);
+		errorStatus = rtmGetErrorStatus(instance->S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
