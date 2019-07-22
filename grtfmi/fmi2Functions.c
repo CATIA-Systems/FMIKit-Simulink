@@ -21,7 +21,7 @@ typedef struct {
 	fmi2ComponentEnvironment componentEnvironment;
 } ModelInstance;
 
-static setResourcePath(const char *uri) {
+static void setResourcePath(const char *uri) {
 
 	if (!uri || FMU_RESOURCES_DIR) return;
 
