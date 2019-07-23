@@ -229,11 +229,9 @@
     <%<fmiType> name="%<identifier>" valueReference="%<vr>" causality="parameter" variability="tunable" start="%<startValue>"/>
   %else
     <%<fmiType> name="%<identifier>" valueReference="%<vr>" causality="parameter" variability="tunable" start="%<startValue>">
-      <Dimensions>
     %foreach dimidx = SIZE(dims, 1)
-        <Dimension start="%<dims[dimidx]>"/>
+      <Dimension start="%<dims[dimidx]>"/>
     %endforeach
-      </Dimensions>
     </%<fmiType>>
   %endif
   %selectfile incfile
@@ -291,9 +289,7 @@
     <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>/>
     %else
     <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>>
-      <Dimensions>
-        <Dimension start="%<width>"/>
-      </Dimensions>
+      <Dimension start="%<width>"/>
     </%<fmiType>>
     %endif
   %return vr + 1
@@ -354,9 +350,7 @@
     <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>/>
     %else
     <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>>
-      <Dimensions>
-        <Dimension start="%<width>"/>
-      </Dimensions>
+      <Dimension start="%<width>"/>
     </%<fmiType>>
     %endif
     %assign outputIndices = outputIndices + vr
