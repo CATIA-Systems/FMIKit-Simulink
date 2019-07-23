@@ -13,7 +13,7 @@
   fmiVersion="2.0"
   guid="%<GUID>" 
   %else
-  fmiVersion="3.0-dev"
+  fmiVersion="3.0-alpha.2"
   instantiationToken="%<GUID>" 
   %endif
   modelName="%<OrigName>"
@@ -37,22 +37,36 @@
   %endif
     canHandleVariableCommunicationStepSize="true">
   %if SourceCodeFMU
-    <SourceFiles>
-      <File name="fmi2Functions.c"/>
+    %assign sourceFiles = []
     %assign generatedSources = FEVAL("dir", "%<RTWGenSettings.RelativeBuildDir>/*.c")
     %foreach i = SIZE(generatedSources, 1)
-      <File name="%<generatedSources[i].name>"/>
+      %assign sourceFiles = sourceFiles + generatedSources[i].name
     %endforeach
     %assign customSources = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
     %foreach i = SIZE(customSources, 1)
-      <File name="%<customSources[i]>"/>
+      %assign sourceFiles = sourceFiles + customSources[i]
     %endforeach
+    %if FMIVersion == "2"
+    <SourceFiles>
+      <File name="fmi2Functions.c"/>
+      %foreach i = SIZE(sourceFiles, 1)
+      <File name="%<sourceFiles[i]>"/>
+      %endforeach
     </SourceFiles>
+    %else
+    <BuildConfiguration>
+      <SourceFileSet>
+        <SourceFile name="fmi3Functions.c"/>
+      %foreach i = SIZE(sourceFiles, 1)
+        <SourceFile name="%<sourceFiles[i]>"/>
+      %endforeach
+      </SourceFileSet>
+    </BuildConfiguration>
+    %endif
   %endif
   </CoSimulation>
   %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
   
-
   <UnitDefinitions>
     %foreach unitIdx = Units.NumUnits
       %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
