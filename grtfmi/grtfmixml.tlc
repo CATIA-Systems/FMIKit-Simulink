@@ -184,16 +184,18 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID, size_t 
   </ModelVariables>
 
   <ModelStructure>
-  %if SIZE(outputIndices,1) > 0
+  %if SIZE(outputIndices, 1) > 0
+    %if FMIVersion == "2"
     <Outputs>
-    %foreach iOutputIndex = SIZE(outputIndices,1)
-      %if FMIVersion == "2"
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
       <Unknown index="%<outputIndices[iOutputIndex]>"/>
-      %else
-      <Unknown valueReference="%<outputIndices[iOutputIndex]>"/>
-      %endif
-    %endforeach
+      %endforeach
     </Outputs>
+    %else
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
+    <Output valueReference="%<outputIndices[iOutputIndex]>"/>
+      %endforeach
+    %endif
   %endif
   </ModelStructure>
 
