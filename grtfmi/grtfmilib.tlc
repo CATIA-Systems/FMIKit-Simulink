@@ -306,6 +306,11 @@
     %assign dtypeID      = LibGetRecordDataTypeId(outp)
     %assign width        = LibGetRecordWidth(outp)
     %assign attributes   = MinMaxAttributes(outp, fmiType)
+    %if fmiType == "Real"
+      %assign variability = "continuous"
+    %else
+      %assign variability = "discrete"
+    %endif
     %foreach index = width
       %if width == 1
         %assign dataName     = "%<Identifier>"
@@ -320,7 +325,7 @@
       *size = 1;
       return &(rtmGetY(S)->%<dataName>);
       %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output"%<description>>
+    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output" variability="%<variability>"%<description>>
       <%<fmiType>%<attributes>/>
     </ScalarVariable>
       %assign outputIndices = outputIndices + vr
