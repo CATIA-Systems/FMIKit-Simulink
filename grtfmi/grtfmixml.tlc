@@ -91,6 +91,14 @@
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
 
+#ifndef NO_FMI_FUNCTION_PREFIX
+  %if FMIVersion == "2"
+#define FMI2_FUNCTION_PREFIX %<OrigName>_
+  %else
+#define FMI3_FUNCTION_PREFIX %<OrigName>_
+  %endif
+#endif
+
 #define MODEL_GUID       "%<GUID>"
 #define MODEL            %<OrigName>
 #define MODEL_INITIALIZE %<OrigName>_initialize

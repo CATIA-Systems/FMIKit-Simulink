@@ -1,8 +1,9 @@
 #include <float.h>  /* for DBL_EPSILON */
 #include <string.h> /* for strcpy(), strncmp() */
-#include "fmi2Functions.h"
 
 #include "fmiwrapper.inc"
+
+#include "fmi2Functions.h"
 
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 

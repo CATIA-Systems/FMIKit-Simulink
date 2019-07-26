@@ -137,6 +137,7 @@ target_compile_definitions(${MODEL} PUBLIC
   _CRT_SECURE_NO_WARNINGS
   RT
   USE_RTMODEL
+  NO_FMI_FUNCTION_PREFIX
 )
 
 target_link_libraries(${MODEL}
