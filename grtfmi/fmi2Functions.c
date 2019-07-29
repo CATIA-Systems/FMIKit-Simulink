@@ -30,15 +30,13 @@ static void setResourcePath(const char *uri) {
 
 	if (!uri || FMU_RESOURCES_DIR) return;
 
-	path = strdup(uri);
-
-	if (strncmp(path, scheme1, strlen(scheme1)) == 0) {
-		strcpy(path, &path[strlen(scheme1)] - 1);
-	} else if (strncmp(path, scheme2, strlen(scheme2)) == 0) {
-		strcpy(path, &path[strlen(scheme2)] - 1);
-	} else {
-		free(path);
-	}
+	if (strncmp(uri, scheme1, strlen(scheme1)) == 0) {
+        path = strdup(&uri[strlen(scheme1) - 1]);
+	} else if (strncmp(uri, scheme2, strlen(scheme2)) == 0) {
+        path = strdup(&uri[strlen(scheme2) - 1]);
+    } else {
+        return;
+    }
 
 #ifdef _WIN32
 	// strip any leading slashes
