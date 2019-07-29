@@ -413,7 +413,12 @@ fmi3Status fmi3DoStep(fmi3Instance c,
 
 	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
 #endif
+        
+#ifdef REUSABLE_FUNCTION
 		MODEL_STEP(instance->S);
+#else
+        MODEL_STEP();
+#endif
 		const char *errorStatus = rtmGetErrorStatus(instance->S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi3Error, "error", errorStatus);

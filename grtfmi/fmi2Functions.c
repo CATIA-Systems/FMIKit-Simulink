@@ -404,7 +404,12 @@ fmi2Status fmi2DoStep(fmi2Component c,
 
 	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
 #endif
+        
+#ifdef REUSABLE_FUNCTION
 		MODEL_STEP(instance->S);
+#else
+        MODEL_STEP();
+#endif
 		errorStatus = rtmGetErrorStatus(instance->S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
