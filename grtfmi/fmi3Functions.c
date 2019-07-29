@@ -107,17 +107,21 @@ fmi3Status fmi3Terminate(fmi3Instance c) {
 
 fmi3Status fmi3Reset(fmi3Instance c) {
 
+    ModelInstance *instance = (ModelInstance *)c;
+    
 #ifdef REUSABLE_FUNCTION
-	ModelInstance *instance = (ModelInstance *)c;
-
-	MODEL_TERMINATE(instance->S);
-
-	instance->S = MODEL();
-
-	MODEL_INITIALIZE(instance->S);
+    if (instance->S) {
+        MODEL_TERMINATE(instance->S);
+    }
+    
+    instance->S = MODEL();
+    MODEL_INITIALIZE(instance->S);
 #else
-	MODEL_TERMINATE();
-	MODEL_INITIALIZE();
+    if (instance->S) {
+        MODEL_TERMINATE();
+    }
+    
+    MODEL_INITIALIZE();
 #endif
 
 	return fmi3OK;
