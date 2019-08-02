@@ -20,6 +20,7 @@ typedef struct {
 	const char *instanceName;
 	fmi2CallbackLogger logger;
 	fmi2ComponentEnvironment componentEnvironment;
+	ModelVariable modelVariables[N_MODEL_VARIABLES];
 } ModelInstance;
 
 static void setResourcePath(const char *uri) {
@@ -102,6 +103,8 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	instance->S = RT_MDL_INSTANCE;
 #endif
 
+	initializeModelVariables(instance->S, instance->modelVariables);
+
 	return instance;
 }
 
@@ -172,19 +175,25 @@ fmi2Status fmi2Reset(fmi2Component c) {
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
+		
+		index = vr[i] - 1;
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
 
-		switch (dtypeID) {
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_DOUBLE:
-			value[i] = *(REAL64_T *)vptr;
+			value[i] = *(REAL64_T *)v.address;
 			break;
 		case SS_SINGLE:
-			value[i] = *(REAL32_T *)vptr;
+			value[i] = *(REAL32_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -197,31 +206,37 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		switch (dtypeID) {
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_INT8:
-			value[i] = *(INT8_T *)vptr;
+			value[i] = *(INT8_T *)v.address;
 			break;
 		case SS_UINT8:
-			value[i] = *(UINT8_T *)vptr;
+			value[i] = *(UINT8_T *)v.address;
 			break;
 		case SS_INT16:
-			value[i] = *(INT16_T *)vptr;
+			value[i] = *(INT16_T *)v.address;
 			break;
 		case SS_UINT16:
-			value[i] = *(UINT16_T *)vptr;
+			value[i] = *(UINT16_T *)v.address;
 			break;
 		case SS_INT32:
-			value[i] = *(INT32_T *)vptr;
+			value[i] = *(INT32_T *)v.address;
 			break;
 		case SS_UINT32:
-			value[i] = *(UINT32_T *)vptr;
+			value[i] = *(UINT32_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -234,16 +249,22 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		switch (dtypeID) {
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_BOOLEAN:
-			value[i] = *(BOOLEAN_T *)vptr;
+			value[i] = *(BOOLEAN_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -258,19 +279,25 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		switch (dtypeID) {
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_DOUBLE:
-			*((REAL64_T *)vptr) = value[i];
+			*((REAL64_T *)v.address) = value[i];
 			break;
 		case SS_SINGLE:
-			*((REAL32_T *)vptr) = value[i];
+			*((REAL32_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -283,31 +310,37 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		switch (dtypeID) {
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_INT8:
-			*((INT8_T *)vptr) = value[i];
+			*((INT8_T *)v.address) = value[i];
 			break;
 		case SS_UINT8:
-			*((UINT8_T *)vptr) = value[i];
+			*((UINT8_T *)v.address) = value[i];
 			break;
 		case SS_INT16:
-			*((INT16_T *)vptr) = value[i];
+			*((INT16_T *)v.address) = value[i];
 			break;
 		case SS_UINT16:
-			*((UINT16_T *)vptr) = value[i];
+			*((UINT16_T *)v.address) = value[i];
 			break;
 		case SS_INT32:
-			*((INT32_T *)vptr) = value[i];
+			*((INT32_T *)v.address) = value[i];
 			break;
 		case SS_UINT32:
-			*((UINT32_T *)vptr) = value[i];
+			*((UINT32_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -320,16 +353,22 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		switch (dtypeID) {
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_BOOLEAN:
-			*((BOOLEAN_T *)vptr) = value[i];
+			*((BOOLEAN_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;

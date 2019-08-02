@@ -186,9 +186,9 @@
       <%<fmiType> start="%<startValue>"/>
     </ScalarVariable>
     %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      return &(rtmGetDefaultParam(S)->%<identifier>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = 0;
+    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<identifier>);
     %assign index = index + 1
     %assign vr = vr + 1
   %endforeach
@@ -235,10 +235,9 @@
     </%<fmiType>>
   %endif
   %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      *size = %<width>;
-      return &(rtmGetDefaultParam(S)->%<identifier>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = %<width>;
+    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<identifier>);
   %assign vr = vr + 1
   %return vr
 %endfunction
@@ -260,9 +259,9 @@
       %assign variableName = "%<port.Identifier>[%<index+1>]"
     %endif
     %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      return &(rtmGetU(S)->%<dataName>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = 0;
+    modelVariables[%<vr-1>].address = &(rtmGetU(S)->%<dataName>);
     %selectfile xmlfile
     <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input"%<description>>
       <%<fmiType> start="0"%<attributes>/>
@@ -280,10 +279,9 @@
   %assign fmiType      = GetFMI3Type(dataTypeName)
   %assign attributes   = MinMaxAttributes(port, fmiType)
   %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      *size = %<width>;
-      return &(rtmGetU(S)->%<port.Identifier>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = %<width>;
+    modelVariables[%<vr-1>].address = &(rtmGetU(S)->%<port.Identifier>);
   %selectfile xmlfile
     %if width == 1    
     <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>/>
@@ -320,10 +318,9 @@
         %assign variableName = "%<Identifier>[%<index+1>]"
       %endif
       %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      *size = 1;
-      return &(rtmGetY(S)->%<dataName>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = 0;
+    modelVariables[%<vr-1>].address = &(rtmGetY(S)->%<dataName>);
       %selectfile xmlfile
     <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output" variability="%<variability>"%<description>>
       <%<fmiType>%<attributes>/>
@@ -346,10 +343,9 @@
     %assign width        = LibGetRecordWidth(outp)
     %assign attributes   = MinMaxAttributes(outp, fmiType)
     %selectfile incfile
-    case %<vr>:
-      *dtypeID = %<dtypeID>;
-      *size = %<width>;
-      return &(rtmGetY(S)->%<Identifier>);
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = %<width>;
+    modelVariables[%<vr-1>].address = &(rtmGetY(S)->%<Identifier>);
     %selectfile xmlfile
     %if width == 1
     <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>/>

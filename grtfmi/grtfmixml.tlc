@@ -91,6 +91,12 @@
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
 
+typedef struct {
+	BuiltInDTypeId dtypeID;
+	size_t size;
+	void* address;
+} ModelVariable;
+
 #ifndef NO_FMI_FUNCTION_PREFIX
   %if FMIVersion == "2"
 #define FMI2_FUNCTION_PREFIX %<OrigName>_
@@ -124,8 +130,7 @@
 #define rtmGetY(S)          (&%<tOutput>)
 %endif
 
-void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID, size_t *size) {
-  switch(vr) {
+static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
   %if !ConfigSet.InlineParams
     %selectfile xmlfile
@@ -183,10 +188,9 @@ void *getScalarVariable(RT_MDL_TYPE *S, int vr, BuiltInDTypeId *dtypeID, size_t 
     %endif
   %endwith
   %selectfile incfile
-    default:
-      return NULL;
-  }
 }
+
+#define N_MODEL_VARIABLES %<vr>
   %selectfile xmlfile
 
   </ModelVariables>

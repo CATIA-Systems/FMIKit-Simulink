@@ -15,6 +15,7 @@ typedef struct {
 	const char *instanceName;
 	fmi3CallbackLogMessage logger;
 	fmi3InstanceEnvironment componentEnvironment;
+	ModelVariable modelVariables[N_MODEL_VARIABLES];
 } ModelInstance;
 
 #define NOT_IMPLEMENTED return fmi3Error;
@@ -62,6 +63,8 @@ fmi3Instance fmi3Instantiate(fmi3String instanceName,
 
 	instance->S = RT_MDL_INSTANCE;
 #endif
+
+	initializeModelVariables(instance->S, instance->modelVariables);
 
 	return instance;
 }
@@ -128,36 +131,37 @@ fmi3Status fmi3Reset(fmi3Instance c) {
 }
 
 
-
 /* Getting and setting variable values */
 
 static fmi3Status getVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size, copied = 0;
+	size_t i, index, copied = 0;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		const void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		if (vptr == NULL) {
+		if (index >= N_MODEL_VARIABLES) {
 			return fmi3Error;
 		}
 
-		if (dtypeID != datatypeID) {
+		v = instance->modelVariables[index];
+
+		if (v.dtypeID != datatypeID) {
 			return fmi3Error;
 		}
 
-		if (copied + size > nValues) {
+		if (copied + v.size > nValues) {
 			return fmi3Error;
 		}
 
-		memcpy(values, vptr, typeSize * size);
+		memcpy(values, v.address, typeSize * v.size);
 
-		copied += size;
-		values = (char *)values + (size * typeSize);
+		copied += v.size;
+		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
@@ -241,29 +245,31 @@ static fmi3Status setVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	BuiltInDTypeId dtypeID = -1;
-	size_t i, size, copied = 0;
+	size_t i, index, copied = 0;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID, &size);
+		index = vr[i] - 1;
 
-		if (vptr == NULL) {
+		if (index >= N_MODEL_VARIABLES) {
 			return fmi3Error;
 		}
 
-		if (dtypeID != datatypeID) {
+		v = instance->modelVariables[index];
+
+		if (v.dtypeID != datatypeID) {
 			return fmi3Error;
 		}
 
-		if (copied + size > nValues) {
+		if (copied + v.size > nValues) {
 			return fmi3Error;
 		}
 
-		memcpy(vptr, values, typeSize * size);
+		memcpy(v.address, values, typeSize * v.size);
 
-		copied += size;
-		values = (char *)values + (size * typeSize);
+		copied += v.size;
+		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
