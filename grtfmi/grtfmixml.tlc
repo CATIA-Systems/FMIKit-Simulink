@@ -132,24 +132,25 @@ typedef struct {
 
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
-  %if !ConfigSet.InlineParams
-    %selectfile xmlfile
+  %selectfile xmlfile
 
-    <!-- Parameters -->
-    %with ModelParameters
-      %foreach paramid = NumParameters
-        %assign param = Parameter[paramid]
-        %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleParameters>")
-          %continue
-        %endif
-        %if FMIVersion == "2"
-          %assign vr = OutputParameterFMI2(param, vr)
-        %else
-          %assign vr = OutputParameterFMI3(param, vr)
-        %endif
-      %endforeach
-    %endwith
-  %endif
+  <!-- Parameters -->
+  %with ModelParameters
+    %foreach paramid = NumParameters
+      %assign param = Parameter[paramid]
+      %if ConfigSet.InlineParams && (!ISFIELD(param, "Tunable") || param.Tunable != "yes")
+        %continue
+      %endif
+      %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleParameters>")
+        %continue
+      %endif
+      %if FMIVersion == "2"
+        %assign vr = OutputParameterFMI2(param, vr)
+      %else
+        %assign vr = OutputParameterFMI3(param, vr)
+      %endif
+    %endforeach
+  %endwith
   %selectfile xmlfile
   %% Inputs
   %with ExternalInputs
