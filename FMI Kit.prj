@@ -81,6 +81,7 @@ FMI Kit supports...&lt;/p&gt;
       <file>${PROJECT_ROOT}\+FMIKit\setStartValue.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\setUseSourceCode.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\showBlockDialog.m</file>
+      <file>${PROJECT_ROOT}\+FMIKit\showBlockDialogHelp.m</file>
       <file>${PROJECT_ROOT}\+FMIKit\version.m</file>
       <file>${PROJECT_ROOT}\examples\BouncingBall\binaries\darwin64\BouncingBall.dylib</file>
       <file>${PROJECT_ROOT}\examples\BouncingBall\binaries\linux64\BouncingBall.so</file>
@@ -113,6 +114,21 @@ FMI Kit supports...&lt;/p&gt;
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_xml_datetime.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmilib.tlc</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmixml.tlc</file>
+      <file>${PROJECT_ROOT}\html\fmu_export.html</file>
+      <file>${PROJECT_ROOT}\html\fmu_import.html</file>
+      <file>${PROJECT_ROOT}\html\images\advanced.png</file>
+      <file>${PROJECT_ROOT}\html\images\boolean.png</file>
+      <file>${PROJECT_ROOT}\html\images\coder_target.png</file>
+      <file>${PROJECT_ROOT}\html\images\enumeration.png</file>
+      <file>${PROJECT_ROOT}\html\images\fmi-logo.jpg</file>
+      <file>${PROJECT_ROOT}\html\images\integer.png</file>
+      <file>${PROJECT_ROOT}\html\images\output_ports.png</file>
+      <file>${PROJECT_ROOT}\html\images\overview.png</file>
+      <file>${PROJECT_ROOT}\html\images\real.png</file>
+      <file>${PROJECT_ROOT}\html\images\string.png</file>
+      <file>${PROJECT_ROOT}\html\images\variables.png</file>
+      <file>${PROJECT_ROOT}\html\index.html</file>
+      <file>${PROJECT_ROOT}\html\style.css</file>
       <file>${PROJECT_ROOT}\include\fmi1.h</file>
       <file>${PROJECT_ROOT}\include\fmi2Functions.h</file>
       <file>${PROJECT_ROOT}\include\fmi2FunctionTypes.h</file>
