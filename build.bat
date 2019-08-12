@@ -1,6 +1,3 @@
-echo build the Java archive
-call mvn -f Java/pom.xml install
-
 echo build the generic S-function (sfun_fmurun.mexw32)
 mkdir win32
 cd win32
