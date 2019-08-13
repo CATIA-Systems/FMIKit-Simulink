@@ -80,6 +80,13 @@ switch hookMethod
             end
         end
         
+        % check for Simscape blocks
+        if isempty(find_system(modelName, 'BlockType', 'SimscapeBlock'))
+            simscape_blocks = 'off';
+        else
+            simscape_blocks = 'on';
+        end
+        
         % write the CMakeCache.txt file
         fid = fopen('CMakeCache.txt', 'w');
         fprintf(fid, 'MODEL:STRING=%s\n', modelName);
@@ -90,6 +97,7 @@ switch hookMethod
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', build_path_list(custom_source));
         fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', build_path_list(custom_library));
         fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
+        fprintf(fid, 'SIMSCAPE:BOOL=%s\n', upper(simscape_blocks));
         fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
         fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationLevel'));
         fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));

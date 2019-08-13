@@ -7,6 +7,7 @@ set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
 set(CUSTOM_LIBRARY "" CACHE STRING "Additional static libraries")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
+set(SIMSCAPE OFF CACHE BOOL "Model contains Simscape blocks")
 set(RESOURCES "" CACHE STRING "Files to copy to the resources directory of the FMU")
 set(FMU_BUILD_DIR FMUArchive)
 set(FMI_VERSION 2 CACHE STRING "FMI Version")
@@ -49,6 +50,21 @@ else ()
     set (FMI_PLATFORM ${FMI_PLATFORM}32)
   endif ()
 
+endif ()
+
+# MATLAB architecture
+if (WIN32)
+  set(ARCH win)
+elseif (APPLE)
+  set(ARCH maci)
+else ()
+  set(ARCH glnxa)
+endif ()
+
+if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+  set (ARCH ${ARCH}64)
+else ()
+  set (ARCH ${ARCH}32)
 endif ()
 
 if (MSVC)
@@ -112,6 +128,64 @@ set(SOURCES
   ${CUSTOM_SOURCE}
 )
 
+set(RTW_INCLUDE
+  ${MATLAB_ROOT}/simulink/include
+  ${MATLAB_ROOT}/extern/include
+  ${MATLAB_ROOT}/rtw/c/src
+  ${MATLAB_ROOT}/rtw/c/src/ext_mode/common
+)
+
+if (${SIMSCAPE})
+
+  file(GLOB EX_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/external/library/c/${ARCH}/*.c")
+  file(GLOB MC_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/math/core/c/${ARCH}/*.c")
+  file(GLOB NE_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/network_engine/c/${ARCH}/*.c")
+  file(GLOB PM_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}/*.c")
+  file(GLOB SSC_CORE_SOURCES "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/core/c/${ARCH}/*.c")
+  file(GLOB SSC_SLI_SOURCES  "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}/*.c")
+
+  add_library (ex       STATIC ${EX_SOURCES})
+  add_library (mc       STATIC ${MC_SOURCES})
+  add_library (ne       STATIC ${NE_SOURCES})
+  add_library (pm       STATIC ${PM_SOURCES})
+  add_library (ssc_core STATIC ${SSC_CORE_SOURCES})
+  add_library (ssc_sli  STATIC ${SSC_SLI_SOURCES})
+
+  set(SIMSCAPE_INCLUDE
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/engine/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/compiler/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/network_engine/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/common/math/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/common/lang/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/common/external/library/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/simscapedemos
+  )
+
+  target_include_directories (ex       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+  target_include_directories (mc       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+  target_include_directories (ne       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+  target_include_directories (pm       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+  target_include_directories (ssc_core PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+  target_include_directories (ssc_sli  PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
+
+  foreach (INCLUDE_PATH ${SIMSCAPE_INCLUDE})
+    file(GLOB COMPONENT_HEADERS "${INCLUDE_PATH}/*.h")
+    set(SIMSCAPE_HEADERS ${SIMSCAPE_HEADERS} ${COMPONENT_HEADERS})
+  endforeach(INCLUDE_PATH)
+
+  set(SIMSCAPE_SOURCES
+    ${EX_SOURCES}
+    ${MC_SOURCES}
+    ${NE_SOURCES}
+    ${PM_SOURCES}
+    ${SSC_CORE_SOURCES}
+    ${SSC_SLI_SOURCES}
+  )
+
+endif ()
+
 add_library (${MODEL} SHARED
   ${RTW_DIR}/modelDescription.xml
   ${HEADERS}
@@ -123,11 +197,9 @@ target_include_directories (${MODEL} PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${RTW_DIR}
   ${RTW_DIR}/../slprj/grtfmi/_sharedutils
-  ${RTW_DIR}/../slprj/grtfmi/sldemo_mdlref_counter_bus
-  ${MATLAB_ROOT}/extern/include
-  ${MATLAB_ROOT}/simulink/include
-  ${MATLAB_ROOT}/rtw/c/src
-  ${MATLAB_ROOT}/rtw/c/src/ext_mode/common
+  ${RTW_DIR}/../slprj/grtfmi/${MODEL}
+  ${RTW_INCLUDE}
+  ${SIMSCAPE_INCLUDE}
 )
 
 # don't add the "lib" prefix to the shared library on Linux
@@ -140,9 +212,11 @@ target_compile_definitions(${MODEL} PUBLIC
   NO_FMI_FUNCTION_PREFIX
 )
 
-target_link_libraries(${MODEL}
-  ${CUSTOM_LIBRARY}
-)
+target_link_libraries(${MODEL} ${CUSTOM_LIBRARY})
+
+if (${SIMSCAPE})
+  target_link_libraries(${MODEL} ex mc ne pm ssc_core ssc_sli)
+endif ()
 
 file(READ ${MATLAB_ROOT}/simulink/include/simstruc.h CONTENTS)
 file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
@@ -187,7 +261,7 @@ endif ()
 
 if (SOURCE_CODE_FMU)
   # source code
-  foreach (SOURCE_FILE ${HEADERS} ${SOURCES})
+  foreach (SOURCE_FILE ${HEADERS} ${SOURCES} ${SIMSCAPE_HEADERS} ${SIMSCAPE_SOURCES})
     get_filename_component(BASE_NAME ${SOURCE_FILE} NAME)
     add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
       ${SOURCE_FILE}

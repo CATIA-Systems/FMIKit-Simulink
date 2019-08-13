@@ -37,7 +37,12 @@
   %endif
     canHandleVariableCommunicationStepSize="true">
   %if SourceCodeFMU
-    %assign sourceFiles = []
+    %assign simscapeBlocks = FEVAL("find_system", modelName, "BlockType", "SimscapeBlock")
+    %if ISEMPTY(simscapeBlocks)
+      %assign sourceFiles = []
+    %else
+      %assign sourceFiles = FEVAL("grtfmi_simscape_sources")
+    %endif
     %assign generatedSources = FEVAL("dir", "%<RTWGenSettings.RelativeBuildDir>/*.c")
     %foreach i = SIZE(generatedSources, 1)
       %assign sourceFiles = sourceFiles + generatedSources[i].name
