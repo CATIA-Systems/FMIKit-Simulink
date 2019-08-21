@@ -27,6 +27,9 @@ html/images/
 fmikit.jar
 *.class
 
+# CMake installation
+cmake-*/
+
 # CMake build directories
 build*/
 win32/
