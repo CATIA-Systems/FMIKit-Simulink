@@ -7,28 +7,23 @@ if ~isempty(command)
     return
 end
 
-% check for CMake in the FMI Kit folder
-info = what('+FMIKit');
-
-if ~isempty(info)
+% check for CMake in the parent folder
+[parent_folder, ~, ~] = fileparts(which(mfilename));
+[parent_folder, ~, ~] = fileparts(parent_folder);
   
-    [fmikit_folder, ~, ~] = fileparts(info(1).path);
-
-    if ispc
-        listing = dir(fullfile(fmikit_folder, 'cmake-*', 'bin', 'cmake.exe'));
-    elseif ismac
-        listing = dir(fullfile(fmikit_folder, 'cmake-*', 'CMake.app', 'Contents', 'bin', 'cmake'));
-    else
-        listing = dir(fullfile(fmikit_folder, 'cmake-*', 'bin', 'cmake'));
-    end
-
-    if ~isempty(listing)
-        command = fullfile(listing.folder, listing.name);
-        return
-    end
-    
+if ispc
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'bin', 'cmake.exe'));
+elseif ismac
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'CMake.app', 'Contents', 'bin', 'cmake'));
+else
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'bin', 'cmake'));
 end
 
+if ~isempty(listing)
+    command = fullfile(listing.folder, listing.name);
+    return
+end
+    
 % try the default command
 command = 'cmake';
 
