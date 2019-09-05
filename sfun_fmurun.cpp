@@ -16,6 +16,10 @@
 
 extern "C" {
 #include "simstruc.h"
+
+#ifdef GRTFMI
+extern const char *FMU_RESOURCES_DIR;
+#endif
 }
 
 #include "FMU1.h"
@@ -61,12 +65,25 @@ enum Parameter {
 };
 
 static string getStringParam(SimStruct *S, int index) {
-	auto pa = ssGetSFcnParam(S, index);
-	size_t buflen = mxGetN(pa) * sizeof(mxChar) + 1;
-	auto str = (char *)mxMalloc(buflen);
-	mxGetString(pa, str, buflen);
-	string cppstr(str);
-	mxFree(str);
+	const mxArray *pa = ssGetSFcnParam(S, index);
+	size_t buflen = mxGetN(pa) + 1;
+	auto data = static_cast<const mxChar*>mxGetData(pa);
+	auto cstr = static_cast<char *>(mxMalloc(buflen));
+
+	// terminate the C string
+	cstr[buflen - 1] = '\0';
+
+	// convert real_T to ASCII char
+	for (int i = 0; i < buflen; i++) {
+		cstr[i] = data[i];
+		if (cstr[i] == 1) {
+			cstr[i] = '\0';
+			break;
+		}
+	}
+
+	string cppstr(cstr);
+	mxFree(cstr);
 	return cppstr;
 }
 
@@ -414,10 +431,10 @@ static void setStartValues(SimStruct *S, FMU *fmu) {
 	auto buffer = static_cast<char *>(calloc(size, sizeof(char)));
 	auto value  = static_cast<char *>(calloc(n + 1, sizeof(char)));
 
-	if (mxGetString(pa, buffer, size) != 0) {
-		ssSetErrorStatus(S, "Failed to convert string parameters");
-		return;
-	}
+	//if (mxGetString(pa, buffer, size) != 0) {
+	//	ssSetErrorStatus(S, "Failed to convert string parameters");
+	//	return;
+	//}
 
 	for (int i = 0; i < m; i++) {
 
@@ -887,6 +904,12 @@ static void mdlStart(SimStruct *S) {
 
     bool loggingOn = debugLogging(S);
 
+#ifdef GRTFMI
+	auto unzipdir = FMU_RESOURCES_DIR + string("/") + modelIdentifier(S);
+#else
+	auto unzipdir = unzipDirectory(S);
+#endif
+
 	if (fmiVersion(S) == "1.0") {
 
 		if (runAsKind(S) == CO_SIMULATION) {
@@ -916,9 +939,9 @@ static void mdlStart(SimStruct *S) {
 		FMU2 *fmu = nullptr;
 
 		if (runAsKind(S) == CO_SIMULATION) {
-			fmu = new FMU2Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName);
+			fmu = new FMU2Slave(guid(S), modelIdentifier(S), unzipdir, instanceName);
 		} else {
-			fmu = new FMU2Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName);
+			fmu = new FMU2Model(guid(S), modelIdentifier(S), unzipdir, instanceName);
 		}
 
         fmu->m_userData = S;

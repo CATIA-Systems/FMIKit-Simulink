@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#endif
+
 #include <float.h>  /* for DBL_EPSILON */
 #include <string.h> /* for strcpy(), strncmp() */
 

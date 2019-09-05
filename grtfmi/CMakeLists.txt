@@ -8,13 +8,14 @@ set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
 set(CUSTOM_LIBRARY "" CACHE STRING "Additional static libraries")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
 set(SIMSCAPE OFF CACHE BOOL "Model contains Simscape blocks")
-set(RESOURCES "" CACHE STRING "Files to copy to the resources directory of the FMU")
 set(FMU_BUILD_DIR FMUArchive)
 set(FMI_VERSION 2 CACHE STRING "FMI Version")
 set_property(CACHE FMI_VERSION PROPERTY STRINGS 2 3)
 set(COMPILER_OPTIMIZATION_LEVEL "Disabled" CACHE STRING "Compiler optimization level")
 set_property(CACHE COMPILER_OPTIMIZATION_LEVEL PROPERTY STRINGS "Disabled" "Minimize size" "Maximize speed" "Full optimization" "Custom")
 set(COMPILER_OPTIMIZATION_FLAGS "/Ox" CACHE STRING "Custom compiler optimization flags")
+
+get_filename_component(CURRENT_DIR ${RTW_DIR} DIRECTORY)
 
 project (${MODEL})
 
@@ -194,6 +195,7 @@ add_library (${MODEL} SHARED
 
 target_include_directories (${MODEL} PUBLIC
   ${CUSTOM_INCLUDE}
+  ${CURRENT_DIR}
   ${CMAKE_SOURCE_DIR}
   ${RTW_DIR}
   ${RTW_DIR}/../slprj/grtfmi/_sharedutils
@@ -210,6 +212,7 @@ target_compile_definitions(${MODEL} PUBLIC
   RT
   USE_RTMODEL
   NO_FMI_FUNCTION_PREFIX
+  GRTFMI
 )
 
 target_link_libraries(${MODEL} ${CUSTOM_LIBRARY})
@@ -226,11 +229,6 @@ file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
 ")
 file(APPEND ${RTW_DIR}/Temp/simstruc_rt.h "${CONTENTS}")
 
-# remove FMU_BUILD_DIR from previous build
-add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
-  ${FMU_BUILD_DIR}
-)
-
 # modelDescription.xml
 add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${RTW_DIR}/modelDescription.xml
@@ -245,17 +243,7 @@ add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 
 set (ARCHIVE_FILES modelDescription.xml binaries)
 
-if (RESOURCES)
-  # copy resources
-  foreach (RESOURCE_FILE ${RESOURCES})
-    get_filename_component(BASE_NAME ${RESOURCE_FILE} NAME)
-    add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-      ${RESOURCE_FILE}
-      ${FMU_BUILD_DIR}/resources/${BASE_NAME}
-    )
-  endforeach(RESOURCE_FILE)
-
-  # sources directory
+if (EXISTS ${FMU_BUILD_DIR}/resources)
   set (ARCHIVE_FILES ${ARCHIVE_FILES} resources)
 endif ()
 

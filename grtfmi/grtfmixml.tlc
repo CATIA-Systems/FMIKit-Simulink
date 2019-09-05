@@ -43,19 +43,17 @@
     %else
       %assign sourceFiles = FEVAL("grtfmi_simscape_sources")
     %endif
-    %assign generatedSources = FEVAL("dir", "%<RTWGenSettings.RelativeBuildDir>/*.c")
-    %foreach i = SIZE(generatedSources, 1)
-      %assign sourceFiles = sourceFiles + generatedSources[i].name
-    %endforeach
-    %assign customSources = FEVAL("regexp", ConfigSet.CustomSource, "\\s+", "split")
-    %foreach i = SIZE(customSources, 1)
-      %assign sourceFiles = sourceFiles + customSources[i]
+    %assign modelSources = FEVAL("grtfmi_model_sources", modelName, RTWGenSettings.RelativeBuildDir)
+    %assign modelSources = modelSources[1]
+    %foreach i = SIZE(modelSources, 1)
+      %assign sourceFiles = sourceFiles + modelSources[i]
     %endforeach
     %if FMIVersion == "2"
     <SourceFiles>
       <File name="fmi2Functions.c"/>
       %foreach i = SIZE(sourceFiles, 1)
-      <File name="%<sourceFiles[i]>"/>
+        %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
+      <File name="%<sourceFile>"/>
       %endforeach
     </SourceFiles>
     %else
