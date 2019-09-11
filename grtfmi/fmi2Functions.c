@@ -442,9 +442,11 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	ModelInstance *instance = (ModelInstance *)c;
 	const char *errorStatus;
 
-#ifndef DISCRETE
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
+#ifdef DISCRETE
+	while ((instance->S->Timing.clockTick0 + 1) * STEP_SIZE < tNext + DBL_EPSILON) {
+#else
 	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
 #endif
         
@@ -458,9 +460,8 @@ fmi2Status fmi2DoStep(fmi2Component c,
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
 		}
-#ifndef DISCRETE
+
 	}
-#endif
 
 	return fmi2OK;
 }

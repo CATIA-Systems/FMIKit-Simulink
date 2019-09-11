@@ -418,9 +418,11 @@ fmi3Status fmi3DoStep(fmi3Instance c,
 
 	ModelInstance *instance = (ModelInstance *)c;
 
-#ifndef DISCRETE
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
+#ifdef DISCRETE
+	while ((instance->S->Timing.clockTick0 + 1) * STEP_SIZE < tNext + DBL_EPSILON) {
+#else
 	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
 #endif
         
@@ -434,9 +436,8 @@ fmi3Status fmi3DoStep(fmi3Instance c,
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi3Error, "error", errorStatus);
 			return fmi3Error;
 		}
-#ifndef DISCRETE
+
 	}
-#endif
 
 	return fmi3OK;
 }
