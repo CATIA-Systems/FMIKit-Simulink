@@ -2,6 +2,8 @@
 
 # FMI Kit for Simulink
 
+[![Build Status](https://dev.azure.com/CATIA-Systems/FMIKit-Simulink/_apis/build/status/CATIA-Systems.FMIKit-Simulink?branchName=master)](https://dev.azure.com/CATIA-Systems/FMIKit-Simulink/_build/latest?definitionId=4&branchName=master)
+
 A Simulink library to import and export [Functional Mock-up Units](https://fmi-standard.org/) that supports...
 
 - FMI 1.0 and 2.0

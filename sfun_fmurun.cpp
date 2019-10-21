@@ -65,24 +65,29 @@ enum Parameter {
 };
 
 static string getStringParam(SimStruct *S, int index) {
-	const mxArray *pa = ssGetSFcnParam(S, index);
-	size_t buflen = mxGetN(pa) + 1;
-	auto data = static_cast<const mxChar*>mxGetData(pa);
-	auto cstr = static_cast<char *>(mxMalloc(buflen));
 
-	// terminate the C string
-	cstr[buflen - 1] = '\0';
+	const mxArray *pa = ssGetSFcnParam(S, index);
+
+	auto n = mxGetN(pa);
+	auto m = mxGetM(pa);
+
+	// TODO: assert m == 1
+
+	if (n < 1) return "";
+
+	auto data = static_cast<const mxChar*>(mxGetData(pa));
+
+	if (!data) return "";
+
+	auto cstr = static_cast<char *>(mxMalloc(n));
 
 	// convert real_T to ASCII char
-	for (int i = 0; i < buflen; i++) {
+	for (int i = 0; i < n; i++) {
+		// TODO: assert 0 <= data[i] <= 127 
 		cstr[i] = data[i];
-		if (cstr[i] == 1) {
-			cstr[i] = '\0';
-			break;
-		}
 	}
 
-	string cppstr(cstr);
+	string cppstr(cstr, n);
 	mxFree(cstr);
 	return cppstr;
 }

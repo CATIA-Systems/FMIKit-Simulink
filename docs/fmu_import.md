@@ -95,7 +95,7 @@ With source code FMUs it is also possible to use FMUs in Rapid Accelerator mode 
 
 ### Set model name
 
-Use the FMU´s model name as the block name
+Use the FMU's model name as the block name
 
 ### Direct Input
 
@@ -104,7 +104,7 @@ This gives better results for FMUs that contain direct terms and do not support 
 
 If not checked `ssSetInputPortDirectFeedThrough(true)` is only set for input ports whose input variables have output variables with a direct dependency.
 The derivative `der_u` for these input variables is set such that `u(t) + der_u(t) * step_size = u(t+1)` if the FMU supports input interpolation.
-Variables that are manually added to the block´s output ports are assumed to depend on all input variables.
+Variables that are manually added to the block's output ports are assumed to depend on all input variables.
 
 ## MATLAB Commands
 
@@ -178,7 +178,7 @@ FMIKit.setOutputPorts(gcb, ports)
 
 ### Use Source Code
 
-Use `FMIKit.setSourceCode()` to use FMU´s source code (if available):
+Use `FMIKit.setSourceCode()` to use FMU's source code (if available):
 
 ```
 FMIKit.setSourceCode(gcb, true)

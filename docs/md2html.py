@@ -1,4 +1,4 @@
-import os, markdown2, fnmatch
+import os, markdown2
 import shutil
 
 docs = os.path.dirname(os.path.abspath(__file__))
