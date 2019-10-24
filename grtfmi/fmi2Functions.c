@@ -1,4 +1,5 @@
 #include <float.h>  /* for DBL_EPSILON */
+#include <stdlib.h>
 #include "fmi2Functions.h"
 
 #include "fmiwrapper.inc"
@@ -48,6 +49,9 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
 		return NULL;
 	}
+
+	/* set fmuResourceLocation as environment variable */
+        _putenv_s("FMU_RESOURCE_DIR", fmuResourceLocation);
 
 	ModelInstance *instance = malloc(sizeof(ModelInstance));
 
@@ -210,7 +214,7 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) { return fmi2Error; }
 
-fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
+fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
 	BuiltInDTypeId dtypeID = -1;
