@@ -55,11 +55,17 @@ switch hookMethod
         resources = regexp(strtrim(resources), '\s+', 'split');
         if ~all(cellfun(@isempty, resources))
             disp('### Copy resources')
+            mkdir(fullfile('FMUArchive', 'resources'))
+            [parent_dir, ~, ~] = fileparts(current_dir);
             for i = 1:numel(resources)
-                resource = resources{i};
+                if ~exist(resources{i})
+                    resource = fullfile(parent_dir, resources{i});
+                else
+                    resource = resources{i};
+                end
                 disp(['Copying ' resource ' to resources'])
                 if isfile(resource)
-                    copyfile(resources{i}, fullfile('FMUArchive', 'resources'));
+                    copyfile(resource, fullfile('FMUArchive', 'resources'));
                 else
                     [~, folder, ~] = fileparts(resource);
                     copyfile(resource, fullfile('FMUArchive', 'resources', folder));
