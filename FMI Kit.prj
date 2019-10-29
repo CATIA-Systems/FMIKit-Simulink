@@ -109,6 +109,7 @@ FMI Kit supports...&lt;/p&gt;
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_cmake_default_generator.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_exclude_variable.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_find_cmake.m</file>
+      <file>${PROJECT_ROOT}\grtfmi\grtfmi_generate_guid.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_make_rtw_hook.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_selectcallback.m</file>
       <file>${PROJECT_ROOT}\grtfmi\grtfmi_xml_datetime.m</file>
