@@ -10,10 +10,10 @@ sources = {};
 % generated RTW model
 include{1} = rtw_dir;
 
-gen_sources = cellstr(ls(fullfile(rtw_dir, '*.c')));
+gen_sources = dir(fullfile(rtw_dir, '*.c'));
 
 for i = 1:numel(gen_sources)
-  sources{end+1} = fullfile(rtw_dir, gen_sources{i}); %#ok<AGROW>
+  sources{end+1} = fullfile(rtw_dir, gen_sources(i).name); %#ok<AGROW>
 end
 
 % S-functions sources
