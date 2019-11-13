@@ -139,10 +139,13 @@
   %foreach colid = nCols
   %foreach rowid = nRows
     %if nCols > 1 && nRows > 1
+      %assign dataName     = "%<param.Identifier>[%<index>]"
       %assign variableName = "%<param.Identifier>[%<rowid+1>,%<colid+1>]"
     %elseif width > 1
+      %assign dataName     = "%<param.Identifier>[%<index>]"
       %assign variableName = "%<param.Identifier>[%<index+1>]"
     %else
+      %assign dataName     = "%<param.Identifier>"
       %assign variableName = "%<param.Identifier>"  
     %endif
     %if valueType == "Matrix"
@@ -152,11 +155,9 @@
     %else
       %assign startValue = param.Value
     %endif
-    %if sigSrc[1] < 0
-      %assign identifier = param.Identifier
-    %else
+    %if sigSrc[1] >= 0
       %assign varGroupIdx = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1]) 
-      %assign identifier = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name + "." + param.Identifier
+      %assign dataName = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name + "." + dataName
     %endif
     %selectfile xmlfile
     %switch dataTypeName
@@ -188,7 +189,7 @@
     %selectfile incfile
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<identifier>);
+    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<dataName>);
     %assign index = index + 1
     %assign vr = vr + 1
   %endforeach
