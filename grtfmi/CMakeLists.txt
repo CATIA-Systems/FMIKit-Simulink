@@ -210,6 +210,7 @@ set_target_properties(${MODEL} PROPERTIES PREFIX "")
 target_compile_definitions(${MODEL} PUBLIC
   _CRT_SECURE_NO_WARNINGS
   RT
+  RT_MALLOC
   USE_RTMODEL
   NO_FMI_FUNCTION_PREFIX
   GRTFMI

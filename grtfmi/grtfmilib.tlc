@@ -3,8 +3,14 @@
 %%  model description (XML) generation.
 %%
 
-%function GetFMIType(typeName) void
-  %switch typeName
+%function GetFMIType(record) void
+  %assign dataTypeId   = LibGetRecordDataTypeId(record)
+  %assign dataType     = ::CompiledModel.DataTypes.DataType[dataTypeId]
+  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %if ISFIELD(dataType, "Enumeration")
+    %return "Enumeration"
+  %endif
+  %switch dataTypeName
     %case "real_T"
     %case "real32_T"
       %return "Real"
@@ -68,9 +74,10 @@
       %endif
       %if ISFIELD(port, "UnitIdx")
         %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
-        %if !ISEMPTY(unit)
-          %assign attributes = "%<attributes> unit=\"%<unit>\""
-        %endif
+        %assign attributes = "%<attributes> unit=\"%<unit>\""
+      %elseif ISFIELD(port, "BlockName")
+        %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
+        %assign attributes = "%<attributes> unit=\"%<unit>\""
       %endif
   %endswitch
   %return attributes
@@ -88,129 +95,116 @@
   %return attribute
 %endfunction
 
-%function GenerateSubsystemFMI(subSysIdx, vr) void
-  %selectfile xmlfile
-  %assign numVars = 0
-  %assign subsystem = ::CompiledModel.BlockHierarchyMap.Subsystem[subSysIdx]
-  %foreach bIdx = subsystem.NumBlocks
-    %assign vr = GenerateBlockFMI(subsystem.Block[bIdx], subSysIdx, bIdx, vr)
-  %endforeach
-  %foreach ssIdx = subsystem.NumChildSubsystems
-    %assign vr = GenerateSubsystemFMI(subsystem.ChildSubsystems[ssIdx], vr)
-  %endforeach
-  %return vr
-%endfunction
-
-%function GenerateBlockFMI(block, subSysIdx, blockIdx, vr) void
-  %foreach idx = block.NumParameters
-    %if block.Parameter[idx]._idx >= 0
-      %assign param = ::CompiledModel.ModelParameters.Parameter[block.Parameter[idx]._idx]
-      %if FEVAL("grtfmi_exclude_variable", "%<param.Identifier>", "%<VisibleParameters>")
-        %continue
-      %endif
-      %assign vr = OutputParameterFMI(param, vr)
-    %endif
-  %endforeach
-  %return vr
-%endfunction
-
-%function OutputParameterFMI2(param, vr)
-  %assign parType      = ::CompiledModel.GlobalScope.tParametersType
-  %assign defParam     = ::CompiledModel.GlobalScope.tDefaultParameters
-  %assign sigSrc       = param.OwnerSysIdx
-  %assign dtypeID      = LibGetRecordDataTypeId(param)
-  %assign dataTypeName = SLibGetRecordDataTypeName(param, "")
-  %assign valueType    = TYPE(param.Value)
-  %assign width        = LibGetRecordWidth(param)
-  %assign dims         = LibGetRecordDimensions(param)
+%function VariableFMI2(record, variableName, dataName, vr, variableAttr, typeAttr) Output
+  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %assign fmiType      = GetFMIType(record)
+  %assign dtypeID      = LibGetRecordDataTypeId(record)
+  %assign dims         = LibGetRecordDimensions(record)
+  %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
   %assign nCols        = SIZE(dims, 1) == 1 ? 1 : dims[1]
-  %assign fmiType      = GetFMIType(dataTypeName)
-  %if ISFIELD(param, "IsPseudoWorkspaceVar") && param.IsPseudoWorkspaceVar == "yes"
-    %return vr
+  %assign minMaxAttr   = MinMaxAttributes(record, fmiType)
+  %assign typeAttr     = "%<typeAttr>%<minMaxAttr>"
+  %if ISFIELD(record, "BlockName")
+    %assign description = FEVAL("get_param", "%<record.BlockName>", "Description")
+    %if !ISEMPTY(description)
+      %assign variableAttr = "%<variableAttr> description=\"%<description>\""
+    %endif
   %endif
-  %if fmiType == ""
-    %return vr
-  %endif
-  %if SIZE(dims, 1) > 2
-    %return vr
-  %endif
-  %assign index = 0
-  %foreach colid = nCols
-  %foreach rowid = nRows
-    %if nCols > 1 && nRows > 1
-      %assign dataName     = "%<param.Identifier>[%<index>]"
-      %assign variableName = "%<param.Identifier>[%<rowid+1>,%<colid+1>]"
-    %elseif width > 1
-      %assign dataName     = "%<param.Identifier>[%<index>]"
-      %assign variableName = "%<param.Identifier>[%<index+1>]"
+  %if ISEMPTY(fmiType)
+    %assign dataType = ::CompiledModel.DataTypes.DataType[dtypeID]
+    %if ISFIELD(dataType, "Elements")
+      %% Bus
+      %foreach elementIdx = dataType.NumElements
+        %assign element = dataType.Elements[elementIdx]
+        %assign vr = VariableFMI2(element, "%<variableName>.%<element.Name>", "%<dataName>.%<element.Name>", vr, variableAttr, typeAttr)
+      %endforeach
     %else
-      %assign dataName     = "%<param.Identifier>"
-      %assign variableName = "%<param.Identifier>"  
+      %return vr
     %endif
-    %if valueType == "Matrix"
-      %assign startValue = param.Value[rowid][colid]
-    %elseif valueType == "Vector"
-      %assign startValue = param.Value[index]
-    %else
-      %assign startValue = param.Value
-    %endif
-    %if sigSrc[1] >= 0
-      %assign varGroupIdx = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1]) 
-      %assign dataName = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name + "." + dataName
-    %endif
-    %selectfile xmlfile
-    %switch dataTypeName
-      %case "real_T"
-      %case "real32_T"
-        %if "%<startValue>" == "rtInf"
-          %assign startValue = "INF"
-        %elseif "%<startValue>" == "rtMinusInf"
-          %assign startValue = "-INF"
-        %elseif "%<startValue>" == "rtNaN"
-          %assign startValue = "NAN"
+  %else
+    %assign index = 0
+    %foreach colid = nCols
+    %foreach rowid = nRows
+      %if nCols > 1 && nRows > 1
+        %assign dataSubs     = "[%<index>]"
+        %assign variableSubs = "[%<rowid+1>,%<colid+1>]"
+      %elseif width > 1
+        %assign dataSubs     = "[%<index>]"
+        %assign variableSubs = "[%<index+1>]"
+      %else
+        %assign dataSubs     = ""
+        %assign variableSubs = "" 
+      %endif
+      %if ISFIELD(record, "Value")
+        %assign valueType = TYPE(record.Value)
+        %if valueType == "Matrix"
+          %assign startValue = record.Value[rowid][colid]
+        %elseif valueType == "Vector"
+          %assign startValue = record.Value[index]
         %else
-          %assign startValue = FEVAL("strrep", "%<startValue>", "F", "")       
+          %assign startValue = record.Value
         %endif
-        %break
-      %case "uint8_T"
-      %case "uint16_T"
-      %case "uint32_T"
-        %assign startValue = FEVAL("strrep", "%<startValue>", "U", "")
-        %break
-      %default
-        %break
-    %endswitch
-    %assign startValue = FEVAL("strrep", "%<startValue>", "[", "")
-    %assign startValue = FEVAL("strrep", "%<startValue>", "]", "")
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="parameter" variability="tunable">
-      <%<fmiType> start="%<startValue>"/>
-    </ScalarVariable>
-    %selectfile incfile
+        %switch dataTypeName
+          %case "real_T"
+          %case "real32_T"
+            %if "%<startValue>" == "rtInf"
+              %assign startValue = "INF"
+            %elseif "%<startValue>" == "rtMinusInf"
+              %assign startValue = "-INF"
+            %elseif "%<startValue>" == "rtNaN"
+              %assign startValue = "NAN"
+            %else
+              %assign startValue = FEVAL("strrep", "%<startValue>", "F", "")       
+            %endif
+            %break
+          %case "uint8_T"
+          %case "uint16_T"
+          %case "uint32_T"
+            %assign startValue = FEVAL("strrep", "%<startValue>", "U", "")
+            %break
+          %default
+            %break
+        %endswitch
+        %assign startAttr = " start=\"%<startValue>\""
+      %else
+        %assign startAttr = ""
+      %endif
+      %if fmiType == "Enumeration"
+        %assign dtypeID = 6
+        %assign typeAttr = " declaredType=\"%<dataType.DTName>\"%<typeAttr>"
+      %endif
+      %selectfile incfile
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<dataName>);
-    %assign index = index + 1
-    %assign vr = vr + 1
-  %endforeach
-  %endforeach
+    modelVariables[%<vr-1>].address = %<dataName>%<dataSubs>);
+      %selectfile xmlfile
+    <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
+      <%<fmiType>%<startAttr>%<typeAttr>/>
+    </ScalarVariable>
+      %assign index = index + 1
+      %assign vr = vr + 1
+    %endforeach
+    %endforeach
+  %endif
   %return vr
 %endfunction
 
-%function OutputParameterFMI3(param, vr)
-  %assign parType      = ::CompiledModel.GlobalScope.tParametersType
-  %assign defParam     = ::CompiledModel.GlobalScope.tDefaultParameters
-  %assign sigSrc       = param.OwnerSysIdx
-  %assign dtypeID      = LibGetRecordDataTypeId(param)
-  %assign dataTypeName = SLibGetRecordDataTypeName(param, "")
-  %assign valueType    = TYPE(param.Value)
-  %assign width        = LibGetRecordWidth(param)
-  %assign dims         = LibGetRecordDimensions(param)
+%function VariableFMI3(record, variableName, dataName, vr, variableAttr, typeAttr) Output
+  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %assign fmiType      = GetFMI3Type(dataTypeName)
+  %assign dtypeID      = LibGetRecordDataTypeId(record)
+  %assign dims         = LibGetRecordDimensions(record)
+  %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
   %assign nCols        = SIZE(dims, 1) == 1 ? 1 : dims[1]
-  %assign fmiType      = GetFMI3Type(dataTypeName)
-  %if ISFIELD(param, "IsPseudoWorkspaceVar") && param.IsPseudoWorkspaceVar == "yes"
-    %return vr
+  %assign minMaxAttr   = MinMaxAttributes(record, fmiType)
+  %assign variableAttr = "%<variableAttr>%<minMaxAttr>"
+  %if ISFIELD(record, "BlockName")
+    %assign description = FEVAL("get_param", "%<record.BlockName>", "Description")
+    %if !ISEMPTY(description)
+      %assign variableAttr = "%<variableAttr> description=\"%<description>\""
+    %endif
   %endif
   %if fmiType == ""
     %return vr
@@ -218,18 +212,15 @@
   %if nRows == 0 || nCols == 0
     %return vr
   %endif
-  %if sigSrc[1] < 0
-    %assign identifier = param.Identifier
-  %else
-    %assign varGroupIdx = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1]) 
-    %assign identifier = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name + "." + param.Identifier
-  %endif
   %selectfile xmlfile
-  %assign startValue = FEVAL("grtfmi_start_value", param.Value)
+  %if ISFIELD(record, "Value")
+    %assign startValue = FEVAL("grtfmi_start_value", record.Value)
+    %assign variableAttr = "%<variableAttr> start=\"%<startValue>\""
+  %endif
   %if width == 1
-    <%<fmiType> name="%<identifier>" valueReference="%<vr>" causality="parameter" variability="tunable" start="%<startValue>"/>
+    <%<fmiType> name="%<variableName>" valueReference="%<vr>"%<variableAttr>/>
   %else
-    <%<fmiType> name="%<identifier>" valueReference="%<vr>" causality="parameter" variability="tunable" start="%<startValue>">
+    <%<fmiType> name="%<variableName>" valueReference="%<vr>"%<variableAttr>>
     %foreach dimidx = SIZE(dims, 1)
       <Dimension start="%<dims[dimidx]>"/>
     %endforeach
@@ -238,124 +229,7 @@
   %selectfile incfile
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = %<width>;
-    modelVariables[%<vr-1>].address = &(rtmGetDefaultParam(S)->%<identifier>);
+    modelVariables[%<vr-1>].address = %<dataName>);
   %assign vr = vr + 1
   %return vr
-%endfunction
-
-%function ExternalInputFMI2(port, vr)
-  %assign dtypeID      = LibGetRecordDataTypeId(port)
-  %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
-  %assign dims         = LibGetRecordDimensions(port)
-  %assign width        = LibGetRecordWidth(port)
-  %assign fmiType      = GetFMIType(dataTypeName)
-  %assign description  = DescriptionAttribute(port)
-  %assign attributes   = MinMaxAttributes(port, fmiType)
-  %foreach index = width
-    %if width == 1
-      %assign dataName     = "%<port.Identifier>"
-      %assign variableName = "%<port.Identifier>"
-    %else
-      %assign dataName     = "%<port.Identifier>[%<index>]"
-      %assign variableName = "%<port.Identifier>[%<index+1>]"
-    %endif
-    %selectfile incfile
-    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
-    modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = &(rtmGetU(S)->%<dataName>);
-    %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="input"%<description>>
-      <%<fmiType> start="0"%<attributes>/>
-    </ScalarVariable>
-    %assign vr = vr + 1
-  %endforeach
-  %return vr
-%endfunction
-
-%function ExternalInputFMI3(port, vr)
-  %assign dtypeID      = LibGetRecordDataTypeId(port)
-  %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
-  %assign dims         = LibGetRecordDimensions(port)
-  %assign width        = LibGetRecordWidth(port)
-  %assign fmiType      = GetFMI3Type(dataTypeName)
-  %assign attributes   = MinMaxAttributes(port, fmiType)
-  %selectfile incfile
-    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
-    modelVariables[%<vr-1>].size    = %<width>;
-    modelVariables[%<vr-1>].address = &(rtmGetU(S)->%<port.Identifier>);
-  %selectfile xmlfile
-    %if width == 1    
-    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>/>
-    %else
-    <%<fmiType> name="%<port.Identifier>" valueReference="%<vr>" causality="input" start="0"%<attributes>>
-      <Dimension start="%<width>"/>
-    </%<fmiType>>
-    %endif
-  %return vr + 1
-%endfunction
-
-%function ExternalOutputFMI2(outp, vr) Output
-  %assign sysid        = outp.Block[0]
-  %assign blkid        = outp.Block[1]
-  %assign outportBlock = System[sysid].Block[blkid]
-  %assign description  = DescriptionAttribute(outp)
-  %with outportBlock
-    %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
-    %assign fmiType      = GetFMIType(dataTypeName)
-    %assign dtypeID      = LibGetRecordDataTypeId(outp)
-    %assign width        = LibGetRecordWidth(outp)
-    %assign attributes   = MinMaxAttributes(outp, fmiType)
-    %if fmiType == "Real"
-      %assign variability = "continuous"
-    %else
-      %assign variability = "discrete"
-    %endif
-    %foreach index = width
-      %if width == 1
-        %assign dataName     = "%<Identifier>"
-        %assign variableName = "%<Identifier>"
-      %else
-        %assign dataName     = "%<Identifier>[%<index>]"
-        %assign variableName = "%<Identifier>[%<index+1>]"
-      %endif
-      %selectfile incfile
-    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
-    modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = &(rtmGetY(S)->%<dataName>);
-      %selectfile xmlfile
-    <ScalarVariable name="%<variableName>" valueReference="%<vr>" causality="output" variability="%<variability>"%<description>>
-      <%<fmiType>%<attributes>/>
-    </ScalarVariable>
-      %assign outputIndices = outputIndices + vr
-      %assign vr = vr + 1
-    %endforeach
-  %endwith
-  %return vr
-%endfunction
-
-%function ExternalOutputFMI3(outp, vr) Output
-  %assign sysid        = outp.Block[0]
-  %assign blkid        = outp.Block[1]
-  %assign outportBlock = System[sysid].Block[blkid]
-  %with outportBlock
-    %assign dataTypeName = SLibGetRecordDataTypeName(outp, "")
-    %assign fmiType      = GetFMI3Type(dataTypeName)
-    %assign dtypeID      = LibGetRecordDataTypeId(outp)
-    %assign width        = LibGetRecordWidth(outp)
-    %assign attributes   = MinMaxAttributes(outp, fmiType)
-    %selectfile incfile
-    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
-    modelVariables[%<vr-1>].size    = %<width>;
-    modelVariables[%<vr-1>].address = &(rtmGetY(S)->%<Identifier>);
-    %selectfile xmlfile
-    %if width == 1
-    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>/>
-    %else
-    <%<fmiType> name="%<Identifier>" valueReference="%<vr>" causality="output"%<attributes>>
-      <Dimension start="%<width>"/>
-    </%<fmiType>>
-    %endif
-    %assign outputIndices = outputIndices + vr
-  %endwith
-  %return vr + 1
 %endfunction

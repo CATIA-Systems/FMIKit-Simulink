@@ -75,6 +75,13 @@
   rtwoptions(i).tooltip       = 'Add model sources to FMU';
 
   i = i + 1;
+  rtwoptions(i).prompt        = 'Include block outputs';
+  rtwoptions(i).type          = 'Checkbox';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'IncludeBlockOutputs';
+  rtwoptions(i).tooltip       = 'Include global block outputs in the model description';
+
+  i = i + 1;
   rtwoptions(i).prompt        = 'CMake';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
