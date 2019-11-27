@@ -113,7 +113,7 @@
   %endif
   %if ISEMPTY(fmiType)
     %assign dataType = ::CompiledModel.DataTypes.DataType[dtypeID]
-    %if ISFIELD(dataType, "Elements")
+    %if ISFIELD(dataType, "Elements") && width == 1
       %% Bus
       %foreach elementIdx = dataType.NumElements
         %assign element = dataType.Elements[elementIdx]
