@@ -1,9 +1,21 @@
-function test_grtfmi_export
+function test_grtfmi
 
 for fmi_version = [2 3]
   
   fmi_version = num2str(fmi_version);
+
+  build_dir = ['fmi' fmi_version];
   
+  if exist(build_dir, 'dir')
+    rmdir(build_dir, 's');
+  end
+  
+  mkdir(build_dir);
+  
+  cd(build_dir);
+  
+  build_model('f14', fmi_version);
+
   build_model('sldemo_clutch', fmi_version);
 
   build_model('sldemo_fuelsys', fmi_version);
@@ -21,6 +33,8 @@ for fmi_version = [2 3]
   save_system(h, 'sldemo_mdlref_counter_bus');
 
   build_model('sldemo_mdlref_bus', fmi_version);
+
+  cd('..');
   
 end
   
@@ -69,8 +83,5 @@ rtwbuild(h);
 close_system(h, 0);
 
 assert(exist([model '.fmu'], 'file') == 2);
-
-status = system(['fmpy simulate ' model '.fmu']);
-assert(status == 0);
 
 end
