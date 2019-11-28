@@ -74,9 +74,12 @@
       %endif
       %if ISFIELD(port, "UnitIdx")
         %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
-        %assign attributes = "%<attributes> unit=\"%<unit>\""
       %elseif ISFIELD(port, "BlockName")
         %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
+      %else
+        %assign unit = ""
+      %endif
+      %if !ISEMPTY(unit)
         %assign attributes = "%<attributes> unit=\"%<unit>\""
       %endif
   %endswitch
