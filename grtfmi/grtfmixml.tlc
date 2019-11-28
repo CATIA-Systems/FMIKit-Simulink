@@ -152,9 +152,6 @@ typedef struct {
 #define MODEL_TERMINATE  %<OrigName>_terminate
 #define RT_MDL_TYPE      %<tSimStructType>
 #define STEP_SIZE        %<FixedStepOpts.FixedStep>
-  %if Solver == "FixedStepDiscrete"
-#define DISCRETE
-  %endif
 
 /* R2019a defines the block parameters as extern */
 #ifndef rtmGetDefaultParam

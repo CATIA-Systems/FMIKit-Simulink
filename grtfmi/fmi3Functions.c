@@ -420,11 +420,10 @@ fmi3Status fmi3DoStep(fmi3Instance c,
 
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
-#ifdef DISCRETE
-	while ((instance->S->Timing.clockTick0 + 1) * STEP_SIZE < tNext + DBL_EPSILON) {
-#else
-	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
+#ifdef rtmGetT
+	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON)
 #endif
+	{
         
 #ifdef REUSABLE_FUNCTION
 		MODEL_STEP(instance->S);
