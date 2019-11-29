@@ -79,7 +79,7 @@
       %else
         %assign unit = ""
       %endif
-      %if TYPE(unit) == "String" && !ISEMPTY(unit)
+      %if TYPE(unit) == "String" && !ISEMPTY(unit) && unit != "inherit"
         %assign attributes = "%<attributes> unit=\"%<unit>\""
       %endif
   %endswitch
