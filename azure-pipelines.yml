@@ -145,7 +145,6 @@ jobs:
       goals: install
 
   - script: |
-      mkdir dist
       cp -r +FMIKit         dist/+FMIKit
       cp -r examples        dist/examples
       cp -r grtfmi          dist/grtfmi
@@ -157,10 +156,12 @@ jobs:
       cp fmikit.jar         dist
       cp forms_rt.jar       dist
       cp LICENSE.txt        dist
+      cp README.md          dist
       cp sfun_fmurun.mexa64 dist
       cp sfun_fmurun.cpp    dist
       cp swingx-1.6.jar     dist
-      zip -r FMIKit-Simulink.zip dist
+      cd dist
+      zip -r ../FMIKit-Simulink.zip *
     displayName: Create distribution archive
 
   - task: PublishPipelineArtifact@1
