@@ -88,12 +88,8 @@ if msg
         rel_year = rel_year + 0.1;
     end
     
-    if rel_year < 2012.1 || rel_year > 2019.0
-        warning('FMU import is only supported on MATLAB R2012b - R2019a')
-    end
-    
-    if rel_year < 2012.1 || rel_year > 2018.1
-        warning('FMU export is only supported on MATLAB R2012b - R2018b')
+    if rel_year < 2012.1
+        warning('MATLAB releases prior to R2012b are not supported')
     end
 end
 
