@@ -80,9 +80,7 @@ end
 if msg
     disp(['Initializing FMI Kit ' [num2str(FMIKit.majorVersion) '.' ...
         num2str(FMIKit.minorVersion) '.' num2str(FMIKit.patchVersion)]])
-    
-    disp('DISCLAIMER: This is a pre-release version. DO NOT USE FOR PRODUCTION.')
-    
+        
     % check MATLAB version
     rel = version('-release');
     rel_year = str2double(rel(1:4));
