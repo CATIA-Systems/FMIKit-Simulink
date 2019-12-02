@@ -30,6 +30,11 @@ fmikit_demo_BouncingBall
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
 
+## Commercial Support
+
+You're starting a project, need training or professional support?
+Our partners at [Claytex](https://www.claytex.com/about-us/contact-us/) are ready to help you.
+
 ## License
 
 Copyright &copy; 2019 Dassault Syst&egrave;mes.
