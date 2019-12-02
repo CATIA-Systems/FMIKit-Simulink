@@ -10,28 +10,27 @@ A Simulink library to import and export [Functional Mock-up Units](https://fmi-s
 - Model Exchange and Co-Simulation
 - Rapid Accelerator mode
 - import of C code FMUs
-- MATLAB R2012b - R2019b (rtwsfcnfmi.tlc R2012b - R2018b)
+- MATLAB R2012b - R2019b
 
 ## Quick start
 
-- download and run the [MATLAB App installer](https://github.com/CATIA-Systems/FMIKit-Simulink/releases)
-- click on the app in the MATLAB app tool strip to initialize FMI Kit
-- learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs
-
-To run the FMI Kit app automatically, add the following lines to your [startup script](https://mathworks.com/help/matlab/ref/startup.html).
+To get started with FMI Kit run the following commands in the MATLAB Command Window
 
 ```matlab
-% start FMI Kit
-apps = matlab.apputil.getInstalledAppInfo();
+% download FMI Kit to the current folder
+unzip('https://github.com/CATIA-Systems/FMIKit-Simulink/releases/download/v2.7-alpha.1/FMIKit-Simulink-2.7-alpha.1.zip', 'FMIKit-Simulink-2.7-alpha.1')
 
-for i = 1:numel(apps)
-    app = apps(i);
-    if strcmp(app.name, 'FMI Kit')
-        matlab.apputil.run(app.id);
-        return
-    end
-end
+% add the folder to the MATLAB path
+addpath(fullfile(pwd, 'FMIKit-Simulink-2.7-alpha.1'))
+
+% initialize FMI Kit
+FMIKit.initialize()
+
+% open the Bouncing Ball demo
+fmikit_demo_BouncingBall
 ```
+
+See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
 
 ## License
 
