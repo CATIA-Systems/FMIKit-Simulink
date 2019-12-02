@@ -62,13 +62,3 @@ Prerequisites: [CMake](https://cmake.org)
 ## Debugging the block dialog
 
 TODO
-
-## Building the app installer
-
-- download & extract the zip file
-- build fmikit.jar with IntelliJ
-- build HTML documentation `python docs/md2html.py`
-- run build.bat
-- copy `sfun_fmurun.mexa64` and `sfun_fmurun.mexmaci64`
-- build the app installer project with R2019a
-- rename the app installer (e.g. `FMIKit-2.6-alpha.2.mlappinstall`)
