@@ -862,17 +862,35 @@ public class FMUBlockDialog extends JDialog {
         }
 
         if (generic) {
-            // input
-            params.add("[" + Util.join(inputPortWidths, " ") + "]"); // input port widths
-            params.add(chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
-            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");  // input port direct feed through
-            params.add("[" + Util.join(inputPortTypes, " ") + "]");  // input port types
-            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");  // input port variable VRs
-            params.add(runAsKind == 1 && modelDescription.coSimulation.canInterpolateInputs ? "1" : "0");  // can interpolate inputs
+            // input port widths
+            params.add("[" + Util.join(inputPortWidths, " ") + "]");
 
-            // output
+            // direct input
+            if (runAsKind == 0) {
+                params.add("1");  // always true for Model Exchange
+            } else {
+                params.add(chckbxDirectInput.isSelected() ? "1" : "0");
+            }
+
+            // input port direct feed through
+            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+
+            // input port types
+            params.add("[" + Util.join(inputPortTypes, " ") + "]");
+
+            // input port variable VRs
+            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
+
+            // can interpolate inputs
+            params.add(runAsKind == 1 && modelDescription.coSimulation.canInterpolateInputs ? "1" : "0");
+
+            // output port widths
             params.add("[" + Util.join(outportWidths, " ") + "]");
+
+            // output port types
             params.add("[" + Util.join(outportPortTypes, " ") + "]");
+
+            // output port variable VRs
             params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
         }
 
