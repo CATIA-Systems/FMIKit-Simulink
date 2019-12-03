@@ -26,6 +26,9 @@ FMIKit.initialize()
 
 % open the Bouncing Ball demo
 fmikit_demo_BouncingBall
+
+% open the documentation
+web('FMIKit-Simulink-2.7-alpha.1/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
