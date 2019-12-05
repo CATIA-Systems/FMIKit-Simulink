@@ -68,6 +68,15 @@
     'Files to copy to the resources directory of the FMU';
 
   i = i + 1;
+  rtwoptions(i).prompt         = 'Add image of Simulink model';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'on';
+  rtwoptions(i).tlcvariable    = 'AddModelImage';
+  rtwoptions(i).makevariable   = '';
+  rtwoptions(i).tooltip        = ...
+    'Add an image of the Simulink model to the FMU (model.png)';
+
+  i = i + 1;
   rtwoptions(i).prompt        = 'Include sources in FMU';
   rtwoptions(i).type          = 'Checkbox';
   rtwoptions(i).default       = 'on';

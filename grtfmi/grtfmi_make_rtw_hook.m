@@ -10,7 +10,10 @@ switch hookMethod
         if exist('FMUArchive', 'dir')
             rmdir('FMUArchive', 's');
         end
-
+        
+        % create the archive directory (uncompressed FMU)
+        mkdir('FMUArchive');
+        
         % remove fmiwrapper.inc for referenced models
         if ~strcmp(current_dir(end-11:end), '_grt_fmi_rtw')
             delete('fmiwrapper.inc');
@@ -23,6 +26,15 @@ switch hookMethod
 
         pathstr = which('grtfmi.tlc');
         [grtfmi_dir, ~, ~] = fileparts(pathstr);
+        
+        % add model.png
+        if strcmp(get_param(gcs, 'AddModelImage'), 'on')
+            % create an image of the model
+            print(['-s' modelName], '-dpng', fullfile('FMUArchive', 'model.png'));
+        else
+            % use the generic Simulink logo
+            copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
+        end
         
         command = get_param(modelName, 'CMakeCommand');
         command = grtfmi_find_cmake(command);

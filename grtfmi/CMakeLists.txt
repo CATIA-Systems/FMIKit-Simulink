@@ -244,6 +244,12 @@ add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
 
 set (ARCHIVE_FILES modelDescription.xml binaries)
 
+# model.png
+if (EXISTS ${FMU_BUILD_DIR}/model.png)
+  set (ARCHIVE_FILES ${ARCHIVE_FILES} model.png)
+endif ()
+
+# resources
 if (EXISTS ${FMU_BUILD_DIR}/resources)
   set (ARCHIVE_FILES ${ARCHIVE_FILES} resources)
 endif ()
