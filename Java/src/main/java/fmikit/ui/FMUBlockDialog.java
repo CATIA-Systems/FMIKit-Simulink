@@ -804,6 +804,7 @@ public class FMUBlockDialog extends JDialog {
 
         boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
+        boolean isModelExchange = runAsKind == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
@@ -833,7 +834,11 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // relative tolerance
-        params.add("0");
+        if (isModelExchange) {
+            params.add("FMIKit.getSolverRelativeTolerance(bdroot(gcb))");
+        } else {
+            params.add(txtRelativeTolerance.getText());
+        }
 
         // sample time
         params.add(txtSampleTime.getText());
@@ -866,7 +871,7 @@ public class FMUBlockDialog extends JDialog {
             params.add("[" + Util.join(inputPortWidths, " ") + "]");
 
             // direct input
-            if (runAsKind == 0) {
+            if (isModelExchange) {
                 params.add("1");  // always true for Model Exchange
             } else {
                 params.add(chckbxDirectInput.isSelected() ? "1" : "0");
