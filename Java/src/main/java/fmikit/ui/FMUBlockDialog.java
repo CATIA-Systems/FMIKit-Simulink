@@ -55,7 +55,6 @@ public class FMUBlockDialog extends JDialog {
     private JCheckBox chckbxDebugLogging;
     private JComboBox cmbbxLogLevel;
     private JCheckBox chckbxUseSourceCode;
-    private JCheckBox chckbxDirectInput;
     private JLabel lblMessageIcon;
     private JLabel lblMessage;
     private JXTreeTable treeTable;
@@ -166,11 +165,10 @@ public class FMUBlockDialog extends JDialog {
         variablesTree.setModel(null);
         outportsTree.setModel(null);
 
-        // disable the "Direct Input" when "Model Exchange" is selected
+        // disable the "Relative Tolerance" when "Model Exchange" is selected
         cmbbxRunAsKind.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 boolean isCoSimulation = cmbbxRunAsKind.getSelectedIndex() == 1;
-                chckbxDirectInput.setEnabled(isCoSimulation);
                 txtRelativeTolerance.setEnabled(isCoSimulation);
             }
         });
@@ -564,8 +562,6 @@ public class FMUBlockDialog extends JDialog {
         userData.functionName = userData.useSourceCode ? "sfun_" + getModelIdentifier() : "sfun_fmurun";
         userData.parameters = getSFunctionParameters();
 
-        userData.directInput = chckbxDirectInput.isSelected();
-
         return userData;
     }
 
@@ -604,7 +600,6 @@ public class FMUBlockDialog extends JDialog {
         chckbxDebugLogging.setSelected(userData.debugLogging);
         chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
-        chckbxDirectInput.setSelected(userData.directInput);
 
         // TODO: restore outports?
     }
@@ -867,27 +862,22 @@ public class FMUBlockDialog extends JDialog {
         }
 
         if (generic) {
+
             // input port widths
             params.add("[" + Util.join(inputPortWidths, " ") + "]");
 
-            // direct input
-            if (isModelExchange) {
-                params.add("1");  // always true for Model Exchange
-            } else {
-                params.add(chckbxDirectInput.isSelected() ? "1" : "0");
-            }
-
             // input port direct feed through
-            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+            if (isModelExchange) {
+                params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+            } else {
+                params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
+            }
 
             // input port types
             params.add("[" + Util.join(inputPortTypes, " ") + "]");
 
             // input port variable VRs
             params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
-
-            // can interpolate inputs
-            params.add(runAsKind == 1 && modelDescription.coSimulation.canInterpolateInputs ? "1" : "0");
 
             // output port widths
             params.add("[" + Util.join(outportWidths, " ") + "]");
@@ -1410,11 +1400,6 @@ public class FMUBlockDialog extends JDialog {
             w.println("#define INPUT_PORT_TYPES " + Util.join(inputPortTypes, ", "));
             w.println("#define INPUT_PORT_FEED_THROUGH " + Util.join(inputPortFeedThrough, ", "));
             w.println("#define INPUT_VARIABLE_VRS " + Util.join(inputVariableVRs, ", "));
-            if (chckbxDirectInput.isSelected()) {
-                w.println("#define DIRECT_INPUT 1");
-            } else if (cmbbxRunAsKind.getSelectedIndex() == CO_SIMULATION && modelDescription.coSimulation.canInterpolateInputs) {
-                w.println("#define SET_INPUT_DERIVATIVES 1");
-            }
         }
         w.println();
 
@@ -1717,13 +1702,13 @@ public class FMUBlockDialog extends JDialog {
         btnResetOutputs.setText("");
         panel10.add(btnResetOutputs, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         final JPanel panel11 = new JPanel();
-        panel11.setLayout(new GridLayoutManager(11, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel11.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
         panel11.setOpaque(false);
         tabbedPane.addTab("Advanced", panel11);
         txtUnzipDirectory = new JTextField();
         panel11.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final Spacer spacer7 = new Spacer();
-        panel11.add(spacer7, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel11.add(spacer7, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label13 = new JLabel();
         label13.setText("Unzip directory:");
         panel11.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -1737,10 +1722,6 @@ public class FMUBlockDialog extends JDialog {
         chckbxUseSourceCode.setOpaque(false);
         chckbxUseSourceCode.setText("Use source code");
         panel11.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        chckbxDirectInput = new JCheckBox();
-        chckbxDirectInput.setOpaque(false);
-        chckbxDirectInput.setText("Direct input");
-        panel11.add(chckbxDirectInput, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel12 = new JPanel();
         panel12.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         panel12.setOpaque(false);
@@ -1793,4 +1774,5 @@ public class FMUBlockDialog extends JDialog {
     public JComponent $$$getRootComponent$$$() {
         return contentPane;
     }
+
 }

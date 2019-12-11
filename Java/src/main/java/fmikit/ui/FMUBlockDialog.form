@@ -574,7 +574,7 @@
                   </grid>
                 </children>
               </grid>
-              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="11" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
+              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
                 <margin top="15" left="15" bottom="15" right="15"/>
                 <constraints>
                   <tabbedpane title="Advanced"/>
@@ -594,7 +594,7 @@
                   </component>
                   <vspacer id="8f529">
                     <constraints>
-                      <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
                   <component id="123b1" class="javax.swing.JLabel">
@@ -630,15 +630,6 @@
                     <properties>
                       <opaque value="false"/>
                       <text value="Use source code"/>
-                    </properties>
-                  </component>
-                  <component id="71c93" class="javax.swing.JCheckBox" binding="chckbxDirectInput">
-                    <constraints>
-                      <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <opaque value="false"/>
-                      <text value="Direct input"/>
                     </properties>
                   </component>
                   <grid id="56ec3" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

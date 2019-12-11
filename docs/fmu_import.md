@@ -97,15 +97,6 @@ With source code FMUs it is also possible to use FMUs in Rapid Accelerator mode 
 
 Use the FMU's model name as the block name
 
-### Direct Input
-
-If checked `ssSetInputPortDirectFeedThrough(true)` is set for all input ports of the FMU and the value of the block's inputs `u` at `t+1` is applied to the input variables of the FMU at time `t`.
-This gives better results for FMUs that contain direct terms and do not support input interpolation.
-
-If not checked `ssSetInputPortDirectFeedThrough(true)` is only set for input ports whose input variables have output variables with a direct dependency.
-The derivative `der_u` for these input variables is set such that `u(t) + der_u(t) * step_size = u(t+1)` if the FMU supports input interpolation.
-Variables that are manually added to the block's output ports are assumed to depend on all input variables.
-
 ## MATLAB Commands
 
 ### Get the Model Description
@@ -192,14 +183,6 @@ Use `FMIKit.setRelativeTolerance()` to set the relative tolerance for the embedd
 FMIKit.setRelativeTolerance(gcb, '1e-3')
 ```
 
-### Enable Direct Input
-
-Use `FMIKit.setDirectInput()` to enable direct input:
-
-```
-FMIKit.setDirectInput(gcb, true)
-```
-
 ## UserData struct
 
 The information from the block dialog is stored in the parameter `UserData` of the FMU block:
@@ -224,7 +207,6 @@ ud =
        setBlockName: 0
        functionName: 'sfun_fmurun'
          parameters: [1x252 char]
-        directInput: 0
 
 >> ud.outputPorts(2)
 
@@ -251,4 +233,3 @@ ans =
 | `useSourceCode`     | `bool`           | Compile the FMU from source code                                 |
 | `functionName`      | `char`           | Name of the S-function                                           |
 | `parameters`        | `char`           | Parameters for the S-function                                    |
-| `directInput`       | `bool`           | Use direct input                                                 |
