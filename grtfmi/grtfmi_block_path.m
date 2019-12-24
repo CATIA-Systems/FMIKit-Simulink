@@ -38,9 +38,9 @@ for i = 2:numel(segments)
     segment = strrep(segment, c, ['&#x' dec2hex(c) ';']); 
   end
   
-  % add quotes if the segment contains spaces
+  % add apostrophes if the segment contains spaces
   if regexp(segment, '\s')
-    segment = ['&quot;' segment '&quot;']; %#ok<AGROW>
+    segment = ['&#39;' segment '&#39;']; %#ok<AGROW>
   end
   
   if isempty(variable_name)
