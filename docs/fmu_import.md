@@ -183,6 +183,23 @@ Use `FMIKit.setRelativeTolerance()` to set the relative tolerance for the embedd
 FMIKit.setRelativeTolerance(gcb, '1e-3')
 ```
 
+## Calling sequence
+
+The S-function `sfun_fmurun` associated to the `FMU` block loads and connects the FMU to [Simulink's simulation loop](https://www.mathworks.com/help/simulink/sfg/how-the-simulink-engine-interacts-with-c-s-functions.html) by setting its inputs and retrieving its outputs.
+The S-function's `mdl*` callbacks in which the respective FMI functions are called depend on the interface type of the FMU and are described below.
+
+### Co-Simulation calling sequence
+
+For Co-Simulation all input variables are set in [`mdlUpdate`](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) and all output variables are retrieved in [`mdlOutputs`](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+[Direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) is disabled for all input ports.
+
+### Model Exchange calling sequence
+
+For Model Exchange direct feedthrough is enabled for an input port if any output variable declares a dependency on the corresponding input variable in the `<ModelStructrue>`.
+If any internal variable is added to the outputs of the FMU block direct feedthrough is enabled for all input ports.
+Input variables with [direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) enabled are set in [`mdlDerivatives`](https://www.mathworks.com/help/simulink/sfg/mdlderivatives.html?searchHighlight=mdlDerivatives), [`mdlZeroCrossings`](https://www.mathworks.com/help/simulink/sfg/mdlzerocrossings.html) and  [`mdlOutputs`](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+In [`mdlUpdate`](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) all input variables are set.
+
 ## UserData struct
 
 The information from the block dialog is stored in the parameter `UserData` of the FMU block:

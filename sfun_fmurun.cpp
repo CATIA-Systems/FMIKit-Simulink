@@ -1004,6 +1004,8 @@ static void mdlZeroCrossings(SimStruct *S) {
 
 	if (model) {
 
+		setInput(S, true);
+
 		auto z = ssGetNonsampledZCs(S);
 
 		if (nz(S) > 0) {
@@ -1025,6 +1027,9 @@ static void mdlDerivatives(SimStruct *S) {
 	auto model = component<Model>(S);
 
 	if (model) {
+
+		setInput(S, true);
+
 		auto x = ssGetContStates(S);
 		auto dx = ssGetdX(S);
 
