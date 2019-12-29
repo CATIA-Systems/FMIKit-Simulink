@@ -73,29 +73,31 @@ The folder where the FMU is extracted. The path can be absolute or relative to t
 
 The sample time for the FMU block (use `-1` for inherited)
 
-### Error Diagnostics
+### Relative Tolerance
 
-Determines how to handle errors reported by the FMU
+The relative tolerance for a Co-Simulation FMU (use `0` for the default tolerance).
 
-| Option  | Description
-|---------|------------
-| Ignore  | The FMI status code is ignored
-| Warning | A Simulink error is raised when the FMI status is `Warning` or `Error`
-| Error   | An error is raised when the FMI status is `Error`
+### Log Level
 
-### Debug Logging
+The lowest status code that is logged.
 
-Enables the debug logging to the MATLAB console
+### Log File
+
+Redirect the log messages to this file if `Log to File` is checked.
+
+### Enable Debug Logging
+
+Enable the FMU's debug logging.
+
+### Log FMI calls
+
+Log all FMI calls to the FMU.
 
 ### Use Source Code
 
-If checked a source S-function `sfun_<model_name>.c` is generated from the FMU's source code which gets automatically compiled when the **Apply** or **OK** button is clicked. For FMI 1.0 this feature is only available for FMUs generated with Dymola 2016 or later.
+If checked a source S-function `sfun_<model_name>.c` is generated from the FMU's source code which gets automatically compiled when the `Apply` or `OK` button is clicked. For FMI 1.0 this feature is only available for FMUs generated with Dymola 2016 or later.
 
 With source code FMUs it is also possible to use FMUs in Rapid Accelerator mode and create target code for RSIM, GRT, ds1005, ds1006 Scalexio platforms.
-
-### Set model name
-
-Use the FMU's model name as the block name
 
 ## MATLAB Commands
 
