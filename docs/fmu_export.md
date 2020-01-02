@@ -41,12 +41,24 @@ To export a Simulink model as an FMU
 
 The `grtfmi.tlc` target has the following options under **Simulation > Model Configuration Parameters > FMI**:
 
-| Parameter              | Description                                                                 |
-|------------------------|-----------------------------------------------------------------------------|
-| CMake generator        | CMake generator to build the shared library                                 |
-| CMake command          | CMake command or path the executable (leave empty for default command)      |
-| Visible parameters     | Parameters to include in the model description (leave empty to include all) |
-| Include sources in FMU | Add model sources to FMU                                                    |
+| Parameter                   | Description                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------|
+| FMI version                 | FMI version of the FMU                                                      |
+| Visible parameters          | Parameters to include in the model description (leave empty to include all) |
+| Model author                | Model author to be written to the model description                         |
+| Template directory          | Template directory with files and folders to be added to the FMU            |
+| Add image of Simulink model | Add an image of the Simulink model to the FMU (model.png)                   |
+| Include sources in FMU      | Add model sources to FMU                                                    |
+| Include block outputs       | Include global block outputs in the model description                       |
+
+and under **Simulation > Model Configuration Parameters > CMake**:
+
+| Parameter                          | Description                                                            |
+|------------------------------------|------------------------------------------------------------------------|
+| CMake generator                    | CMake generator to build the shared library                            |
+| CMake command                      | CMake command or path the executable (leave empty for default command) |
+| Compiler optimization level        | Compiler optimization level                                            |
+| Custom compiler optimization flags | Custom compiler optimization flags                                     |
 
 ## S-Function based FMU
 

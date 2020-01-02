@@ -249,6 +249,11 @@ if (EXISTS ${FMU_BUILD_DIR}/model.png)
   set (ARCHIVE_FILES ${ARCHIVE_FILES} model.png)
 endif ()
 
+# documentation
+if (EXISTS ${FMU_BUILD_DIR}/documentation)
+  set (ARCHIVE_FILES ${ARCHIVE_FILES} documentation)
+endif ()
+
 # resources
 if (EXISTS ${FMU_BUILD_DIR}/resources)
   set (ARCHIVE_FILES ${ARCHIVE_FILES} resources)
