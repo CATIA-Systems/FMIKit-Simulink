@@ -1,3 +1,5 @@
+![FMI Kit banner](docs/images/banner.png)
+
 # FMI Kit for Simulink
 
 [![Build Status](https://dev.azure.com/CATIA-Systems/FMIKit-Simulink/_apis/build/status/CATIA-Systems.FMIKit-Simulink?branchName=master)](https://dev.azure.com/CATIA-Systems/FMIKit-Simulink/_build/latest?definitionId=4&branchName=master)
