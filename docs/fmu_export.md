@@ -60,6 +60,22 @@ and under **Simulation > Model Configuration Parameters > CMake**:
 | Compiler optimization level        | Compiler optimization level                                            |
 | Custom compiler optimization flags | Custom compiler optimization flags                                     |
 
+Example of a template folder:
+
+```
++ binaries
+  + win64
+    - Solver.dll
++ documentation
+  - index.html
+  + licenses
+    - license.txt
++ resources
+  - table.dat
+```
+
+Note that only files under `binaries`, `documentation`, `resources`, and `sources` will be added to the FMU archive.
+
 ## S-Function based FMU
 
 The `rtwsfcnfmi.tlc` target has the following options under **Simulation > Model Configuration Parameters > FMI**:
