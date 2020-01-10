@@ -17,11 +17,12 @@ A Simulink library to import and export [Functional Mock-up Units](https://fmi-s
 To get started with FMI Kit run the following commands in the MATLAB Command Window
 
 ```matlab
-% download FMI Kit to the current folder
-unzip('https://github.com/CATIA-Systems/FMIKit-Simulink/releases/download/v2.7-alpha.1/FMIKit-Simulink-2.7-alpha.1.zip', 'FMIKit-Simulink-2.7-alpha.1')
+% download and extract the distribution archive to the current folder
+unzip(['https://github.com/CATIA-Systems/FMIKit-Simulink/releases/' ...
+  'download/v2.7/FMIKit-Simulink-2.7.zip'], 'FMIKit-Simulink')
 
 % add the folder to the MATLAB path
-addpath(fullfile(pwd, 'FMIKit-Simulink-2.7-alpha.1'))
+addpath(fullfile(pwd, 'FMIKit-Simulink-2.7'))
 
 % initialize FMI Kit
 FMIKit.initialize()
@@ -30,7 +31,7 @@ FMIKit.initialize()
 fmikit_demo_BouncingBall
 
 % open the documentation
-web('FMIKit-Simulink-2.7-alpha.1/html/index.html')
+web('FMIKit-Simulink-2.7/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
