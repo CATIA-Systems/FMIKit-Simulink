@@ -13,6 +13,7 @@ FMI Kit supports...
 - binary and C code FMUs
 - MATLAB R2012b - R2019b
 
+See the [changelog](changelog.html) for a list of changes in this version.  
 For updates visit the [project on GitHub](https://github.com/CATIA-Systems/FMIKit-Simulink).
 
 ### [FMU Import](fmu_import.html)
