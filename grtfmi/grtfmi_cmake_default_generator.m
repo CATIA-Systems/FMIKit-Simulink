@@ -7,26 +7,21 @@ if ispc
     else
         platform = '';
     end
-
+    
     % find the newest installed Visual Studio
     vswhere = [getenv('ProgramFiles(x86)') '\Microsoft Visual Studio\Installer\vswhere.exe'];
-    command = ['"' vswhere '" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath'];
-    [status, cmdout] = system(command);
+    vswhere_command = ['"' vswhere '" -latest -products * -requires Microsoft.Component.MSBuild'];
+    [status, productName] = system([vswhere_command, ' -property productName']);
     
-    if status == 0 && ~isempty(strfind(cmdout, '2017'))  %#ok<STREMP>
-        generator = ['Visual Studio 15 2017' platform];
-    elseif system('set VS140COMNTOOLS') == 0
+    if status ~= 0 || ~isempty(productName)
         generator = ['Visual Studio 14 2015' platform];
-    elseif system('set VS120COMNTOOLS') == 0
-        generator = ['Visual Studio 12 2013' platform];
-    elseif system('set VS110COMNTOOLS') == 0
-        generator = ['Visual Studio 11 2012' platform];
-    elseif system('set VS100COMNTOOLS') == 0
-        generator = ['Visual Studio 10 2010' platform];
-    elseif system('set VS90COMNTOOLS') == 0
-        generator = ['Visual Studio 9 2008' platform];
     else
-        generator = ['Visual Studio 14 2015' platform];
+        [~, installationVersion] = system([vswhere_command, ' -property installationVersion']);
+        [~, productLineVersion] = system([vswhere_command, ' -property productLineVersion']);
+        
+        generator = [strtrim(productName), ' ', ...
+            regexp(installationVersion, '^[0-9]*', 'match', 'once'), ' ', ...
+            strtrim(productLineVersion), platform];
     end
 else
     generator = 'Unix Makefiles';
