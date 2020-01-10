@@ -5,6 +5,7 @@ set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install di
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
+set(CUSTOM_LIBRARY_DIRECTORIES "" CACHE STRING "Additional library directories")
 set(CUSTOM_LIBRARY "" CACHE STRING "Additional static libraries")
 set(SOURCE_CODE_FMU ON CACHE BOOL "Copy sources to FMU archive")
 set(SIMSCAPE OFF CACHE BOOL "Model contains Simscape blocks")
@@ -217,6 +218,7 @@ target_compile_definitions(${MODEL} PUBLIC
 )
 
 target_link_libraries(${MODEL} ${CUSTOM_LIBRARY})
+target_link_directories(${MODEL} PRIVATE ${CUSTOM_LIBRARY_DIRECTORIES})
 
 if (${SIMSCAPE})
   target_link_libraries(${MODEL} ex mc ne pm ssc_core ssc_sli)

@@ -72,11 +72,20 @@ switch hookMethod
         disp('### Running CMake generator')
         
         % get model sources
-        [custom_include, custom_source, custom_library] = ...
-            grtfmi_model_sources(modelName, pwd);
-        
+        custom_include = buildInfo.getIncludePaths(true);
+        custom_source = buildInfo.getSourceFiles(true, true);
+        buildInfo.Settings.Matlabroot
+        % remove files from Matlab installation. TODO: these should not be
+        % added in the first place but we would have to modify the grt.tlc
+        % file to fix this (probably)
+        matches = cellfun('isempty', regexp(custom_source, '\\(rt_printf\.c|rt_main\.c)$'));
+        custom_source = custom_source(matches);
+        custom_library_directories = buildInfo.getLibraryPaths(true, true);
+        custom_library = {buildInfo.getLinkObjects.Name}';
+      
         custom_include = cmake_list(custom_include);
         custom_source  = cmake_list(custom_source);
+        custom_library_directories = cmake_list(custom_library_directories);
         custom_library = cmake_list(custom_library);
         
         % check for Simscape blocks
@@ -93,6 +102,7 @@ switch hookMethod
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', custom_source);
+        fprintf(fid, 'CUSTOM_LIBRARY_DIRECTORIES:STRING=%s\n', custom_library_directories);
         fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);
         fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
         fprintf(fid, 'SIMSCAPE:BOOL=%s\n', upper(simscape_blocks));
@@ -116,16 +126,6 @@ end
 end
 
 function joined = cmake_list(array)
-
-if isempty(array)
-    joined = '';
-    return
-end
-
-joined = array{1};
-
-for i = 2:numel(array)
-    joined = [joined ';' array{i}];  %#ok<ARGROW>
-end
-
+joined = strjoin(array, ';');
+joined = strrep(joined, '\', '/');
 end
