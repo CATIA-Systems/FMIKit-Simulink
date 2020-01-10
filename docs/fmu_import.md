@@ -192,15 +192,15 @@ The S-function's `mdl*` callbacks in which the respective FMI functions are call
 
 ### Co-Simulation calling sequence
 
-For Co-Simulation all input variables are set in [`mdlUpdate`](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) and all output variables are retrieved in [`mdlOutputs`](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+For Co-Simulation all input variables are set in [mdlUpdate](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) and all output variables are retrieved in [mdlOutputs](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
 [Direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) is disabled for all input ports.
 
 ### Model Exchange calling sequence
 
 For Model Exchange direct feedthrough is enabled for an input port if any output variable declares a dependency on the corresponding input variable in the `<ModelStructrue>`.
 If any internal variable is added to the outputs of the FMU block direct feedthrough is enabled for all input ports.
-Input variables with [direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) enabled are set in [`mdlDerivatives`](https://www.mathworks.com/help/simulink/sfg/mdlderivatives.html?searchHighlight=mdlDerivatives), [`mdlZeroCrossings`](https://www.mathworks.com/help/simulink/sfg/mdlzerocrossings.html) and  [`mdlOutputs`](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
-In [`mdlUpdate`](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) all input variables are set.
+Input variables with [direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) enabled are set in [mdlDerivatives](https://www.mathworks.com/help/simulink/sfg/mdlderivatives.html?searchHighlight=mdlDerivatives), [mdlZeroCrossings](https://www.mathworks.com/help/simulink/sfg/mdlzerocrossings.html) and  [mdlOutputs](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+In [mdlUpdate](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) all input variables are set.
 
 ## UserData struct
 
