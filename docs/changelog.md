@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.7 (unreleased)
+## 2.7
 
 This release brings fixes and improvements for the import and export of FMUs.
 It is now distributed as a ZIP archive (instead of a MATLAB App) for easier deployment.
