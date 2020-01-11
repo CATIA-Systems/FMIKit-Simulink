@@ -301,7 +301,7 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 			*((REAL64_T *)v.address) = value[i];
 			break;
 		case SS_SINGLE:
-			*((REAL32_T *)v.address) = value[i];
+			*((REAL32_T *)v.address) = (REAL32_T)value[i];
 			break;
 		default:
 			return fmi2Error;
