@@ -1,6 +1,13 @@
 function grtfmi_selectcallback(hDlg, hSrc)
-  
+
+% disable "Package code and artifacts"
+slConfigUISetVal(hDlg, hSrc, 'PackageGeneratedCodeAndArtifacts', 'off');
+slConfigUISetEnabled(hDlg, hSrc, 'PackageGeneratedCodeAndArtifacts', false);
+
+% disable "Generate makefile"
 slConfigUISetVal(hDlg, hSrc, 'GenerateMakefile', 'off');
+slConfigUISetEnabled(hDlg, hSrc, 'GenerateMakefile', false);
+
 slConfigUISetVal(hDlg, hSrc, 'RetainRTWFile', 'on');
 
 % Reusable functions are not supported in R2012b

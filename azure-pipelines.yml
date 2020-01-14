@@ -1,0 +1,172 @@
+jobs:
+
+- job: win32
+  displayName: 'Windows (32-bit)'
+  pool:
+    vmImage: 'vs2017-win2016'
+
+  steps:
+
+  - task: DownloadSecureFile@1
+    name: R2012b
+    inputs:
+      secureFile: R2012b-win32.zip
+
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: $(R2012b.secureFilePath)
+      destinationFolder: ThirdParty/R2012b
+
+  - script: |
+      cmake -G "Visual Studio 15 2017" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake --build build --config Release
+    displayName: Build generic S-function
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: sfun_fmurun.mexw32
+      artifact: win32
+
+- job: win64
+  displayName: 'Windows (64-bit)'
+  pool:
+    vmImage: 'vs2017-win2016'
+
+  steps:
+
+  - task: DownloadSecureFile@1
+    name: R2012b
+    inputs:
+      secureFile: R2012b-win64.zip
+
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: $(R2012b.secureFilePath)
+      destinationFolder: ThirdParty/R2012b
+
+  - script: |
+      cmake -G "Visual Studio 15 2017 Win64" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake --build build --config Release
+    displayName: Build generic S-function
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: sfun_fmurun.mexw64
+      artifact: win64
+
+- job: maci64
+  displayName: 'macOS'
+  pool:
+    vmImage: 'macos-10.13'
+
+  steps:
+
+  - task: DownloadSecureFile@1
+    name: MATLAB
+    inputs:
+      secureFile: R2018b-maci64.zip
+
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: $(MATLAB.secureFilePath)
+      destinationFolder: ThirdParty/MATLAB
+
+  - script: |
+      cmake --version
+      cmake -B build -DMATLAB_DIR=$PWD/ThirdParty/MATLAB .
+      cmake --build build --config Release
+    displayName: Build generic S-function
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: sfun_fmurun.mexmaci64
+      artifact: maci64
+
+- job: glnxa64
+  displayName: 'Linux'
+  dependsOn:
+  - maci64
+  - win32
+  - win64
+  pool:
+    vmImage: 'ubuntu-16.04'
+
+  steps:
+
+  - script: |
+      mkdir dist
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: maci64
+      targetPath: dist
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: win32
+      targetPath: dist
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: win64
+      targetPath: dist
+
+  - task: DownloadSecureFile@1
+    name: MATLAB
+    inputs:
+      secureFile: R2018b-linux64.tar.gz
+
+  - script: |
+      find .
+
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: $(MATLAB.secureFilePath)
+      destinationFolder: ThirdParty
+
+  - script: |
+      find ThirdParty
+      mkdir build
+      cd build
+      cmake --version
+      cmake -DMATLAB_DIR=ThirdParty/R2018b-linux64 ..
+      cmake --build . --config Release
+      cd ..
+    displayName: Build generic S-function
+
+  - script: |
+      python -m pip install markdown2
+      python docs/md2html.py
+    displayName: Generate HTML documentation
+
+  - task: Maven@3
+    inputs:
+      mavenPomFile: Java/pom.xml
+      goals: install
+
+  - script: |
+      cp -r +FMIKit         dist/+FMIKit
+      cp -r examples        dist/examples
+      cp -r grtfmi          dist/grtfmi
+      cp -r html            dist/html
+      cp -r include         dist/include
+      cp -r src             dist/src
+      cp -r rtwsfcnfmi      dist/rtwsfcnfmi
+      cp FMIKit_blocks.slx  dist
+      cp fmikit.jar         dist
+      cp forms_rt.jar       dist
+      cp info.xml           dist
+      cp LICENSE.txt        dist
+      cp README.md          dist
+      cp sfun_fmurun.mexa64 dist
+      cp sfun_fmurun.cpp    dist
+      cp slblocks.m         dist
+      cp swingx-1.6.jar     dist
+      cd dist
+      zip -r ../FMIKit-Simulink.zip *
+    displayName: Create distribution archive
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: FMIKit-Simulink.zip
+      artifact: dist

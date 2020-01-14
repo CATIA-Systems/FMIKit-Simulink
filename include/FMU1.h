@@ -38,6 +38,8 @@ namespace fmikit {
 		void setString(ValueReference vr, std::string value) override;
 
 	protected:
+        static FMU1 *s_currentInstance;
+        
 		static void logFMU1Message(fmi1Component c, fmi1String instanceName, fmi1Status status, fmi1String category, fmi1String message, ...);
 
 		fmi1Component m_component ;
@@ -91,12 +93,12 @@ namespace fmikit {
 				  const std::string &modelIdentifier,
 				  const std::string &unzipDirectory,
 				  const std::string &instanceName,
-				  double timeout, bool loggingOn,
 				  allocateMemoryCallback *allocateMemory = nullptr,
 				  freeMemoryCallback *freeMemory = nullptr);
 
 		~FMU1Slave();
 
+        void instantiateSlave(const std::string &fmuLocation, double timeout, bool loggingOn);
 		void initializeSlave(double startTime, bool stopTimeDefined, double stopTime);
 
 		void doStep(double h) override;
@@ -104,7 +106,7 @@ namespace fmikit {
 
 	private:
 		/* Wrapper functions for SEH */
-		void instantiateSlave(fmi1String  instanceName, fmi1String  fmuGUID, fmi1String  fmuLocation, fmi1String  mimeType, fmi1Real timeout, fmi1Boolean visible, fmi1Boolean interactive, fmi1CallbackFunctions functions, fmi1Boolean loggingOn);
+		void instantiateSlave_(fmi1String  instanceName, fmi1String  fmuGUID, fmi1String  fmuLocation, fmi1String  mimeType, fmi1Real timeout, fmi1Boolean visible, fmi1Boolean interactive, fmi1CallbackFunctions functions, fmi1Boolean loggingOn);
 		void terminateSlave();
 		void freeSlaveInstance();
 
@@ -135,12 +137,12 @@ namespace fmikit {
 							const std::string &modelIdentifier,
 							const std::string &unzipDirectory,
 							const std::string &instanceName,
-							bool loggingOn,
 							allocateMemoryCallback *allocateMemory = nullptr,
 							freeMemoryCallback *freeMemory = nullptr);
 
 		~FMU1Model();
 
+        void instantiateModel(bool loggingOn);
 		void initialize(bool toleranceControlled, double relativeTolerance);
 
 		void getContinuousStates(double states[], size_t size) override;
@@ -163,7 +165,7 @@ namespace fmikit {
 		fmi1EventInfo m_eventInfo;
 
 		/* Wrapper functions for SEH */
-		void instantiateModel(fmi1String instanceName, fmi1String GUID, fmi1CallbackFunctions functions, fmi1Boolean loggingOn);
+		void instantiateModel_(fmi1String instanceName, fmi1String GUID, fmi1CallbackFunctions functions, fmi1Boolean loggingOn);
 		void terminate();
 		void freeModelInstance();
 

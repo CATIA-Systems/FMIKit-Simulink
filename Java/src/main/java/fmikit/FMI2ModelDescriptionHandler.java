@@ -30,7 +30,7 @@ public class FMI2ModelDescriptionHandler extends ModelDescriptionHandler {
 			
 			skip = true;
 			
-		} else if (qName == "SimpleType") {
+		} else if ("SimpleType".equals(qName)) {
 
 			simpleType = new SimpleType();
 
@@ -38,6 +38,16 @@ public class FMI2ModelDescriptionHandler extends ModelDescriptionHandler {
 			simpleType.description = attributes.getValue("description");
 
 			modelDescription.typeDefinitions.put(simpleType.name, simpleType);
+
+		} else if ("DefaultExperiment".equals(qName)) {
+
+			DefaultExperiment defaultExperiment = new DefaultExperiment();
+
+			defaultExperiment.startTime = attributes.getValue("startTime");
+			defaultExperiment.stopTime = attributes.getValue("stopTime");
+			defaultExperiment.tolerance = attributes.getValue("tolerance");
+
+			modelDescription.defaultExperiment = defaultExperiment;
 
 		} else if ("ScalarVariable".equals(qName)) {
 			

@@ -27,6 +27,73 @@
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
   rtwoptions(i).enable        = 'on';
+  rtwoptions(i).default       = 5;   % number of items under this category
+                                     % excluding this one.
+  rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
+  rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
+  rtwoptions(i).tooltip       = '';
+  rtwoptions(i).callback      = '';
+  rtwoptions(i).makevariable  = '';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'FMI version';
+  rtwoptions(i).type           = 'Popup';
+  rtwoptions(i).default        = '2';
+  rtwoptions(i).tlcvariable    = 'FMIVersion';
+  rtwoptions(i).popupstrings   = '2|3';
+  rtwoptions(i).tooltip        = 'FMI version';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Visible parameters';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'VisibleParameters';
+  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'Model author';
+  rtwoptions(i).type           = 'Edit';
+  rtwoptions(i).default        = getenv('username');
+  rtwoptions(i).tlcvariable    = 'ModelAuthor';
+  rtwoptions(i).makevariable   = '';
+  rtwoptions(i).tooltip        = ...
+    'Model author to be written to the model description';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Template directory';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'FMUTemplateDir';
+  rtwoptions(i).tooltip       = ...
+    'Template directory with files and folders to be added to the FMU';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'Add image of Simulink model';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'on';
+  rtwoptions(i).tlcvariable    = 'AddModelImage';
+  rtwoptions(i).makevariable   = '';
+  rtwoptions(i).tooltip        = ...
+    'Add an image of the Simulink model to the FMU (model.png)';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Include sources in FMU';
+  rtwoptions(i).type          = 'Checkbox';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
+  rtwoptions(i).tooltip       = 'Add model sources to FMU';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Include block outputs';
+  rtwoptions(i).type          = 'Checkbox';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'IncludeBlockOutputs';
+  rtwoptions(i).tooltip       = 'Include global block outputs in the model description';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'CMake';
+  rtwoptions(i).type          = 'Category';
+  rtwoptions(i).enable        = 'on';
   rtwoptions(i).default       = 4;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
@@ -39,7 +106,8 @@
   rtwoptions(i).prompt        = 'CMake generator';
   rtwoptions(i).type          = 'Popup';
   rtwoptions(i).default       = grtfmi_cmake_default_generator();
-  rtwoptions(i).popupstrings  = ['Visual Studio 15 2017|' ...
+  rtwoptions(i).popupstrings  = ['Visual Studio 16 2019|' ...
+                                'Visual Studio 15 2017|' ...
                                 'Visual Studio 15 2017 Win64|' ...
                                 'Visual Studio 14 2015|' ...
                                 'Visual Studio 14 2015 Win64|' ...
@@ -55,9 +123,10 @@
                                 'NMake Makefiles JOM|' ...
                                 'MSYS Makefiles|' ...
                                 'MinGW Makefiles|' ...
-                                'Unix Makefiles'];
+                                'Unix Makefiles|' ...
+                                'Xcode'];
   rtwoptions(i).tlcvariable   = 'CMakeGenerator';
-  rtwoptions(i).tooltip       = ['CMake generator to build the shared library'];
+  rtwoptions(i).tooltip       = 'CMake generator to build the shared library';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake command';
@@ -67,30 +136,23 @@
   rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Compiler optimization';
+  rtwoptions(i).prompt        = 'Compiler optimization level';
   rtwoptions(i).type          = 'Popup';
-  rtwoptions(i).enable        = 'off';
   rtwoptions(i).default       = 'Disabled';
   rtwoptions(i).popupstrings  = ['Disabled|' ...
                                 'Minimize size|' ...
                                 'Maximize speed|' ...
-                                'Full optimization'];
-  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimization';
-  rtwoptions(i).tooltip       = ['Compiler optimization level'];
+                                'Full optimization|' ...
+                                'Custom'];
+  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimizationLevel';
+  rtwoptions(i).tooltip       = 'Compiler optimization level';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Visible parameters';
+  rtwoptions(i).prompt        = 'Custom compiler optimization flags';
   rtwoptions(i).type          = 'Edit';
   rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'VisibleParameters';
-  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
-
-  i = i + 1;
-  rtwoptions(i).prompt        = 'Include sources in FMU';
-  rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'on';
-  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
-  rtwoptions(i).tooltip       = 'Add model sources to FMU';
+  rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimizationFlags';
+  rtwoptions(i).tooltip       = 'Custom compiler optimization flags';
 
   %----------------------------------------%
   % Configure code generation settings %

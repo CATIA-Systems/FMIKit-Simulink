@@ -28,10 +28,14 @@ if ~isempty(userData)
     dialog.loadModelDescription();
 end
 
-set(handle(dialog.btnApply, 'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
-set(handle(dialog.btnOK, 'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
+% set(dialog.lblDocumentation, 'MouseClickedCallback', @documenationLableClicked);
 
-dialog.setTitle(getfullname(gcbh));
+set(handle(dialog.lblDocumentation, 'CallbackProperties'), 'MouseClickedCallback',    @documenationLableClicked);
+set(handle(dialog.btnOK,            'CallbackProperties'), 'ActionPerformedCallback', @okButtonClicked);
+set(handle(dialog.btnHelp,          'CallbackProperties'), 'ActionPerformedCallback', @helpButtonClicked);
+set(handle(dialog.btnApply,         'CallbackProperties'), 'ActionPerformedCallback', @applyButtonClicked);
+
+dialog.setBlockPath(getfullname(gcbh));
 dialog.setLocationRelativeTo([]);
 
 if numel(varargin) == 0 || varargin{1}
@@ -40,14 +44,15 @@ end
 
 end
 
-
-function applyButtonClicked(hObject, ~)
+function documenationLableClicked(hObject, ~)
 
 dialog = hObject.getRootPane().getParent();
-applyDialog(dialog);            
 
+if dialog.htmlFile.isFile()
+  web(char(dialog.htmlFile.getAbsolutePath()));
 end
 
+end
 
 function okButtonClicked(hObject, ~)
 
@@ -57,4 +62,15 @@ dialog.close();
 
 end
 
+function helpButtonClicked(~, ~)
 
+FMIKit.showBlockDialogHelp();
+
+end
+
+function applyButtonClicked(hObject, ~)
+
+dialog = hObject.getRootPane().getParent();
+applyDialog(dialog);            
+
+end

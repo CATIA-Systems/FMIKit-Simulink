@@ -48,17 +48,13 @@ namespace fmikit {
     };
 
     enum LogLevel {
-        DEBUG = 1,
-        INFO = 2,
-        WARNING = 3,
-        FATAL = 4
+        LOG_INFO    = 0,
+        LOG_WARNING = 1,
+        LOG_DISCARD = 2,
+        LOG_ERROR   = 3,
+        LOG_FATAL   = 4,
+        LOG_NONE    = 5,
     };
-
-	enum ErrorDiagnostics {
-		ErrorDiagnosticsIgnore,
-		ErrorDiagnosticsWarning,
-		ErrorDiagnosticsError
-	};
 
 	enum Type {
 		REAL,
@@ -67,9 +63,13 @@ namespace fmikit {
 		STRING
 	};
 
+	class FMU;
+
 	typedef unsigned int ValueReference;
 
-	typedef void MessageLogger(LogLevel level, const char* category, const char* message, va_list args);
+	typedef void MessageLogger(FMU *instance, LogLevel level, const char* category, const char* message);
+
+	typedef void FMICallLogger(FMU *instance, const char* message);
 
 	typedef void * allocateMemoryCallback(size_t count, size_t size);
 
@@ -106,11 +106,11 @@ namespace fmikit {
 
 	public:
 		static MessageLogger *m_messageLogger;
+		FMICallLogger *m_fmiCallLogger = nullptr;
 
 		static const char *platform();
-		static LogLevel logLevel() { return m_logLevel; }
-		static void setLogLevel(LogLevel level) { m_logLevel = level; }
-		static void setErrorDiagnostics(ErrorDiagnostics m_errorDiagnostics) { m_errorDiagnostics = m_errorDiagnostics; }
+		LogLevel logLevel() { return m_logLevel; }
+		void setLogLevel(LogLevel level) { m_logLevel = level; }
 
 		explicit FMU(const std::string &guid,
 			const std::string &modelIdentifier,
@@ -118,6 +118,8 @@ namespace fmikit {
 			const std::string &instanceName);
 
 		virtual ~FMU();
+
+        void *m_userData = nullptr;
 
 		double getTime() const { return m_time; }
 
@@ -139,25 +141,20 @@ namespace fmikit {
 		const std::string& instanceName() const { return m_instanceName; }
 		const std::string& fmuLocation() const { return m_fmuLocation; }
 
-		void setLogFMICalls(bool log) { m_logFMICalls = log; }
-
 	protected:
-		static LogLevel m_logLevel;
-
-		ErrorDiagnostics m_errorDiagnostics;
+        LogLevel m_logLevel;
 		HMODULE m_libraryHandle;
 		double m_time;
 		FMIVersion m_fmiVersion;
 		Kind m_kind;
-		bool m_logFMICalls;
 		bool m_stopTimeDefined;
 		double m_stopTime;
 
 		void logDebug(const char *message, ...);
 		void logInfo(const char *message, ...);
-		static void error(const char *message, ...);
+		void error(const char *message, ...);
 
-		static void logFMUMessage(LogLevel level, const char* category, const char* message, va_list args);
+		static void logFMUMessage(FMU *instance, LogLevel level, const char* category, const char* message, va_list args);
 
 		void logGetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]);
 		void logSetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]);

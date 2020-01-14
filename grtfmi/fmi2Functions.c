@@ -1,9 +1,19 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#endif
+
 #include <float.h>  /* for DBL_EPSILON */
-#include "fmi2Functions.h"
+#include <string.h> /* for strcpy(), strncmp() */
 
 #include "fmiwrapper.inc"
 
+#include "fmi2Functions.h"
+
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
+
+/* Path to the resources directory of the extracted FMU */
+const char *FMU_RESOURCES_DIR = NULL;
+
 
 int rtPrintfNoOp(const char *fmt, ...) {
 	return 0;  /* do nothing */
@@ -14,8 +24,34 @@ typedef struct {
 	const char *instanceName;
 	fmi2CallbackLogger logger;
 	fmi2ComponentEnvironment componentEnvironment;
+	ModelVariable modelVariables[N_MODEL_VARIABLES];
 } ModelInstance;
 
+static void setResourcePath(const char *uri) {
+
+	const char *scheme1 = "file:///";
+	const char *scheme2 = "file:/";
+	char *path;
+
+	if (!uri || FMU_RESOURCES_DIR) return;
+
+	if (strncmp(uri, scheme1, strlen(scheme1)) == 0) {
+        path = strdup(&uri[strlen(scheme1) - 1]);
+	} else if (strncmp(uri, scheme2, strlen(scheme2)) == 0) {
+        path = strdup(&uri[strlen(scheme2) - 1]);
+    } else {
+        return;
+    }
+
+#ifdef _WIN32
+	// strip any leading slashes
+	while (path[0] == '/') {
+		strcpy(path, &path[1]);
+	}
+#endif
+
+	FMU_RESOURCES_DIR = path;
+}
 
 /***************************************************
 Types for Common Functions
@@ -44,14 +80,20 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	fmi2Boolean visible,
 	fmi2Boolean loggingOn) {
 
+	ModelInstance *instance;
+	size_t len;
+
 	/* check GUID */
 	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
 		return NULL;
 	}
 
-	ModelInstance *instance = malloc(sizeof(ModelInstance));
+	/* set the path to the resources directory */
+	setResourcePath(fmuResourceLocation);
 
-	size_t len = strlen(instanceName);
+	instance = malloc(sizeof(ModelInstance));
+
+	len = strlen(instanceName);
 	instance->instanceName = malloc((len + 1) * sizeof(char));
 	strncpy((char *)instance->instanceName, instanceName, len + 1);
 	instance->logger = functions->logger;
@@ -62,9 +104,10 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	MODEL_INITIALIZE(instance->S);
 #else
 	MODEL_INITIALIZE();
-
 	instance->S = RT_MDL_INSTANCE;
 #endif
+
+	initializeModelVariables(instance->S, instance->modelVariables);
 
 	return instance;
 }
@@ -73,6 +116,8 @@ void fmi2FreeInstance(fmi2Component c) {
 	ModelInstance *instance = (ModelInstance *)c;
 	free((void *)instance->instanceName);
 	free(instance);
+    free((void *)FMU_RESOURCES_DIR);
+	FMU_RESOURCES_DIR = NULL;
 }
 
 /* Enter and exit initialization mode, terminate and reset */
@@ -110,15 +155,20 @@ fmi2Status fmi2Terminate(fmi2Component c) {
 
 fmi2Status fmi2Reset(fmi2Component c) {
 
+    ModelInstance *instance = (ModelInstance *)c;
+    
 #ifdef REUSABLE_FUNCTION
-	ModelInstance *instance = (ModelInstance *)c;
-
-	MODEL_TERMINATE(instance->S);
+    if (instance->S) {
+        MODEL_TERMINATE(instance->S);
+    }
 
 	instance->S = MODEL();
 	MODEL_INITIALIZE(instance->S);
 #else
-	MODEL_TERMINATE();
+    if (instance->S) {
+        MODEL_TERMINATE();
+    }
+    
 	MODEL_INITIALIZE();
 #endif
 
@@ -129,19 +179,25 @@ fmi2Status fmi2Reset(fmi2Component c) {
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
+		
+		index = vr[i] - 1;
 
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
 
-		switch (dtypeID) {
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_DOUBLE:
-			value[i] = *(REAL64_T *)vptr;
+			value[i] = *(REAL64_T *)v.address;
 			break;
 		case SS_SINGLE:
-			value[i] = *(REAL32_T *)vptr;
+			value[i] = *(REAL32_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -154,30 +210,37 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
-		switch (dtypeID) {
+		index = vr[i] - 1;
+
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_INT8:
-			value[i] = *(INT8_T *)vptr;
+			value[i] = *(INT8_T *)v.address;
 			break;
 		case SS_UINT8:
-			value[i] = *(UINT8_T *)vptr;
+			value[i] = *(UINT8_T *)v.address;
 			break;
 		case SS_INT16:
-			value[i] = *(INT16_T *)vptr;
+			value[i] = *(INT16_T *)v.address;
 			break;
 		case SS_UINT16:
-			value[i] = *(UINT16_T *)vptr;
+			value[i] = *(UINT16_T *)v.address;
 			break;
 		case SS_INT32:
-			value[i] = *(INT32_T *)vptr;
+			value[i] = *(INT32_T *)v.address;
 			break;
 		case SS_UINT32:
-			value[i] = *(UINT32_T *)vptr;
+			value[i] = *(UINT32_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -190,15 +253,22 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
-		switch (dtypeID) {
+		index = vr[i] - 1;
+
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_BOOLEAN:
-			value[i] = *(BOOLEAN_T *)vptr;
+			value[i] = *(BOOLEAN_T *)v.address;
 			break;
 		default:
 			return fmi2Error;
@@ -213,18 +283,25 @@ fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
-		switch (dtypeID) {
+		index = vr[i] - 1;
+
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_DOUBLE:
-			*((REAL64_T *)vptr) = value[i];
+			*((REAL64_T *)v.address) = value[i];
 			break;
 		case SS_SINGLE:
-			*((REAL32_T *)vptr) = value[i];
+			*((REAL32_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -237,30 +314,37 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
-		switch (dtypeID) {
+		index = vr[i] - 1;
+
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_INT8:
-			*((INT8_T *)vptr) = value[i];
+			*((INT8_T *)v.address) = value[i];
 			break;
 		case SS_UINT8:
-			*((UINT8_T *)vptr) = value[i];
+			*((UINT8_T *)v.address) = value[i];
 			break;
 		case SS_INT16:
-			*((INT16_T *)vptr) = value[i];
+			*((INT16_T *)v.address) = value[i];
 			break;
 		case SS_UINT16:
-			*((UINT16_T *)vptr) = value[i];
+			*((UINT16_T *)v.address) = value[i];
 			break;
 		case SS_INT32:
-			*((INT32_T *)vptr) = value[i];
+			*((INT32_T *)v.address) = value[i];
 			break;
 		case SS_UINT32:
-			*((UINT32_T *)vptr) = value[i];
+			*((UINT32_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -273,15 +357,22 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	BuiltInDTypeId dtypeID = -1;
-	size_t i;
+	size_t i, index;
+	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
-		void *vptr = getScalarVariable(instance->S, vr[i], &dtypeID);
 
-		switch (dtypeID) {
+		index = vr[i] - 1;
+
+		if (index >= N_MODEL_VARIABLES) {
+			return fmi2Error;
+		}
+
+		v = instance->modelVariables[index];
+
+		switch (v.dtypeID) {
 		case SS_BOOLEAN:
-			*((BOOLEAN_T *)vptr) = value[i];
+			*((BOOLEAN_T *)v.address) = value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -353,21 +444,27 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
 	ModelInstance *instance = (ModelInstance *)c;
+	const char *errorStatus;
 
-#ifndef DISCRETE
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
-	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON) {
+#ifdef rtmGetT
+	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON)
 #endif
+	{
+
+#ifdef REUSABLE_FUNCTION
 		MODEL_STEP(instance->S);
-		const char *errorStatus = rtmGetErrorStatus(instance->S);
+#else
+        MODEL_STEP();
+#endif
+		errorStatus = rtmGetErrorStatus(instance->S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
 		}
-#ifndef DISCRETE
+
 	}
-#endif
 
 	return fmi2OK;
 }

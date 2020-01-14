@@ -6,11 +6,11 @@ if isempty(userData)
     return
 end
 
-if strcmp(userData.fmiKitVersion, '2.4')
-    
-    disp(['Updating ' block ' that was imported with an older version of FMI Kit.'])
-    
-    userData.fmiKitVersion = '2.6';
+if any(strcmp(userData.fmiKitVersion, {'2.4', '2.6'}))
+
+    disp(['Updating ' getfullname(block) ' that was imported with an older version of FMI Kit.'])
+
+    userData.fmiKitVersion = '2.7';
     set_param(block, 'UserData', userData);
 
     % re-import the FMU
@@ -20,17 +20,44 @@ if strcmp(userData.fmiKitVersion, '2.4')
 
     model = bdroot(block);
     set_param(model, 'Dirty', 'on');
-    
+
     disp('Save the model to apply the changes.')
 
     userData = get_param(block, 'UserData');
+
 end
 
+if ~isfield(userData, 'relativeTolerance')
+    disp(['Adding userData.relativeTolerance to ' getfullname(block)])
+    userData.relativeTolerance = '0';
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
 
-if ~isfield(userData, 'directInput')
-    disp(['adding userData.directInput to ' block])
-    userData.directInput = false;
-    userData.parameters = strrep(userData.parameters, 'logical(',  'false logical(');
+if ~isfield(userData, 'logFMICalls')
+    disp(['Adding userData.logFMICalls to ' getfullname(block)])
+    userData.logFMICalls = false;
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logLevel')
+    disp(['Adding userData.logLevel to ' getfullname(block)])
+    userData.logLevel = 0;
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logFile')
+    disp(['Adding userData.logFile to ' getfullname(block)])
+    userData.logFile = '';
+    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
+    save_system
+end
+
+if ~isfield(userData, 'logToFile')
+    disp(['Adding userData.logToFile to ' getfullname(block)])
+    userData.logToFile = false;
     set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
     save_system
 end

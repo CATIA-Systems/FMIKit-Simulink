@@ -1,4 +1,4 @@
-function export_fmus(varargin)
+function test_rtwsfcnfmi(varargin)
 
 % compile timesthree.c
 mex timesthree.c

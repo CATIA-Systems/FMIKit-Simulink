@@ -11,13 +11,15 @@ git clone https://github.com/CATIA-Systems/FMIKit
 
 ### Build fmikit.jar
 
-Change into the `FMIKit` directory and run
+To build the `fmikit.jar` that contains the block dialog:
 
-```
-mvn -f Java/pom.xml install
-```
-
-to build the `fmikit.jar` that contains the block dialog.
+- open `Java` in IntelliJ
+- in `File > Project Structure` select `Project SDK = 1.6` and `Project language level = 6`
+- in `Artifacts` select `Add (+) > JAR > Empty`
+- change `Name` to `fmikit` and `Output directory` to the project root
+- add `compile output` to `fmikit.jar`
+- in `File > Settings > Editor > GUI Designer` set `Generate GUI into = Binary class files` and check `Automatically copy form runtime classes to output directory`
+- select `Build > Build Artifacts... > fmikit > Build`
 
 ## Compile the generic S-function
 
@@ -60,11 +62,3 @@ Prerequisites: [CMake](https://cmake.org)
 ## Debugging the block dialog
 
 TODO
-
-## Building the app installer
-
-- download & extract the zip file
-- run build.bat
-- copy sfun_fmurun.mexa64
-- build the app installer project
-- rename the app installer (e.g. `FMIKit-2.6-alpha.2.mlappinstall`)

@@ -12,10 +12,16 @@
 #include <wininet.h>
 #endif
 
+#include <stdio.h>
+#include <stdarg.h>
 #include <string>
 
 extern "C" {
 #include "simstruc.h"
+
+#ifdef GRTFMI
+extern const char *FMU_RESOURCES_DIR;
+#endif
 }
 
 #include "FMU1.h"
@@ -33,8 +39,10 @@ enum Parameter {
 	guidParam,
 	modelIdentifierParam,
 	unzipDirectoryParam,
-	logLevelParam,
-	errorDiagnosticsParam,
+    debugLoggingParam,
+    logFMICallsParam,
+    logLevelParam,
+    logFileParam,
 	relativeToleranceParam,
 	sampleTimeParam,
 	offsetTimeParam,
@@ -46,11 +54,9 @@ enum Parameter {
 	stringStartVRsParam,
 	stringStartValuesParam,
 	inputPortWidthsParam,
-	directInputParam,
 	inputPortDirectFeedThroughParam,
 	inputPortTypesParam,
 	inputPortVariableVRsParam,
-	canInterpolateInputsParam,
 	outputPortWidthsParam,
 	outputPortTypesParam,
 	outputPortVariableVRsParam,
@@ -58,20 +64,31 @@ enum Parameter {
 
 };
 
-string getStringParam(SimStruct *S, int index)
-{
-	auto pa = ssGetSFcnParam(S, index);
-	auto data = (char *)mxGetData(pa);
-	auto lendata = mxGetNumberOfElements(pa);
+static string getStringParam(SimStruct *S, int index) {
 
-	size_t buflen = mxGetN(pa) * sizeof(mxChar) + 1;
-	auto str = (char *)mxMalloc(buflen);
-	auto status = mxGetString(pa, str, buflen);
+	const mxArray *pa = ssGetSFcnParam(S, index);
 
-	string cppstr(str);
+	auto n = mxGetN(pa);
+	auto m = mxGetM(pa);
 
-	mxFree(str);
+	// TODO: assert m == 1
 
+	if (n < 1) return "";
+
+	auto data = static_cast<const mxChar*>(mxGetData(pa));
+
+	if (!data) return "";
+
+	auto cstr = static_cast<char *>(mxMalloc(n));
+
+	// convert real_T to ASCII char
+	for (int i = 0; i < n; i++) {
+		// TODO: assert 0 <= data[i] <= 127
+		cstr[i] = data[i];
+	}
+
+	string cppstr(cstr, n);
+	mxFree(cstr);
 	return cppstr;
 }
 
@@ -79,7 +96,7 @@ static string fmiVersion(SimStruct *S) {
 	return getStringParam(S, fmiVersionParam);
 }
 
-inline fmikit::Kind runAsKind(SimStruct *S) { return static_cast<fmikit::Kind>( static_cast<int>( mxGetScalar( ssGetSFcnParam(S, runAsKindParam) ) ) ); }
+static fmikit::Kind runAsKind(SimStruct *S) { return static_cast<fmikit::Kind>(static_cast<int>( mxGetScalar( ssGetSFcnParam(S, runAsKindParam) ) ) ); }
 
 static string guid(SimStruct *S) {
 	return getStringParam(S, guidParam);
@@ -93,25 +110,48 @@ static string unzipDirectory(SimStruct *S) {
 	return getStringParam(S, unzipDirectoryParam);
 }
 
-inline fmikit::LogLevel logLevel(SimStruct *S) { return static_cast<fmikit::LogLevel>(static_cast<int>(mxGetScalar(ssGetSFcnParam(S, logLevelParam )))); }
-
-static string errorDiagnostics(SimStruct *S) {
-	return getStringParam(S, errorDiagnosticsParam);
+static bool debugLogging(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, debugLoggingParam));
 }
 
-inline double relativeTolerance(SimStruct *S) { return mxGetScalar(ssGetSFcnParam(S, relativeToleranceParam)); }
+static bool logFMICalls(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, logFMICallsParam));
+}
 
-inline double sampleTime(SimStruct *S) { return mxGetScalar(ssGetSFcnParam(S, sampleTimeParam)); }
+static fmikit::LogLevel logLevel(SimStruct *S) {
+    int level = static_cast<int>(mxGetScalar(ssGetSFcnParam(S, logLevelParam)));
+    return static_cast<fmikit::LogLevel>(level);
+}
 
-inline double offsetTime(SimStruct *S) { return mxGetScalar(ssGetSFcnParam(S, offsetTimeParam)); }
+static string logFile(SimStruct *S) {
+    return getStringParam(S, logFileParam);
+}
+
+static double relativeTolerance(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, relativeToleranceParam));
+}
+
+static double sampleTime(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, sampleTimeParam));
+}
+
+static double offsetTime(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, offsetTimeParam));
+}
 
 // number of continuous states
-inline int nx(SimStruct *S) { return static_cast<int>(mxGetScalar(ssGetSFcnParam(S, nxParam))); }
+static int nx(SimStruct *S) {
+    return static_cast<int>(mxGetScalar(ssGetSFcnParam(S, nxParam)));
+}
 
 // number of zero-crossings
-inline int nz(SimStruct *S) { return static_cast<int>(mxGetScalar(ssGetSFcnParam(S, nzParam))); }
+static int nz(SimStruct *S) {
+    return static_cast<int>(mxGetScalar(ssGetSFcnParam(S, nzParam)));
+}
 
-inline int nScalarStartValues(SimStruct *S) { return mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam)); }
+static int nScalarStartValues(SimStruct *S) {
+    return mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam));
+}
 
 static int inputPortWidth(SimStruct *S, int index) {
 	auto portWidths = static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, inputPortWidthsParam)));
@@ -120,10 +160,6 @@ static int inputPortWidth(SimStruct *S, int index) {
 
 static bool inputPortDirectFeedThrough(SimStruct *S, int index) {
 	return static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)))[index] != 0;
-}
-
-static bool canInterpolateInputs(SimStruct *S) {
-	return static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, canInterpolateInputsParam)))[0] != 0;
 }
 
 // number of input ports
@@ -165,10 +201,6 @@ inline real_T scalarValue(SimStruct *S, Parameter parameter, int index) {
 	return static_cast<real_T *>(mxGetData(param))[index];
 }
 
-static bool directInput(SimStruct *S) {
-	return static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, directInputParam)))[0] != 0;
-}
-
 static int outputPortWidth(SimStruct *S, int index) {
 	auto portWidths = static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, outputPortWidthsParam)));
 	return static_cast<int>(portWidths[index]);
@@ -181,48 +213,69 @@ template<typename T> T *component(SimStruct *S) {
 	return dynamic_cast<T *>(fmu);
 }
 
-static void logMessage(LogLevel level, const char* category, const char* message, va_list args) {
-	char buf[MAX_MESSAGE_SIZE];
-	vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
-	strncat(buf, "\n", MAX_MESSAGE_SIZE);
-	ssPrintf(buf);
+static void logCall(SimStruct *S, const char* message) {
+
+    FILE *logfile = nullptr;
+
+	void **p = ssGetPWork(S);
+
+    if (p) {
+        logfile = static_cast<FILE *>(p[1]);
+    }
+
+    if (logfile) {
+        fputs(message, logfile);
+        fputs("\n", logfile);
+        fflush(logfile);
+    } else {
+        ssPrintf(message);
+        ssPrintf("\n");
+    }
 }
 
+static void logFMUMessage(FMU *instance, LogLevel level, const char* category, const char* message) {
+
+    if (instance && instance->m_userData) {
+        SimStruct *S = static_cast<SimStruct *>(instance->m_userData);
+        logCall(S, message);
+    }
+}
+
+static void logFMICall(FMU *instance, const char* message) {
+
+	if (instance && instance->m_userData) {
+		SimStruct *S = static_cast<SimStruct *>(instance->m_userData);
+		logCall(S, message);
+	}
+}
+
+/* log mdl*() and fmi*() calls */
 static void logDebug(SimStruct *S, const char* message, ...) {
 
-	va_list args;
-	va_start(args, message);
+    if (logFMICalls(S)) {
+        va_list args;
+        va_start(args, message);
+        char buf[MAX_MESSAGE_SIZE];
+        vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
+        va_end(args);
 
-	if (logLevel(S) <= DEBUG) {
-		char buf[MAX_MESSAGE_SIZE];
-		vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
-		strncat(buf, "\n", MAX_MESSAGE_SIZE);
-		ssPrintf(buf);
-	}
-
-	va_end(args);
+        logCall(S, buf);
+    }
 }
 
-static void setInput(SimStruct *S) {
+static void setInput(SimStruct *S, bool direct) {
 
 	auto fmu = component<FMU>(S);
-
-	const auto feedThrough = directInput(S);
-
-	// don't apply the delayed input at the first step
-	if (!feedThrough && ssGetT(S) == ssGetTStart(S)) {
-		return;
-	}
-
-	auto preu = ssGetRWork(S) + 2 * nz(S); // previous inputs
 
 	int iu = 0;
 
 	for (int i = 0; i < nu(S); i++) {
 
-		auto type  = variableType(S, inputPortTypesParam, i);
+		if (direct && !inputPortDirectFeedThrough(S, i)) continue;
 
-		const void *y = feedThrough ? ssGetInputPortSignal(S, i) : nullptr;
+		auto type = variableType(S, inputPortTypesParam, i);
+
+		const void *y = ssGetInputPortSignal(S, i);
 
 		for (int j = 0; j < inputPortWidth(S, i); j++) {
 
@@ -231,13 +284,13 @@ static void setInput(SimStruct *S) {
 			// set the input
 			switch (type) {
 			case Type::REAL:
-				fmu->setReal(vr, feedThrough ? static_cast<const real_T*>(y)[j] : preu[iu]);
+				fmu->setReal(vr, static_cast<const real_T*>(y)[j]);
 				break;
 			case Type::INTEGER:
-				fmu->setInteger(vr, feedThrough ? static_cast<const int32_T*>(y)[j] : preu[iu]);
+				fmu->setInteger(vr, static_cast<const int32_T*>(y)[j]);
 				break;
 			case Type::BOOLEAN:
-				fmu->setBoolean(vr, feedThrough ? static_cast<const boolean_T*>(y)[j] : preu[iu]);
+				fmu->setBoolean(vr, static_cast<const boolean_T*>(y)[j]);
 				break;
 			default:
 				break;
@@ -245,48 +298,6 @@ static void setInput(SimStruct *S) {
 
 			iu++;
 		}
-	}
-
-}
-
-/* Set the input derivatives for all real input ports with direct feed-through */
-static void setInputDerivatives(SimStruct *S, double h) {
-
-	//if (h <= 0) {
-	//	return;
-	//}
-
-	auto slave = component<Slave>(S);
-
-	const real_T *preu = ssGetRWork(S) + 2 * nz(S);
-
-	int iu = 0;
-
-	for (int i = 0; i < nu(S); i++) {
-
-		if (!ssGetInputPortDirectFeedThrough(S, i)) {
-			continue;
-		}
-
-		auto type  = variableType(S, inputPortTypesParam, i);
-
-		if (type != fmikit::REAL) {
-			continue;
-		}
-
-		const real_T *u = ssGetInputPortRealSignal(S, i);
-
-		for (int j = 0; j < inputPortWidth(S, i); j++) {
-
-			auto vr = valueReference(S, inputPortVariableVRsParam, iu);
-
-			auto du = (u[j] - preu[iu]) / h;
-
-			slave->setRealInputDerivative(vr, 1, du);
-
-			iu++;
-		}
-
 	}
 
 }
@@ -368,10 +379,10 @@ static void setStartValues(SimStruct *S, FMU *fmu) {
 	auto buffer = static_cast<char *>(calloc(size, sizeof(char)));
 	auto value  = static_cast<char *>(calloc(n + 1, sizeof(char)));
 
-	if (mxGetString(pa, buffer, size) != 0) {
-		ssSetErrorStatus(S, "Failed to convert string parameters");
-		return;
-	}
+	//if (mxGetString(pa, buffer, size) != 0) {
+	//	ssSetErrorStatus(S, "Failed to convert string parameters");
+	//	return;
+	//}
 
 	for (int i = 0; i < m; i++) {
 
@@ -418,11 +429,17 @@ static void update(SimStruct *S) {
 		// Work around for the event handling in Dymola FMUs:
 		bool timeEvent = time >= nextEventTime;
 
-		if (timeEvent && logLevel(S) <= DEBUG) ssPrintf("Time event at t=%.16g\n", time);
+		if (timeEvent/* && logLevel(S) <= DEBUG*/) {
+			logDebug(S, "Time event at t=%.16g", time);
+			//ssPrintf("Time event at t=%.16g\n", time);
+		}
 
 		bool stepEvent = model->completedIntegratorStep();
 
-		if (stepEvent && logLevel(S) <= DEBUG) ssPrintf("Step event at t=%.16g\n", time);
+		if (stepEvent/* && logLevel(S) <= DEBUG*/) {
+			logDebug(S, "Step event at t=%.16g\n", time);
+			//ssPrintf("Step event at t=%.16g\n", time);
+		}
 
 		bool stateEvent = false;
 
@@ -435,7 +452,7 @@ static void update(SimStruct *S) {
 			// check for state events
 			for (int i = 0; i < nz(S); i++) {
 
-				bool rising = (prez[i] < 0 && z[i] >= 0) || (prez[i] == 0 && z[i] > 0);
+				bool rising  = (prez[i] < 0 && z[i] >= 0) || (prez[i] == 0 && z[i] > 0);
 				bool falling = (prez[i] > 0 && z[i] <= 0) || (prez[i] == 0 && z[i] < 0);
 
 				if (rising || falling) {
@@ -479,129 +496,148 @@ static void update(SimStruct *S) {
 
 }
 
+static void setErrorStatus(SimStruct *S, const char *message, ...) {
+	va_list args;
+	va_start(args, message);
+	static char msg[1024];
+	vsnprintf(msg, 1024, message, args);
+	ssSetErrorStatus(S, msg);
+	va_end(args);
+}
 
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
 static void mdlCheckParameters(SimStruct *S) {
 
-	logDebug(S, "\nmdlCheckParameters() called on %s\n", ssGetPath(S));
+	logDebug(S, "mdlCheckParameters() called on %s", ssGetPath(S));
 
 	if (!mxIsChar(ssGetSFcnParam(S, fmiVersionParam)) || (fmiVersion(S) != "1.0" && fmiVersion(S) != "2.0")) {
-        ssSetErrorStatus(S, "Parameter 1 (FMI version) must be one of '1.0' or '2.0'");
+        setErrorStatus(S, "Parameter %d (FMI version) must be one of '1.0' or '2.0'", fmiVersionParam + 1);
         return;
     }
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, runAsKindParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, runAsKindParam)) != 1 || (runAsKind(S) != MODEL_EXCHANGE && runAsKind(S) != CO_SIMULATION)) {
-        ssSetErrorStatus(S, "Parameter 2 (run as kind) must be one of 0 (= MODEL_EXCHANGE) or 1 (= CO_SIMULATION)");
+        setErrorStatus(S, "Parameter %d (run as kind) must be one of 0 (= MODEL_EXCHANGE) or 1 (= CO_SIMULATION)", runAsKindParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, guidParam))) {
-        ssSetErrorStatus(S, "Parameter 3 (GUID) must be a string");
+        setErrorStatus(S, "Parameter %d (GUID) must be a string", guidParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, modelIdentifierParam))) {
-        ssSetErrorStatus(S, "Parameter 4 (model identifier) must be a string");
+        setErrorStatus(S, "Parameter %d (model identifier) must be a string", modelIdentifierParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, unzipDirectoryParam))) {
-		ssSetErrorStatus(S, "Parameter 5 (unzip directory) must be a string");
+		setErrorStatus(S, "Parameter %d (unzip directory) must be a string", unzipDirectoryParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, logLevelParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, logLevelParam)) != 1 || (logLevel(S) != 1 && logLevel(S) != 2 && logLevel(S) != 3)) {
-        ssSetErrorStatus(S, "Parameter 6 (log level) must be one of 1 (= DEBUG), 2 (= INFO) or 3 (= WARNING)");
+    if (!mxIsNumeric(ssGetSFcnParam(S, debugLoggingParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, debugLoggingParam)) != 1) {
+        setErrorStatus(S, "Parameter %d (debug logging) must be a scalar", debugLoggingParam + 1);
         return;
     }
 
-	if (!mxIsChar(ssGetSFcnParam(S, errorDiagnosticsParam)) || (errorDiagnostics(S) != "ignore" && errorDiagnostics(S) != "warning" && errorDiagnostics(S) != "error")) {
-		ssSetErrorStatus(S, "Parameter 7 (error diagnostics) must be one of 'ignore', 'warning' or 'error'");
-		return;
-	}
+    if (!mxIsNumeric(ssGetSFcnParam(S, logFMICallsParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, logFMICallsParam)) != 1) {
+        setErrorStatus(S, "Parameter %d (log FMI calls) must be a scalar", logFMICallsParam + 1);
+        return;
+    }
+
+    if (!mxIsNumeric(ssGetSFcnParam(S, logLevelParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, logLevelParam)) != 1 ||
+		(logLevel(S) != 0 && logLevel(S) != 1 && logLevel(S) != 2 && logLevel(S) != 3 && logLevel(S) != 4 && logLevel(S) != 5)) {
+        setErrorStatus(S, "Parameter %d (log level) must be one of 0 (= info), 1 (= warning), 2 (= discard), 3 (= error), 4 (= fatal) or 5 (= none)", logLevelParam + 1);
+        return;
+    }
+
+    if (!mxIsChar(ssGetSFcnParam(S, logFileParam))) {
+        setErrorStatus(S, "Parameter %d (log file) must be a string", logFileParam + 1);
+        return;
+    }
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, relativeToleranceParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, relativeToleranceParam)) != 1) {
-        ssSetErrorStatus(S, "Parameter 8 (relative tolerance) must be numeric");
+        setErrorStatus(S, "Parameter %d (relative tolerance) must be numeric", relativeToleranceParam + 1);
         return;
     }
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, sampleTimeParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, sampleTimeParam)) != 1) {
-        ssSetErrorStatus(S, "Parameter 9 (sample time) must be numeric");
+        setErrorStatus(S, "Parameter %d (sample time) must be numeric", sampleTimeParam + 1);
         return;
     }
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, offsetTimeParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, offsetTimeParam)) != 1) {
-		ssSetErrorStatus(S, "Parameter 10 (offset time) must be numeric");
+		setErrorStatus(S, "Parameter %d (offset time) must be numeric", offsetTimeParam + 1);
 		return;
 	}
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, nxParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, nxParam)) != 1) {
-        ssSetErrorStatus(S, "Parameter 11 (number of continuous states) must be a scalar");
+        setErrorStatus(S, "Parameter %d (number of continuous states) must be a scalar", nxParam + 1);
         return;
     }
 
 	if (!mxIsNumeric(ssGetSFcnParam(S, nzParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, nzParam)) != 1) {
-        ssSetErrorStatus(S, "Parameter 12 (number of event indicators) must be a scalar");
+        setErrorStatus(S, "Parameter %d (number of event indicators) must be a scalar", nzParam + 1);
         return;
     }
 
 	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartTypesParam))) {
-    	ssSetErrorStatus(S, "Parameter 13 (scalar start value types) must be a double array");
+    	setErrorStatus(S, "Parameter %d (scalar start value types) must be a double array", scalarStartTypesParam + 1);
     	return;
     }
 
 	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartVRsParam))) {
-    	ssSetErrorStatus(S, "Parameter 14 (scalar start value references) must be a double array");
+    	setErrorStatus(S, "Parameter %d (scalar start value references) must be a double array", scalarStartVRsParam + 1);
     	return;
     }
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
-        ssSetErrorStatus(S, "The number of elements in parameter 13 (scalar start value references) and parameter 12 (scalar start value types) must be equal");
+        setErrorStatus(S, "The number of elements in parameter %d (scalar start value references) and parameter %d (scalar start value types) must be equal", scalarStartVRsParam + 1, scalarStartTypesParam + 1);
         return;
     }
 
 	// TODO: check VRS values!
 
 	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartValuesParam))) {
-        ssSetErrorStatus(S, "Parameter 15 (scalar start values) must be a double array");
+        setErrorStatus(S, "Parameter %d (scalar start values) must be a double array", scalarStartValuesParam + 1);
         return;
     }
 
-	if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam))) {
-        ssSetErrorStatus(S, "The number of elements in parameter 15 (scalar start values) and parameter 12 (scalar start value types) must be equal");
+	if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
+        setErrorStatus(S, "The number of elements in parameter %d (scalar start values) and parameter %d (scalar start value types) must be equal", scalarStartValuesParam + 1, scalarStartTypesParam + 1);
         return;
     }
 
 	if (!mxIsDouble(ssGetSFcnParam(S, stringStartVRsParam))) {
-        ssSetErrorStatus(S, "Parameter 16 (string start value references) must be a double array");
+        setErrorStatus(S, "Parameter %d (string start value references) must be a double array", stringStartVRsParam + 1);
         return;
     }
 
 	// TODO: check VRS values!
 
 	if (!mxIsChar(ssGetSFcnParam(S, stringStartValuesParam))) {
-        ssSetErrorStatus(S, "Parameter 17 (string start values) must be a char matrix");
+        setErrorStatus(S, "Parameter %d (string start values) must be a char matrix", stringStartValuesParam + 1);
         return;
     }
 
 	if (mxGetM(ssGetSFcnParam(S, stringStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, stringStartVRsParam))) {
-        ssSetErrorStatus(S, "The number of rows in parameter 17 (string start values) must be equal to the number of elements in parameter 15 (string start value references)");
+        setErrorStatus(S, "The number of rows in parameter %d (string start values) must be equal to the number of elements in parameter %d (string start value references)", stringStartValuesParam + 1, stringStartVRsParam + 1);
         return;
     }
 
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortWidthsParam))) {
-		ssSetErrorStatus(S, "Parameter 18 (input port widths) must be a double array");
+		setErrorStatus(S, "Parameter %d (input port widths) must be a double array", inputPortWidthsParam + 1);
 		return;
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortDirectFeedThroughParam))) {
-		ssSetErrorStatus(S, "Parameter 20 (input port direct feed through) must be a double array");
+		setErrorStatus(S, "Parameter %d (input port direct feed through) must be a double array", inputPortDirectFeedThroughParam + 1);
 		return;
 	}
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam))) {
-		ssSetErrorStatus(S, "The number of elements in parameter XX (input port direct feed through) must be equal to the number of elements in parameter XX (inport port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (input port direct feed through) must be equal to the number of elements in parameter %d (inport port widths)", inputPortDirectFeedThroughParam + 1, inputPortWidthsParam + 1);
 		return;
 	}
 
@@ -609,59 +645,54 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)); i++) {
 		if (inputPortWidth(S, i) < 1) {
-			ssSetErrorStatus(S, "Elements in parameter 18 (input port widths) must be >= 1");
+			setErrorStatus(S, "Elements in parameter %d (input port widths) must be >= 1", inputPortWidthsParam + 1);
 			return;
 		}
 		nu += inputPortWidth(S, i);
 	}
 
-	if (!mxIsDouble(ssGetSFcnParam(S, directInputParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, directInputParam)) != 1) {
-		ssSetErrorStatus(S, "Parameter 19 (direct input) must be a double scalar");
-		return;
-	}
-
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam))) {
-		ssSetErrorStatus(S, "Parameter 19 (direct input) must be a doulbe array with the same number of elements as parameter 18 (input port widths)");
+		setErrorStatus(S, "Parameter %d (input port direct feed through) must be a double array with the same number of elements as parameter %d (input port widths)", inputPortDirectFeedThroughParam + 1, inputPortWidthsParam + 1);
 		return;
 	}
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam))) {
-		ssSetErrorStatus(S, "The number of elements in parameter 20 (inport port direct feed through) must be equal to the number of elements in parameter 18 (inport port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (inport port direct feed through) must be equal to the number of elements in parameter %d (inport port widths)", inputPortDirectFeedThroughParam + 1, inputPortWidthsParam + 1);
 		return;
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortTypesParam))) {
-		ssSetErrorStatus(S, "Parameter 19 (inport variable types) must be a double array");
+		setErrorStatus(S, "Parameter %d (input port variable types) must be a double array", inputPortTypesParam + 1);
 		return;
 	}
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, inputPortTypesParam)); i++) {
 		auto v = static_cast<real_T *>(mxGetData(ssGetSFcnParam(S, inputPortTypesParam)))[i];
 		if (v != 0 && v != 1 && v != 2) {
-			ssSetErrorStatus(S, "Elements in parameter 19 (input port types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)");
+			setErrorStatus(S, "Elements in parameter %d (input port types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)", inputPortTypesParam + 1);
 			return;
 		}
 	}
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortTypesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam))) {
-		ssSetErrorStatus(S, "The number of elements in parameter 19 (inport port types) must be equal to the number of the elements in parameter 18 (inport port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (inport port types) must be equal to the number of the elements in parameter %d (inport port widths)", inputPortTypesParam + 1, inputPortWidthsParam + 1);
 		return;
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortVariableVRsParam))) {
-        ssSetErrorStatus(S, "Parameter 20 (inport variable value references) must be a double array");
+        setErrorStatus(S, "Parameter %d (input port value references) must be a double array", inputPortVariableVRsParam + 1);
         return;
     }
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortVariableVRsParam)) != nu) {
-		ssSetErrorStatus(S, "The number of elements in parameter 20 (inport variable value references) must be equal to the sum of the elements in parameter 18 (inport port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (input port value references) must be equal to the sum of the elements in parameter %d (inport port widths)", inputPortVariableVRsParam + 1, inputPortWidthsParam + 1);
 		return;
 	}
 
 	// TODO: check VRS values!
 
 	if (!mxIsDouble(ssGetSFcnParam(S, outputPortWidthsParam))) {
-		ssSetErrorStatus(S, "Parameter 21 (output port widths) must be a double array");
+		setErrorStatus(S, "Parameter %d (output port widths) must be a double array", outputPortWidthsParam + 1);
 		return;
 	}
 
@@ -669,51 +700,41 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam)); i++) {
 		if (outputPortWidth(S, i) < 1) {
-			ssSetErrorStatus(S, "Elements in parameter 21 (output port widths) must be >= 1");
+			setErrorStatus(S, "Elements in parameter %d (output port widths) must be >= 1", outputPortWidthsParam + 1);
 			return;
 		}
 		ny += outputPortWidth(S, i);
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, outputPortTypesParam))) {
-        ssSetErrorStatus(S, "Parameter 22 (output variable types) must be a double array");
+        setErrorStatus(S, "Parameter %d (output port types) must be a double array", outputPortTypesParam + 1);
         return;
     }
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, outputPortTypesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam))) {
-		ssSetErrorStatus(S, "The number of elements in parameter 22 (output port types) must be equal to the number of the elements in parameter 21 (output port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (output port types) must be equal to the number of the elements in parameter %d (output port widths)", outputPortTypesParam + 1, outputPortWidthsParam + 1);
 		return;
 	}
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam)); i++) {
 		auto v = variableType(S, outputPortTypesParam, i);
 		if (v != 0 && v != 1 && v != 2) { // TODO: check this
-			ssSetErrorStatus(S, "Elements in parameter 22 (output variable types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)");
+			setErrorStatus(S, "Elements in parameter %d (output port types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)", outputPortTypesParam + 1);
 			return;
 		}
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, outputPortVariableVRsParam))) {
-        ssSetErrorStatus(S, "Parameter 23 (output variable value references) must be a double array");
+        setErrorStatus(S, "Parameter %d (output variable value references) must be a double array", outputPortVariableVRsParam + 1);
         return;
     }
 
 	if (mxGetNumberOfElements(ssGetSFcnParam(S, outputPortVariableVRsParam)) != ny) {
-		ssSetErrorStatus(S, "The number of elements in parameter 23 (output variable value references) must be equal to the sum of the elements in parameter 21 (output port widths)");
+		setErrorStatus(S, "The number of elements in parameter %d (output variable value references) must be equal to the sum of the elements in parameter %d (output port widths)", outputPortVariableVRsParam + 1, outputPortWidthsParam + 1);
 		return;
 	}
 
 	// TODO: check VRS values!
-
-	//if (!mxIsLogical(ssGetSFcnParam(S, directInputParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, directInputParam)) != 1) {
-	//	ssSetErrorStatus(S, "Parameter 24 (direct input) must be a logical scalar");
-	//	return;
-	//}
-
-	if (!mxIsDouble(ssGetSFcnParam(S, canInterpolateInputsParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, canInterpolateInputsParam)) != 1) {
-		ssSetErrorStatus(S, "Parameter 25 (can interpolate inputs) must be a double scalar");
-		return;
-	}
 
 }
 #endif /* MDL_CHECK_PARAMETERS */
@@ -721,7 +742,7 @@ static void mdlCheckParameters(SimStruct *S) {
 
 static void mdlInitializeSizes(SimStruct *S) {
 
-	logDebug(S, "\nmdlInitializeSizes() called on %s\n", ssGetPath(S));
+	logDebug(S, "mdlInitializeSizes() called on %s", ssGetPath(S));
 
 	ssSetNumSFcnParams(S, numParams);
 
@@ -746,8 +767,8 @@ static void mdlInitializeSizes(SimStruct *S) {
 		ssSetInputPortRequiredContiguous(S, i, 1); // direct input signal access
 		DTypeId type = simulinkVariableType(S, inputPortTypesParam, i);
 		ssSetInputPortDataType(S, i, type);
-		ssSetInputPortDirectFeedThrough(S, i, directInput(S) || inputPortDirectFeedThrough(S, i)); // direct feed through
-		logDebug(S, "\nssSetInputPortDirectFeedThrough(S, %d, %d) called on %s\n", i, 1, ssGetPath(S));
+		ssSetInputPortDirectFeedThrough(S, i, inputPortDirectFeedThrough(S, i)); // direct feed through
+		logDebug(S, "ssSetInputPortDirectFeedThrough(S, %d, %d) called on %s", i, 1, ssGetPath(S));
 	}
 
 	if (!ssSetNumOutputPorts(S, ny(S))) return;
@@ -761,7 +782,7 @@ static void mdlInitializeSizes(SimStruct *S) {
 	ssSetNumSampleTimes(S, 1);
 	ssSetNumRWork(S, 2 * nz(S) + nuv(S)); // prez & z, preu
 	ssSetNumIWork(S, 0);
-	ssSetNumPWork(S, 1); // FMU
+	ssSetNumPWork(S, 2); // [FMU, logfile]
 	ssSetNumModes(S, 3); // [stateEvent, timeEvent, stepEvent]
 	ssSetNumNonsampledZCs(S, (runAsKind(S) == MODEL_EXCHANGE) ? nz(S) + 1 : 0);
 
@@ -774,7 +795,7 @@ static void mdlInitializeSizes(SimStruct *S) {
 
 static void mdlInitializeSampleTimes(SimStruct *S) {
 
-	logDebug(S, "\nmdlInitializeSampleTimes() called on %s\n", ssGetPath(S));
+	logDebug(S, "mdlInitializeSampleTimes() called on %s", ssGetPath(S));
 
 	if (runAsKind(S) == CO_SIMULATION) {
 		ssSetSampleTime(S, 0, sampleTime(S));
@@ -791,12 +812,25 @@ static void mdlInitializeSampleTimes(SimStruct *S) {
 #if defined(MDL_START)
 static void mdlStart(SimStruct *S) {
 
-	logDebug(S, "\nmdlStart() called on %s\n", ssGetPath(S));
+    void **p = ssGetPWork(S);
+
+    if (p[1]) {
+        fclose(static_cast<FILE *>(p[1]));
+        p[1] = nullptr;
+    }
+
+    auto logfile = logFile(S);
+
+    if (!logfile.empty()) {
+        p[1] = fopen(logfile.c_str(), "w");
+    }
+
+	logDebug(S, "mdlStart() called on %s", ssGetPath(S));
 
 	auto instanceName = ssGetPath(S);
 	auto time = ssGetT(S);
 
-	FMU::m_messageLogger = logMessage;
+	FMU::m_messageLogger = logFMUMessage;
 
 	char libraryFile[1000];
 	getLibraryPath(S, libraryFile);
@@ -812,35 +846,33 @@ static void mdlStart(SimStruct *S) {
 	}
 #endif
 
-	void **p = ssGetPWork(S);
-
 	bool toleranceDefined = relativeTolerance(S) > 0;
 
-	auto level = logLevel(S);
+    bool loggingOn = debugLogging(S);
 
-	FMU::setLogLevel(level);
-
-	bool loggingOn = level == DEBUG;
-
-	ErrorDiagnostics diagnostics = ErrorDiagnosticsError;
-
-	if (errorDiagnostics(S) == "ignore") {
-		diagnostics = ErrorDiagnosticsIgnore;
-	} else if (errorDiagnostics(S) == "warning") {
-		diagnostics = ErrorDiagnosticsWarning;
-	}
+#ifdef GRTFMI
+	auto unzipdir = FMU_RESOURCES_DIR + string("/") + modelIdentifier(S);
+#else
+	auto unzipdir = unzipDirectory(S);
+#endif
 
 	if (fmiVersion(S) == "1.0") {
 
 		if (runAsKind(S) == CO_SIMULATION) {
-			auto slave = new FMU1Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, 0.0, loggingOn, calloc, free);
-			slave->setErrorDiagnostics(diagnostics);
+			auto slave = new FMU1Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName);
+            slave->m_userData = S;
+            slave->setLogLevel(logLevel(S));
+            if (logFMICalls(S)) slave->m_fmiCallLogger = logFMICall;
+            slave->instantiateSlave(unzipDirectory(S), 0, loggingOn);
 			setStartValues(S, slave);
 			slave->initializeSlave(time, true, ssGetTFinal(S));
 			p[0] = slave;
 		} else {
-			auto model = new FMU1Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, loggingOn, calloc, free);
-			model->setErrorDiagnostics(diagnostics);
+			auto model = new FMU1Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName);
+            model->m_userData = S;
+            model->setLogLevel(logLevel(S));
+            if (logFMICalls(S)) model->m_fmiCallLogger = logFMICall;
+            model->instantiateModel(loggingOn);
 			setStartValues(S, model);
 			model->setTime(time);
 			model->initialize(toleranceDefined, relativeTolerance(S));
@@ -850,16 +882,19 @@ static void mdlStart(SimStruct *S) {
 
 	} else {
 
-		FMU2 *fmu;
+		FMU2 *fmu = nullptr;
 
 		if (runAsKind(S) == CO_SIMULATION) {
-			fmu = new FMU2Slave(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
+			fmu = new FMU2Slave(guid(S), modelIdentifier(S), unzipdir, instanceName);
 		} else {
-			fmu = new FMU2Model(guid(S), modelIdentifier(S), unzipDirectory(S), instanceName, calloc, free);
+			fmu = new FMU2Model(guid(S), modelIdentifier(S), unzipdir, instanceName);
 		}
 
+        fmu->m_userData = S;
+        fmu->setLogLevel(logLevel(S));
+		if (logFMICalls(S)) fmu->m_fmiCallLogger = logFMICall;
+
 		fmu->instantiate(loggingOn);
-		fmu->setErrorDiagnostics(diagnostics);
 		setStartValues(S, fmu);
 		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, true, ssGetTFinal(S));
 		fmu->enterInitializationMode();
@@ -867,6 +902,7 @@ static void mdlStart(SimStruct *S) {
 
 		p[0] = fmu;
 	}
+
 }
 #endif /* MDL_START */
 
@@ -875,7 +911,7 @@ static void mdlStart(SimStruct *S) {
 #if defined(MDL_INITIALIZE_CONDITIONS)
 static void mdlInitializeConditions(SimStruct *S) {
 
-	logDebug(S, "\nmdlInitializeConditions() called on %s\n", ssGetPath(S));
+	logDebug(S, "mdlInitializeConditions() called on %s", ssGetPath(S));
 
 	auto model = component<Model>(S);
 
@@ -902,7 +938,7 @@ static void mdlInitializeConditions(SimStruct *S) {
 
 static void mdlOutputs(SimStruct *S, int_T tid) {
 
-	logDebug(S, "\nmdlOutputs() called on %s (t=%.16g, %s)\n", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
+	logDebug(S, "mdlOutputs() called on %s (t=%.16g, %s)", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
 
 	auto fmu = component<FMU>(S);
 
@@ -915,9 +951,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
 		if (model2 && model2->getState() == EventModeState) {
 
-			if (directInput(S)) {
-				setInput(S);
-			}
+			setInput(S, true);
 
 			do {
 				model2->newDiscreteStates();
@@ -931,7 +965,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 		model->setTime(ssGetT(S));
 		model->setContinuousStates(x, nx(S));
 
-		setInput(S);
+		setInput(S, true);
 
 		if (ssIsMajorTimeStep(S)) {
 			update(S);
@@ -942,14 +976,6 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 		auto slave = dynamic_cast<Slave *>(fmu);
 
 		if (h > 0) {
-
-			//setRecordedInput(S);
-			setInput(S);
-
-			if (!directInput(S) && canInterpolateInputs(S)) {
-				setInputDerivatives(S, h);
-			}
-
 			slave->doStep(h);
 		}
 	}
@@ -961,41 +987,9 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 #if defined(MDL_UPDATE)
 static void mdlUpdate(SimStruct *S, int_T tid) {
 
-	logDebug(S, "\nmdlUpdate() called on %s (t=%.16g, %s)\n", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
+	logDebug(S, "mdlUpdate() called on %s (t=%.16g, %s)", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
 
-	// record the inputs
-	real_T *preu = ssGetRWork(S) + 2 * nz(S);
-
-	int iu = 0;
-
-	for (int i = 0; i < nu(S); i++) {
-
-		auto type = variableType(S, inputPortTypesParam, i);
-
-		const void *u = ssGetInputPortSignal(S, i);
-
-		for (int j = 0; j < inputPortWidth(S, i); j++) {
-
-			auto vr = valueReference(S, inputPortVariableVRsParam, iu);
-
-			switch (type) {
-			case Type::REAL:
-				preu[iu] = static_cast<const real_T*>(u)[j];
-				break;
-			case Type::INTEGER:
-				preu[iu] = static_cast<const int32_T*>(u)[j];
-				break;
-			case Type::BOOLEAN:
-				preu[iu] = static_cast<const boolean_T*>(u)[j];
-				break;
-			default:
-				break;
-			}
-
-			iu++;
-		}
-	}
-
+	setInput(S, false);
 }
 #endif // MDL_UPDATE
 
@@ -1004,11 +998,13 @@ static void mdlUpdate(SimStruct *S, int_T tid) {
 #if defined(MDL_ZERO_CROSSINGS) && (defined(MATLAB_MEX_FILE) || defined(NRT))
 static void mdlZeroCrossings(SimStruct *S) {
 
-	logDebug(S, "\nmdlZeroCrossings() called on %s (t=%.16g, %s)\n", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
+	logDebug(S, "mdlZeroCrossings() called on %s (t=%.16g, %s)", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
 
 	auto model = component<Model>(S);
 
 	if (model) {
+
+		setInput(S, true);
 
 		auto z = ssGetNonsampledZCs(S);
 
@@ -1026,11 +1022,14 @@ static void mdlZeroCrossings(SimStruct *S) {
 #if defined(MDL_DERIVATIVES)
 static void mdlDerivatives(SimStruct *S) {
 
-	logDebug(S, "\nmdlDerivatives() called on %s (t=%.16g, %s) \n", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
+	logDebug(S, "mdlDerivatives() called on %s (t=%.16g, %s)", ssGetPath(S), ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
 
 	auto model = component<Model>(S);
 
 	if (model) {
+
+		setInput(S, true);
+
 		auto x = ssGetContStates(S);
 		auto dx = ssGetdX(S);
 
@@ -1043,7 +1042,7 @@ static void mdlDerivatives(SimStruct *S) {
 
 static void mdlTerminate(SimStruct *S) {
 
-	logDebug(S, "\nmdlTerminate() called on %s\n", ssGetPath(S));
+	logDebug(S, "mdlTerminate() called on %s", ssGetPath(S));
 
 	delete component<FMU>(S);
 }

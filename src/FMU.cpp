@@ -33,9 +33,6 @@ using namespace fmikit;
 
 MessageLogger * FMU::m_messageLogger = nullptr;
 
-LogLevel FMU::m_logLevel = INFO;
-
-
 const char* FMU::platform() {
 #ifdef _WIN32
 
@@ -81,10 +78,8 @@ static std::string lastSystemErrorMessage() {
 
 
 FMU::FMU(const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName) :
-	m_errorDiagnostics(ErrorDiagnosticsError),
 	m_libraryHandle(nullptr),
 	m_time(0.0),
-	m_logFMICalls(false),
 	m_stopTimeDefined(false),
 	m_stopTime(0.0),
 	m_guid(guid),
@@ -164,22 +159,14 @@ FMU::~FMU() {
 }
 
 void FMU::logDebug(const char *message, ...) {
-	if (!m_logFMICalls) return;
-	va_list args;
-	va_start(args, message);
-	char buf[MAX_MESSAGE_SIZE];
-	vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
-	string s = instanceName() + ": " + buf;
-	m_messageLogger(DEBUG, nullptr, s.c_str(), args);
-	va_end(args);
-}
-
-void FMU::logInfo(const char *message, ...) {
-	if (m_logLevel > INFO) return;
-	va_list args;
-	va_start(args, message);
-	logFMUMessage(INFO, nullptr, message, args);
-	va_end(args);
+	if (m_fmiCallLogger) {
+		va_list args;
+		va_start(args, message);
+		char buf[MAX_MESSAGE_SIZE];
+		vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
+		m_fmiCallLogger(this, buf);
+		va_end(args);
+	}
 }
 
 void FMU::error(const char *message, ...) {
@@ -188,13 +175,17 @@ void FMU::error(const char *message, ...) {
 	char buf[MAX_MESSAGE_SIZE];
 	vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
 	cout << buf << endl;
-	logFMUMessage(FATAL, nullptr, message, args);
+	logFMUMessage(this, LOG_ERROR, nullptr, message, args);
 	va_end(args);
 	throw runtime_error(buf);
 }
 
-void FMU::logFMUMessage(LogLevel level, const char* category, const char* message, va_list args) {
-	if (level >= logLevel() && m_messageLogger) m_messageLogger(level, category, message, args);
+void FMU::logFMUMessage(FMU *instance, LogLevel level, const char* category, const char* message, va_list args) {
+	if (level >= instance->logLevel() && m_messageLogger) {
+		char buf[MAX_MESSAGE_SIZE];
+		vsnprintf(buf, MAX_MESSAGE_SIZE, message, args);
+		m_messageLogger(instance, level, category, buf);
+	}
 }
 
 // ValueReferenc array to debug text
@@ -213,19 +204,19 @@ static void appendDoubles(std::stringstream &ss, const double values[], size_t n
 }
 
 void FMU::logGetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]) {
-	if (m_logLevel > DEBUG) return;
-
-	std::stringstream ss;
-	ss << std::setprecision(16);
-	ss << functionName << "(vr=["; appendValueReferences(ss, vr, nvr); ss << "], nvr=" << nvr << "): value=["; appendDoubles(ss, value, nvr); ss << "]";
-	logDebug(ss.str().c_str());
+    if (m_fmiCallLogger) {
+        std::stringstream ss;
+        ss << std::setprecision(16);
+        ss << functionName << "(vr=["; appendValueReferences(ss, vr, nvr); ss << "], nvr=" << nvr << "): value=["; appendDoubles(ss, value, nvr); ss << "]";
+        logDebug(ss.str().c_str());
+    }
 }
 
 void FMU::logSetReal(const char *functionName, const ValueReference vr[], size_t nvr, const double value[]) {
-	if (m_logLevel > DEBUG) return;
-
-	std::stringstream ss;
-	ss << std::setprecision(16);
-	ss << functionName << "(vr=["; appendValueReferences(ss, vr, nvr); ss << "], nvr=" << nvr << ", value=["; appendDoubles(ss, value, nvr); ss << "])";
-	logDebug(ss.str().c_str());
+    if (m_fmiCallLogger) {
+        std::stringstream ss;
+        ss << std::setprecision(16);
+        ss << functionName << "(vr=["; appendValueReferences(ss, vr, nvr); ss << "], nvr=" << nvr << ", value=["; appendDoubles(ss, value, nvr); ss << "])";
+        logDebug(ss.str().c_str());
+    }
 }

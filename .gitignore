@@ -9,6 +9,10 @@
 *.lib
 *.pdb
 
+# help files
+*.html
+html/images/
+
 # MATLAB App Installers
 *.mlappinstall
 
@@ -23,8 +27,13 @@
 fmikit.jar
 *.class
 
+# CMake installation
+cmake-*/
+
 # CMake build directories
 build*/
+win32/
+win64/
 
 # Distribution files
 dist/

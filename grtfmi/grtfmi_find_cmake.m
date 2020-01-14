@@ -7,6 +7,23 @@ if ~isempty(command)
     return
 end
 
+% check for CMake in the parent folder
+[parent_folder, ~, ~] = fileparts(which(mfilename));
+[parent_folder, ~, ~] = fileparts(parent_folder);
+  
+if ispc
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'bin', 'cmake.exe'));
+elseif ismac
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'CMake.app', 'Contents', 'bin', 'cmake'));
+else
+    listing = dir(fullfile(parent_folder, 'cmake-*', 'bin', 'cmake'));
+end
+
+if ~isempty(listing)
+    command = fullfile(listing.folder, listing.name);
+    return
+end
+    
 % try the default command
 command = 'cmake';
 
@@ -28,10 +45,17 @@ if ispc
     if status == 0
         return
     end
+elseif ismac
+    command = '/usr/local/bin/cmake';
+    [status, ~] = system(command);
+    if status == 0
+        return
+    end
 end
 
 error(['Failed to run CMake. ' ...
-    'Install CMake (https://cmake.org/) and set the CMake command in ' ...
+    'Run <a href="matlab: grtfmi_install_cmake">grtfmi_install_cmake</a> to download and install CMake ' ...
+    'into the FMI Kit directory or install from <a href="https://cmake.org/">cmake.org</a> and set the cmake command in ' ...
     'Configuration Parameters > Code Generation > CMake Build > CMake Command ' ...
     'if the cmake executable is not on the path and it is not installed in the default location.'])
 
