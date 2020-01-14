@@ -1,3 +1,5 @@
+pr: none # don't build pull requests
+
 jobs:
 
 - job: win32
