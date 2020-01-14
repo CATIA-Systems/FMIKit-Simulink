@@ -6,11 +6,11 @@ if isempty(userData)
     return
 end
 
-if strcmp(userData.fmiKitVersion, '2.4')
-    
-    disp(['Updating ' block ' that was imported with an older version of FMI Kit.'])
-    
-    userData.fmiKitVersion = '2.6';
+if any(strcmp(userData.fmiKitVersion, {'2.4', '2.6'}))
+
+    disp(['Updating ' getfullname(block) ' that was imported with an older version of FMI Kit.'])
+
+    userData.fmiKitVersion = '2.7';
     set_param(block, 'UserData', userData);
 
     % re-import the FMU
@@ -20,19 +20,11 @@ if strcmp(userData.fmiKitVersion, '2.4')
 
     model = bdroot(block);
     set_param(model, 'Dirty', 'on');
-    
+
     disp('Save the model to apply the changes.')
 
     userData = get_param(block, 'UserData');
-end
 
-
-if ~isfield(userData, 'directInput')
-    disp(['Adding userData.directInput to ' getfullname(block)])
-    userData.directInput = false;
-    userData.parameters = strrep(userData.parameters, 'logical(',  'false logical(');
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
 end
 
 if ~isfield(userData, 'relativeTolerance')

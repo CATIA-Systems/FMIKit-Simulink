@@ -37,14 +37,16 @@ setSrcParam(mdl, 'CustomSource', sources);
 
 % libraries
 if ispc
-    winsdk = winqueryreg('HKEY_LOCAL_MACHINE', 'SOFTWARE\Microsoft\Microsoft SDKs\Windows', 'CurrentInstallFolder');
-    libdir = fullfile(winsdk, 'Lib');
-    if strcmp(computer('arch'), 'win64')
-        libdir = fullfile(libdir, 'x64');
+    try  % Windows SDK might not be installed
+        winsdk = winqueryreg('HKEY_LOCAL_MACHINE', 'SOFTWARE\Microsoft\Microsoft SDKs\Windows', 'CurrentInstallFolder');
+        libdir = fullfile(winsdk, 'Lib');
+        if strcmp(computer('arch'), 'win64')
+            libdir = fullfile(libdir, 'x64');
+        end
+        libraries  = ['"' fullfile(libdir, 'ShLwApi.Lib') '"'];
+        setSrcParam(mdl, 'SimUserLibraries', libraries);
+        setSrcParam(mdl, 'CustomLibrary', libraries);
     end
-    libraries  = ['"' fullfile(libdir, 'ShLwApi.Lib') '"'];
-    setSrcParam(mdl, 'SimUserLibraries', libraries);
-    setSrcParam(mdl, 'CustomLibrary', libraries);
 end
 
 end

@@ -73,38 +73,31 @@ The folder where the FMU is extracted. The path can be absolute or relative to t
 
 The sample time for the FMU block (use `-1` for inherited)
 
-### Error Diagnostics
+### Relative Tolerance
 
-Determines how to handle errors reported by the FMU
+The relative tolerance for a Co-Simulation FMU (use `0` for the default tolerance).
 
-| Option  | Description
-|---------|------------
-| Ignore  | The FMI status code is ignored
-| Warning | A Simulink error is raised when the FMI status is `Warning` or `Error`
-| Error   | An error is raised when the FMI status is `Error`
+### Log Level
 
-### Debug Logging
+The lowest status code that is logged.
 
-Enables the debug logging to the MATLAB console
+### Log File
+
+Redirect the log messages to this file if `Log to File` is checked.
+
+### Enable Debug Logging
+
+Enable the FMU's debug logging.
+
+### Log FMI calls
+
+Log all FMI calls to the FMU.
 
 ### Use Source Code
 
-If checked a source S-function `sfun_<model_name>.c` is generated from the FMU's source code which gets automatically compiled when the **Apply** or **OK** button is clicked. For FMI 1.0 this feature is only available for FMUs generated with Dymola 2016 or later.
+If checked a source S-function `sfun_<model_name>.c` is generated from the FMU's source code which gets automatically compiled when the `Apply` or `OK` button is clicked. For FMI 1.0 this feature is only available for FMUs generated with Dymola 2016 or later.
 
 With source code FMUs it is also possible to use FMUs in Rapid Accelerator mode and create target code for RSIM, GRT, ds1005, ds1006 Scalexio platforms.
-
-### Set model name
-
-Use the FMU's model name as the block name
-
-### Direct Input
-
-If checked `ssSetInputPortDirectFeedThrough(true)` is set for all input ports of the FMU and the value of the block's inputs `u` at `t+1` is applied to the input variables of the FMU at time `t`.
-This gives better results for FMUs that contain direct terms and do not support input interpolation.
-
-If not checked `ssSetInputPortDirectFeedThrough(true)` is only set for input ports whose input variables have output variables with a direct dependency.
-The derivative `der_u` for these input variables is set such that `u(t) + der_u(t) * step_size = u(t+1)` if the FMU supports input interpolation.
-Variables that are manually added to the block's output ports are assumed to depend on all input variables.
 
 ## MATLAB Commands
 
@@ -192,13 +185,22 @@ Use `FMIKit.setRelativeTolerance()` to set the relative tolerance for the embedd
 FMIKit.setRelativeTolerance(gcb, '1e-3')
 ```
 
-### Enable Direct Input
+## Calling sequence
 
-Use `FMIKit.setDirectInput()` to enable direct input:
+The S-function `sfun_fmurun` associated to the `FMU` block loads and connects the FMU to [Simulink's simulation loop](https://www.mathworks.com/help/simulink/sfg/how-the-simulink-engine-interacts-with-c-s-functions.html) by setting its inputs and retrieving its outputs.
+The S-function's `mdl*` callbacks in which the respective FMI functions are called depend on the interface type of the FMU and are described below.
 
-```
-FMIKit.setDirectInput(gcb, true)
-```
+### Co-Simulation calling sequence
+
+For Co-Simulation all input variables are set in [mdlUpdate](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) and all output variables are retrieved in [mdlOutputs](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+[Direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) is disabled for all input ports.
+
+### Model Exchange calling sequence
+
+For Model Exchange direct feedthrough is enabled for an input port if any output variable declares a dependency on the corresponding input variable in the `<ModelStructrue>`.
+If any internal variable is added to the outputs of the FMU block direct feedthrough is enabled for all input ports.
+Input variables with [direct feedthrough](https://www.mathworks.com/help/simulink/sfg/sssetinputportdirectfeedthrough.html) enabled are set in [mdlDerivatives](https://www.mathworks.com/help/simulink/sfg/mdlderivatives.html?searchHighlight=mdlDerivatives), [mdlZeroCrossings](https://www.mathworks.com/help/simulink/sfg/mdlzerocrossings.html) and  [mdlOutputs](https://www.mathworks.com/help/simulink/sfg/mdloutputs.html).
+In [mdlUpdate](https://www.mathworks.com/help/simulink/sfg/mdlupdate.html) all input variables are set.
 
 ## UserData struct
 
@@ -224,7 +226,6 @@ ud =
        setBlockName: 0
        functionName: 'sfun_fmurun'
          parameters: [1x252 char]
-        directInput: 0
 
 >> ud.outputPorts(2)
 
@@ -251,4 +252,3 @@ ans =
 | `useSourceCode`     | `bool`           | Compile the FMU from source code                                 |
 | `functionName`      | `char`           | Name of the S-function                                           |
 | `parameters`        | `char`           | Parameters for the S-function                                    |
-| `directInput`       | `bool`           | Use direct input                                                 |

@@ -32,7 +32,7 @@
   author="%<ModelAuthor>"
   %endwith
   version="%<ModelVersion>"
-  generationTool="Dassault Systemes FMI Kit for Simulink, ver. 2.6 (MATLAB %<Version>)"
+  generationTool="Dassault Systemes FMI Kit for Simulink, ver. 2.7 (MATLAB %<Version>)"
   %assign XMLdate = FEVAL("makeDateAndDoc", "%<OrigName>", %<ExportImage>, %<CopyModel>, %<LoadBinaryMEX>)
   generationDateAndTime="%<XMLdate>"
   %if BlockHierarchyNames

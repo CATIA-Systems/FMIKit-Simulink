@@ -155,10 +155,12 @@ jobs:
       cp FMIKit_blocks.slx  dist
       cp fmikit.jar         dist
       cp forms_rt.jar       dist
+      cp info.xml           dist
       cp LICENSE.txt        dist
       cp README.md          dist
       cp sfun_fmurun.mexa64 dist
       cp sfun_fmurun.cpp    dist
+      cp slblocks.m         dist
       cp swingx-1.6.jar     dist
       cd dist
       zip -r ../FMIKit-Simulink.zip *

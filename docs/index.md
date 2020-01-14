@@ -11,8 +11,9 @@ FMI Kit supports...
 - FMI 1.0 and 2.0
 - Model Exchange and Co-Simulation
 - binary and C code FMUs
-- MATLAB R2012b - R2019a
+- MATLAB R2012b - R2019b
 
+See the [changelog](changelog.html) for a list of changes in this version.  
 For updates visit the [project on GitHub](https://github.com/CATIA-Systems/FMIKit-Simulink).
 
 ### [FMU Import](fmu_import.html)

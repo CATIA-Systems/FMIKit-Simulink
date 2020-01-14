@@ -41,12 +41,11 @@ end
 for key = keys(ud.startValues)
     userData.startValues.put(...
       java.lang.String(key{1}), ...
-      java.lang.String(ud.startValues(key{1}))); 
+      java.lang.String(ud.startValues(key{1})));
 end
 
 userData.useSourceCode    = ud.useSourceCode;
 userData.functionName     = ud.functionName;
 userData.parameters       = ud.parameters;
-userData.directInput      = ud.directInput;
 
 end

@@ -11,7 +11,8 @@ shutil.copytree(os.path.join(repo, 'docs', 'images'), os.path.join(repo, 'html',
 # generate HTML files
 template = open(os.path.join(docs, 'template.html'), 'r').read()
 
-for filename, title in [('fmu_export', 'FMU Export'),
+for filename, title in [('changelog',  'Changelog'),
+                        ('fmu_export', 'FMU Export'),
                         ('fmu_import', 'FMU Import'),
                         ('index',      'FMI Kit'   )]:
 

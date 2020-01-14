@@ -48,8 +48,6 @@ public class UserData {
 	
 	public String functionName;
 
-	public boolean directInput = false;
-	
 	public static class Port {
 
 	    public Port() {}

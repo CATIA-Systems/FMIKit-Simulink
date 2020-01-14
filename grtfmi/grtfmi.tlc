@@ -60,12 +60,21 @@
     'Model author to be written to the model description';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Resources to copy';
+  rtwoptions(i).prompt        = 'Template directory';
   rtwoptions(i).type          = 'Edit';
   rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'FMUResources';
+  rtwoptions(i).tlcvariable   = 'FMUTemplateDir';
   rtwoptions(i).tooltip       = ...
-    'Files to copy to the resources directory of the FMU';
+    'Template directory with files and folders to be added to the FMU';
+
+  i = i + 1;
+  rtwoptions(i).prompt         = 'Add image of Simulink model';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'on';
+  rtwoptions(i).tlcvariable    = 'AddModelImage';
+  rtwoptions(i).makevariable   = '';
+  rtwoptions(i).tooltip        = ...
+    'Add an image of the Simulink model to the FMU (model.png)';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Include sources in FMU';

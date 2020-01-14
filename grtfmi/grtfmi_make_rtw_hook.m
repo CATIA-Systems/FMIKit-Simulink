@@ -10,7 +10,17 @@ switch hookMethod
         if exist('FMUArchive', 'dir')
             rmdir('FMUArchive', 's');
         end
-
+        
+        % create the archive directory (uncompressed FMU)
+        mkdir('FMUArchive');
+        
+        template_dir = get_param(gcs, 'FMUTemplateDir');
+        
+        % copy template files
+        if ~isempty(template_dir)
+            copyfile(template_dir, 'FMUArchive');
+        end
+        
         % remove fmiwrapper.inc for referenced models
         if ~strcmp(current_dir(end-11:end), '_grt_fmi_rtw')
             delete('fmiwrapper.inc');
@@ -23,6 +33,15 @@ switch hookMethod
 
         pathstr = which('grtfmi.tlc');
         [grtfmi_dir, ~, ~] = fileparts(pathstr);
+        
+        % add model.png
+        if strcmp(get_param(gcs, 'AddModelImage'), 'on')
+            % create an image of the model
+            print(['-s' modelName], '-dpng', fullfile('FMUArchive', 'model.png'));
+        else
+            % use the generic Simulink logo
+            copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
+        end
         
         command = get_param(modelName, 'CMakeCommand');
         command = grtfmi_find_cmake(command);
@@ -50,23 +69,6 @@ switch hookMethod
             end
         end
         
-        % copy resources
-        resources = get_param(gcs, 'FMUResources');
-        resources = regexp(strtrim(resources), '\s+', 'split');
-        if ~all(cellfun(@isempty, resources))
-            disp('### Copy resources')
-            for i = 1:numel(resources)
-                resource = resources{i};
-                disp(['Copying ' resource ' to resources'])
-                if isfile(resource)
-                    copyfile(resources{i}, fullfile('FMUArchive', 'resources'));
-                else
-                    [~, folder, ~] = fileparts(resource);
-                    copyfile(resource, fullfile('FMUArchive', 'resources', folder));
-                end
-            end
-        end
-
         disp('### Running CMake generator')
         
         % get model sources

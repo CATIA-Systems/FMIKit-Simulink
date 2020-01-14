@@ -35,7 +35,7 @@ public class FMUBlockDialog extends JDialog {
     private JLabel lblFmiVersion;
     private JLabel lblPlatforms;
     private JLabel lblModelName;
-    private JLabel lblDescription;
+    private JTextPane txtpnDescription;
     private JLabel lblGenerationTool;
     private JLabel lblGenerationDate;
     private JLabel lblContinuousStates;
@@ -55,7 +55,6 @@ public class FMUBlockDialog extends JDialog {
     private JCheckBox chckbxDebugLogging;
     private JComboBox cmbbxLogLevel;
     private JCheckBox chckbxUseSourceCode;
-    private JCheckBox chckbxDirectInput;
     private JLabel lblMessageIcon;
     private JLabel lblMessage;
     private JXTreeTable treeTable;
@@ -68,7 +67,7 @@ public class FMUBlockDialog extends JDialog {
     public JLabel lblDocumentation;
 
     public static boolean debugLogging = false;
-    public static final String FMI_KIT_VERSION = "2.6";
+    public static final String FMI_KIT_VERSION = "2.7";
     public static final int MODEL_EXCHANGE = 0;
     public static final int CO_SIMULATION = 1;
     public static HashMap<Double, FMUBlockDialog> dialogs = new HashMap<Double, FMUBlockDialog>();
@@ -86,7 +85,7 @@ public class FMUBlockDialog extends JDialog {
 
     public FMUBlockDialog() {
 
-        setMinimumSize(new Dimension(850, 600));
+        setMinimumSize(new Dimension(850, 650));
 
         setContentPane(contentPane);
 
@@ -166,11 +165,10 @@ public class FMUBlockDialog extends JDialog {
         variablesTree.setModel(null);
         outportsTree.setModel(null);
 
-        // disable the "Direct Input" when "Model Exchange" is selected
+        // disable the "Relative Tolerance" when "Model Exchange" is selected
         cmbbxRunAsKind.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 boolean isCoSimulation = cmbbxRunAsKind.getSelectedIndex() == 1;
-                chckbxDirectInput.setEnabled(isCoSimulation);
                 txtRelativeTolerance.setEnabled(isCoSimulation);
             }
         });
@@ -564,8 +562,6 @@ public class FMUBlockDialog extends JDialog {
         userData.functionName = userData.useSourceCode ? "sfun_" + getModelIdentifier() : "sfun_fmurun";
         userData.parameters = getSFunctionParameters();
 
-        userData.directInput = chckbxDirectInput.isSelected();
-
         return userData;
     }
 
@@ -604,7 +600,6 @@ public class FMUBlockDialog extends JDialog {
         chckbxDebugLogging.setSelected(userData.debugLogging);
         chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
-        chckbxDirectInput.setSelected(userData.directInput);
 
         // TODO: restore outports?
     }
@@ -804,6 +799,7 @@ public class FMUBlockDialog extends JDialog {
 
         boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
+        boolean isModelExchange = runAsKind == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
@@ -833,7 +829,11 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // relative tolerance
-        params.add("0");
+        if (isModelExchange) {
+            params.add("FMIKit.getSolverRelativeTolerance(bdroot(gcb))");
+        } else {
+            params.add(txtRelativeTolerance.getText());
+        }
 
         // sample time
         params.add(txtSampleTime.getText());
@@ -862,17 +862,30 @@ public class FMUBlockDialog extends JDialog {
         }
 
         if (generic) {
-            // input
-            params.add("[" + Util.join(inputPortWidths, " ") + "]"); // input port widths
-            params.add(chckbxDirectInput.isSelected() ? "1" : "0"); // direct input
-            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");  // input port direct feed through
-            params.add("[" + Util.join(inputPortTypes, " ") + "]");  // input port types
-            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");  // input port variable VRs
-            params.add(runAsKind == 1 && modelDescription.coSimulation.canInterpolateInputs ? "1" : "0");  // can interpolate inputs
 
-            // output
+            // input port widths
+            params.add("[" + Util.join(inputPortWidths, " ") + "]");
+
+            // input port direct feed through
+            if (isModelExchange) {
+                params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+            } else {
+                params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
+            }
+
+            // input port types
+            params.add("[" + Util.join(inputPortTypes, " ") + "]");
+
+            // input port variable VRs
+            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
+
+            // output port widths
             params.add("[" + Util.join(outportWidths, " ") + "]");
+
+            // output port types
             params.add("[" + Util.join(outportPortTypes, " ") + "]");
+
+            // output port variable VRs
             params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
         }
 
@@ -1159,18 +1172,12 @@ public class FMUBlockDialog extends JDialog {
 
         lblFmiVersion.setText(modelDescription.fmiVersion);
         lblModelName.setText(modelDescription.modelName);
-        String description = modelDescription.description;
-        // clip long descriptions so it does not break the layout
-        if (description != null && description.length() > 90) {
-            description = description.substring(0, 90) + "...";
-            lblDescription.setToolTipText(modelDescription.description);
-        }
-        lblDescription.setText(description);
         lblGenerationTool.setText(modelDescription.generationTool);
         lblGenerationDate.setText(modelDescription.generationDateAndTime);
         lblContinuousStates.setText(Integer.toString(modelDescription.numberOfContinuousStates));
         lblEventIndicators.setText(Integer.toString(modelDescription.numberOfEventIndicators));
         lblVariables.setText(Integer.toString(modelDescription.scalarVariables.size()));
+        txtpnDescription.setText(modelDescription.description);
 
         if (userData != null) {
 
@@ -1387,11 +1394,6 @@ public class FMUBlockDialog extends JDialog {
             w.println("#define INPUT_PORT_TYPES " + Util.join(inputPortTypes, ", "));
             w.println("#define INPUT_PORT_FEED_THROUGH " + Util.join(inputPortFeedThrough, ", "));
             w.println("#define INPUT_VARIABLE_VRS " + Util.join(inputVariableVRs, ", "));
-            if (chckbxDirectInput.isSelected()) {
-                w.println("#define DIRECT_INPUT 1");
-            } else if (cmbbxRunAsKind.getSelectedIndex() == CO_SIMULATION && modelDescription.coSimulation.canInterpolateInputs) {
-                w.println("#define SET_INPUT_DERIVATIVES 1");
-            }
         }
         w.println();
 
@@ -1528,7 +1530,7 @@ public class FMUBlockDialog extends JDialog {
         tabbedPane.setOpaque(false);
         panel3.add(tabbedPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
         final JPanel panel4 = new JPanel();
-        panel4.setLayout(new GridLayoutManager(13, 2, new Insets(15, 15, 15, 15), 15, 15));
+        panel4.setLayout(new GridLayoutManager(12, 2, new Insets(15, 15, 15, 15), 15, 15));
         panel4.setOpaque(false);
         tabbedPane.addTab("Overview", panel4);
         final JLabel label1 = new JLabel();
@@ -1546,8 +1548,6 @@ public class FMUBlockDialog extends JDialog {
         reloadButton = new JButton();
         reloadButton.setText("Reload");
         panel5.add(reloadButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(65, -1), null, 0, false));
-        final Spacer spacer2 = new Spacer();
-        panel4.add(spacer2, new GridConstraints(12, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(18, 14), null, 0, false));
         final JLabel label2 = new JLabel();
         label2.setText("Interface:");
         panel4.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(18, 16), null, 0, false));
@@ -1561,23 +1561,20 @@ public class FMUBlockDialog extends JDialog {
         label5.setText("Model name:");
         panel4.add(label5, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label6 = new JLabel();
-        label6.setText("Description:");
-        panel4.add(label6, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        label6.setText("Generation tool:");
+        panel4.add(label6, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label7 = new JLabel();
-        label7.setText("Generation tool:");
+        label7.setText("Generation date:");
         panel4.add(label7, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label8 = new JLabel();
-        label8.setText("Generation date:");
+        label8.setText("Continuous states:");
         panel4.add(label8, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label9 = new JLabel();
-        label9.setText("Continuous states:");
+        label9.setText("Event indicators:");
         panel4.add(label9, new GridConstraints(9, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label10 = new JLabel();
-        label10.setText("Event indicators:");
+        label10.setText("Variables:");
         panel4.add(label10, new GridConstraints(10, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label11 = new JLabel();
-        label11.setText("Variables:");
-        panel4.add(label11, new GridConstraints(11, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblFmiVersion = new JLabel();
         lblFmiVersion.setText("");
         panel4.add(lblFmiVersion, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -1587,24 +1584,21 @@ public class FMUBlockDialog extends JDialog {
         lblModelName = new JLabel();
         lblModelName.setText("");
         panel4.add(lblModelName, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        lblDescription = new JLabel();
-        lblDescription.setText("");
-        panel4.add(lblDescription, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblGenerationTool = new JLabel();
         lblGenerationTool.setText("");
-        panel4.add(lblGenerationTool, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblGenerationTool, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblGenerationDate = new JLabel();
         lblGenerationDate.setText("");
-        panel4.add(lblGenerationDate, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblGenerationDate, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblContinuousStates = new JLabel();
         lblContinuousStates.setText("");
-        panel4.add(lblContinuousStates, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblContinuousStates, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblEventIndicators = new JLabel();
         lblEventIndicators.setText("");
-        panel4.add(lblEventIndicators, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblEventIndicators, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblVariables = new JLabel();
         lblVariables.setText("");
-        panel4.add(lblVariables, new GridConstraints(11, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblVariables, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel6 = new JPanel();
         panel6.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         panel6.setOpaque(false);
@@ -1616,14 +1610,22 @@ public class FMUBlockDialog extends JDialog {
         defaultComboBoxModel1.addElement("Co-Simulation");
         cmbbxRunAsKind.setModel(defaultComboBoxModel1);
         panel6.add(cmbbxRunAsKind, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer3 = new Spacer();
-        panel6.add(spacer3, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-        final JLabel label12 = new JLabel();
-        label12.setText("Documentation:");
-        panel4.add(label12, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer2 = new Spacer();
+        panel6.add(spacer2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        final JLabel label11 = new JLabel();
+        label11.setText("Documentation:");
+        panel4.add(label11, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         lblDocumentation = new JLabel();
         lblDocumentation.setText("");
-        panel4.add(lblDocumentation, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel4.add(lblDocumentation, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        txtpnDescription = new JTextPane();
+        txtpnDescription.setEditable(false);
+        txtpnDescription.setOpaque(false);
+        txtpnDescription.setText("");
+        panel4.add(txtpnDescription, new GridConstraints(11, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(150, 50), null, 0, false));
+        final JLabel label12 = new JLabel();
+        label12.setText("Description:");
+        panel4.add(label12, new GridConstraints(11, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel7 = new JPanel();
         panel7.setLayout(new GridLayoutManager(1, 1, new Insets(10, 10, 10, 10), -1, -1));
         panel7.setOpaque(false);
@@ -1652,10 +1654,10 @@ public class FMUBlockDialog extends JDialog {
         addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
         addOutputButton.setText("Vector");
         panel9.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer3 = new Spacer();
+        panel9.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final Spacer spacer4 = new Spacer();
-        panel9.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-        final Spacer spacer5 = new Spacer();
-        panel9.add(spacer5, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel9.add(spacer4, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         addScalarOutputPortButton = new JButton();
         addScalarOutputPortButton.setHorizontalAlignment(2);
         addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
@@ -1671,8 +1673,8 @@ public class FMUBlockDialog extends JDialog {
         panel10.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), 5, -1));
         panel10.setOpaque(false);
         panel8.add(panel10, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        final Spacer spacer6 = new Spacer();
-        panel10.add(spacer6, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        final Spacer spacer5 = new Spacer();
+        panel10.add(spacer5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         btnMoveUp = new JButton();
         btnMoveUp.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-up.png")));
         btnMoveUp.setText("");
@@ -1694,13 +1696,13 @@ public class FMUBlockDialog extends JDialog {
         btnResetOutputs.setText("");
         panel10.add(btnResetOutputs, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         final JPanel panel11 = new JPanel();
-        panel11.setLayout(new GridLayoutManager(11, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel11.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
         panel11.setOpaque(false);
         tabbedPane.addTab("Advanced", panel11);
         txtUnzipDirectory = new JTextField();
         panel11.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        final Spacer spacer7 = new Spacer();
-        panel11.add(spacer7, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        final Spacer spacer6 = new Spacer();
+        panel11.add(spacer6, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label13 = new JLabel();
         label13.setText("Unzip directory:");
         panel11.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -1714,10 +1716,6 @@ public class FMUBlockDialog extends JDialog {
         chckbxUseSourceCode.setOpaque(false);
         chckbxUseSourceCode.setText("Use source code");
         panel11.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        chckbxDirectInput = new JCheckBox();
-        chckbxDirectInput.setOpaque(false);
-        chckbxDirectInput.setText("Direct input");
-        panel11.add(chckbxDirectInput, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel12 = new JPanel();
         panel12.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         panel12.setOpaque(false);
@@ -1732,8 +1730,8 @@ public class FMUBlockDialog extends JDialog {
         defaultComboBoxModel2.addElement("None");
         cmbbxLogLevel.setModel(defaultComboBoxModel2);
         panel12.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer8 = new Spacer();
-        panel12.add(spacer8, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        final Spacer spacer7 = new Spacer();
+        panel12.add(spacer7, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         chckbxDebugLogging = new JCheckBox();
         chckbxDebugLogging.setOpaque(false);
         chckbxDebugLogging.setText("Enable debug logging");
@@ -1770,4 +1768,5 @@ public class FMUBlockDialog extends JDialog {
     public JComponent $$$getRootComponent$$$() {
         return contentPane;
     }
+
 }
