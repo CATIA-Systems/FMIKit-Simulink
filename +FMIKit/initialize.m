@@ -56,6 +56,18 @@ if isempty(which('fmikit.ui.FMUBlockDialog'))
     msg = true;
 end
 
+% delete re-saved block library
+close_system('FMIKit_blocks', 0);
+library_file = fullfile(folder, 'FMIKit_blocks.slx');
+if exist(library_file, 'file')
+    delete(library_file);
+end
+
+% re-save block library for current release
+h = load_system('FMIKit_blocks_R2012b');
+save_system(h, library_file);
+close_system(h);
+
 % add repository information to avoid "fix" message in library browser
 if ~verLessThan('matlab', '8.4') % R2014b
   try
