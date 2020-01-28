@@ -444,21 +444,57 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	const char *errorStatus;
+	RT_MDL_TYPE *S = instance->S;
+	const char *errorStatus = NULL;
 
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
 #ifdef rtmGetT
-	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON)
+	while (rtmGetT(S) + STEP_SIZE < tNext + DBL_EPSILON)
 #endif
 	{
 
+#if NUM_TASKS > 1 // multitasking
+
 #ifdef REUSABLE_FUNCTION
-		MODEL_STEP(instance->S);
+		// step the model for the base sample time
+		MODEL_STEP(S, 0);
+
+		// step the model for any other sample times (subrates)
+		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+			if (rtmStepTask(S, i)) {
+				MODEL_STEP(S, i);
+			}
+			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+				rtmTaskCounter(S, i) = 0;
+			}
+		}
+#else
+		// step the model for the base sample time
+		MODEL_STEP(0);
+
+		// step the model for any other sample times (subrates)
+		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+			if (rtmStepTask(S, i)) {
+				MODEL_STEP(i);
+			}
+			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+				rtmTaskCounter(S, i) = 0;
+			}
+		}
+#endif
+
+#else // multitasking
+
+#ifdef REUSABLE_FUNCTION
+		MODEL_STEP(S);
 #else
         MODEL_STEP();
 #endif
-		errorStatus = rtmGetErrorStatus(instance->S);
+
+#endif // multitasking
+
+		errorStatus = rtmGetErrorStatus(S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
