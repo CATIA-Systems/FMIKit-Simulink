@@ -2,7 +2,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-#include <float.h>  /* for DBL_EPSILON */
+#include <float.h>  /* for DBL_EPSILON, FLT_MAX */
 #include <string.h> /* for strcpy(), strncmp() */
 
 #include "fmiwrapper.inc"
@@ -301,7 +301,11 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 			*((REAL64_T *)v.address) = value[i];
 			break;
 		case SS_SINGLE:
-			*((REAL32_T *)v.address) = value[i];
+			if (value[i] < -FLT_MAX || value[i] > FLT_MAX) {
+				// TODO: log this
+				return fmi2Error;
+			}
+			*((REAL32_T *)v.address) = (REAL32_T)value[i];
 			break;
 		default:
 			return fmi2Error;
