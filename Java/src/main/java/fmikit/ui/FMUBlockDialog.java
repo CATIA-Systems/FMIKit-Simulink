@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -1073,19 +1074,21 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // show model.png
-        ImageIcon modelImageIcon = null;
-
         try {
             File modelImageFile = new File(unzipdir, "model.png").getCanonicalFile();
             BufferedImage modelImage = ImageIO.read(modelImageFile);
-            modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
+            ImageIcon modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
+            lblModelImage.setEnabled(true);
+            lblModelImage.setIcon(modelImageIcon);
+            lblModelImage.setText(null);
+            String url = modelImageFile.toURI().toURL().toString();
+            lblModelImage.setToolTipText("<html><img src=\"" + url + "\"/></html>");
         } catch (IOException e) {
-            logError("Failed to load model.png.");
+            lblModelImage.setEnabled(false);
+            lblModelImage.setIcon(null);
+            lblModelImage.setText("no image available");
+            lblModelImage.setToolTipText(null);
         }
-
-        lblModelImage.setIcon(modelImageIcon);
-        lblModelImage.setText(modelImageIcon == null ? "no image available" : "");
-        lblModelImage.setEnabled(modelImageIcon != null);
 
         loadModelDescription();
     }
