@@ -454,7 +454,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 
 #ifdef rtmGetT
-	while (rtmGetT(S) + STEP_SIZE < tNext + DBL_EPSILON)
+	while (rtmGetT(S) + STEP_SIZE < tNext + 100 * DBL_EPSILON)
 #endif
 	{
 
