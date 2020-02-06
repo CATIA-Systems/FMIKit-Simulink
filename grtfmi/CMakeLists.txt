@@ -121,6 +121,7 @@ FILE(GLOB SHARED_SOURCES   "${RTW_DIR}/../slprj/grtfmi/_sharedutils/*.c")
 FILE(GLOB REFMODEL_SOURCES "${RTW_DIR}/../slprj/grtfmi/sldemo_mdlref_counter_bus/*.c")
 
 set(SOURCES
+  "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c"
   ${RTW_SOURCES}
   ${SHARED_SOURCES}
   ${REFMODEL_SOURCES}
