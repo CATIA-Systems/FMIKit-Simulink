@@ -158,7 +158,7 @@ typedef struct {
 
 /* R2019a defines the block parameters as extern */
 #ifndef rtmGetDefaultParam
-#define rtmGetDefaultParam(S) (&%<OrigName>_P)
+#define rtmGetDefaultParam(S) (&%<tParameters>)
 #endif
 
 %if reusableFunction
