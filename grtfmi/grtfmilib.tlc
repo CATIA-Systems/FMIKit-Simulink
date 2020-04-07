@@ -102,7 +102,7 @@
 %function VariableFMI2(record, variableName, dataName, vr, variableAttr, typeAttr) Output
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
   %assign fmiType      = GetFMIType(record)
-  %assign dtypeID      = LibGetRecordDataTypeId(record)
+  %assign dtypeID      = LibGetRecordContainerDataTypeId(record) 
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
