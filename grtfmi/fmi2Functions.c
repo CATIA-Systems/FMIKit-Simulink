@@ -127,6 +127,11 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	fmi2Real startTime,
 	fmi2Boolean stopTimeDefined,
 	fmi2Real stopTime) {
+
+	if (stopTimeDefined && stopTime <= startTime) {
+		return fmi2Error;
+	}
+
 	return fmi2OK;
 }
 
