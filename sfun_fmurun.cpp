@@ -896,7 +896,10 @@ static void mdlStart(SimStruct *S) {
 
 		fmu->instantiate(loggingOn);
 		setStartValues(S, fmu);
-		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, true, ssGetTFinal(S));
+
+		const auto stopTime = ssGetTFinal(S);  // can be -1
+		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime);
+
 		fmu->enterInitializationMode();
 		fmu->exitInitializationMode();
 
