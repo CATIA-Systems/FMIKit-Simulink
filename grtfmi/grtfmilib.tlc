@@ -93,6 +93,7 @@
   %endif
   %assign description = FEVAL("get_param", "%<block.BlockName>", "Description")
   %if !ISEMPTY(description)
+    %assign description = FEVAL("grtfmi_xml_encode", description)
     %assign attribute = " description=\"%<description>\""
   %endif
   %return attribute
@@ -114,6 +115,7 @@
   %if ISFIELD(record, "BlockName")
     %assign description = FEVAL("get_param", "%<record.BlockName>", "Description")
     %if !ISEMPTY(description)
+      %assign description = FEVAL("grtfmi_xml_encode", description)
       %assign variableAttr = "%<variableAttr> description=\"%<description>\""
     %endif
   %endif
@@ -212,6 +214,7 @@
   %if ISFIELD(record, "BlockName")
     %assign description = FEVAL("get_param", "%<record.BlockName>", "Description")
     %if !ISEMPTY(description)
+      %assign description = FEVAL("grtfmi_xml_encode", description)
       %assign variableAttr = "%<variableAttr> description=\"%<description>\""
     %endif
   %endif
