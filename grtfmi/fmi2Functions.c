@@ -3,6 +3,7 @@
 #endif
 
 #include <float.h>  /* for DBL_EPSILON, FLT_MAX */
+#include <math.h>   /* for fabs() */
 #include <string.h> /* for strcpy(), strncmp() */
 
 #include "fmiwrapper.inc"
