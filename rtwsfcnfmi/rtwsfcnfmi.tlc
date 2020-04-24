@@ -1,4 +1,4 @@
-%% SYSTLC: S-Function Target with Functional Mockup Interface (FMI) \
+%% SYSTLC: FMU based on RTW S-Function (Functional Mock-up Unit) \
 %%    TMF: none MAKE: make_rtw EXTMODE: no_ext_comm
 
 %% 
