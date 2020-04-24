@@ -837,11 +837,9 @@ static void mdlStart(SimStruct *S) {
 
 #ifdef _WIN32
 	if (!PathFileExists(libraryFile)) {
-#ifdef _WIN64
-		ssSetErrorStatus(S, "The current platform (Windows 64-bit) is not supported by the FMU");
-#else
-		ssSetErrorStatus(S, "The current platform (Windows 32-bit) is not supported by the FMU");
-#endif
+		static char errorMessage[1024];
+		snprintf(errorMessage, 1024, "Cannot find the FMU's platform binary %s for %s.", libraryFile, instanceName);
+		ssSetErrorStatus(S, errorMessage);
 		return;
 	}
 #endif
