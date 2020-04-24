@@ -457,10 +457,9 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	RT_MDL_TYPE *S = instance->S;
 	const char *errorStatus = NULL;
 
-	time_T tNext = currentCommunicationPoint + communicationStepSize;
-
 #ifdef rtmGetT
-    double epsilon = (1.0 + fabs(rtmGetT(S))) * 2 * DBL_EPSILON;
+	time_T tNext = currentCommunicationPoint + communicationStepSize;
+	double epsilon = (1.0 + fabs(rtmGetT(S))) * 2 * DBL_EPSILON;
 	
     while (rtmGetT(S) + STEP_SIZE < tNext + epsilon)
 #endif
