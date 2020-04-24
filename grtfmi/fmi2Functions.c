@@ -102,9 +102,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 #ifdef REUSABLE_FUNCTION
 	instance->S = MODEL();
-	MODEL_INITIALIZE(instance->S);
 #else
-	MODEL_INITIALIZE();
 	instance->S = RT_MDL_INSTANCE;
 #endif
 
@@ -137,6 +135,15 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 }
 
 fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
+
+	ModelInstance *instance = (ModelInstance *)c;
+
+#ifdef REUSABLE_FUNCTION
+	MODEL_INITIALIZE(instance->S);
+#else
+	MODEL_INITIALIZE();
+#endif
+
 	return fmi2OK;
 }
 
