@@ -43,11 +43,12 @@ switch hookMethod
             copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
         end
         
-        command = get_param(modelName, 'CMakeCommand');
-        command = grtfmi_find_cmake(command);
-        generator = get_param(modelName, 'CMakeGenerator');
-        source_code_fmu = get_param(modelName, 'SourceCodeFMU');
-        fmi_version = get_param(modelName, 'FMIVersion');
+        generator           = get_param(modelName, 'CMakeGenerator');
+        command             = get_param(modelName, 'CMakeCommand');
+        command             = grtfmi_find_cmake(command);
+        build_configuration = get_param(modelName, 'CMakeBuildConfiguration');
+        source_code_fmu     = get_param(modelName, 'SourceCodeFMU');
+        fmi_version         = get_param(modelName, 'FMIVersion');
         
         % copy extracted nested FMUs
         nested_fmus = find_system(modelName, 'ReferenceBlock', 'FMIKit_blocks/FMU');
@@ -106,7 +107,7 @@ switch hookMethod
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
-        status = system(['"' command '" --build . --config Release']);
+        status = system(['"' command '" --build . --config ' build_configuration]);
         assert(status == 0, 'Failed to build FMU');
 
         % copy the FMU to the working directory

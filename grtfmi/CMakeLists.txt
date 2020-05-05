@@ -243,6 +243,15 @@ add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_FILE_NAME:${MODEL}>
 )
 
+# debug info
+if (MSVC)
+  add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND
+    "${CMAKE_SOURCE_DIR}/copypdb.bat"
+    "$<TARGET_PDB_FILE:${MODEL}>"
+    "${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_PDB_FILE_NAME:${MODEL}>"
+  )
+endif()
+
 set (ARCHIVE_FILES modelDescription.xml binaries)
 
 # model.png
