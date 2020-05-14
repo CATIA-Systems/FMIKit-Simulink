@@ -119,6 +119,8 @@ target_include_directories(${MODEL_NAME} PRIVATE
   "${MATLAB_ROOT}/rtw/c/src"
 )
 
+target_link_libraries(${MODEL_NAME} ${CUSTOM_LIBRARY})
+
 # modelDescription.xml
 add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${RTW_DIR}/modelDescription.xml
