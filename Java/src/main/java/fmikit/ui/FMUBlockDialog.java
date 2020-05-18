@@ -816,20 +816,24 @@ public class FMUBlockDialog extends JDialog {
 
         params.add("FMIKit.getUnzipDirectory(gcb)");
 
-        // debug logging
-        params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
+        if (generic) {
+            // debug logging
+            params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
 
-        // log FMI calls
-        params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
+            // log FMI calls
+            params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
+        }
 
         // log level
         params.add(Integer.toString(cmbbxLogLevel.getSelectedIndex()));
 
-        // log file
-        if (chckbxLogToFile.isSelected()) {
-            params.add("'" + txtLogFile.getText() + "'");
-        } else {
-            params.add("''");
+        if (generic) {
+            // log file
+            if (chckbxLogToFile.isSelected()) {
+                params.add("'" + txtLogFile.getText() + "'");
+            } else {
+                params.add("''");
+            }
         }
 
         // relative tolerance

@@ -330,8 +330,9 @@ static void mdlCheckParameters(SimStruct *S) {
         return;
     }
 
-    if (!mxIsNumeric(LOG_LEVEL_PARAM) || mxGetNumberOfElements(LOG_LEVEL_PARAM) != 1 || (LOG_LEVEL != 1 && LOG_LEVEL != 2 && LOG_LEVEL != 3)) {
-        ssSetErrorStatus(S, "Parameter 2 (log level) must be one of 1 (= DEBUG), 2 (= INFO) or 3 (= WARNING)");
+    if (!mxIsNumeric(LOG_LEVEL_PARAM) || mxGetNumberOfElements(LOG_LEVEL_PARAM) != 1 ||
+        (LOG_LEVEL != 0 && LOG_LEVEL != 1 && LOG_LEVEL != 2 && LOG_LEVEL != 3 && LOG_LEVEL != 4 && LOG_LEVEL !=5)) {
+        ssSetErrorStatus(S, "Parameter 2 (log level) must be one of 0 (Info), 1 (Warning), 2 (Discard), 3 (Error), 4 (Fatal) or 5 (None)");
         return;
     }
 
