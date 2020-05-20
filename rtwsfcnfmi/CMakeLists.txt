@@ -70,6 +70,7 @@ if (EXISTS "${RTW_DIR}/rt_zcfcn.c")
 endif ()
 
 add_library(${MODEL_NAME} SHARED
+  "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c"
   ${MODEL_SOURCES}
   ${CUSTOM_SOURCE}
 )
