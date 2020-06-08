@@ -7,7 +7,20 @@ function initialize()
 msg = false;
 
 info = what('+FMIKit');
+
+% check for multiple FMIKit installations on the MATLAB path
+if numel(info) > 1
+    message = ['Multiple FMIKit installations found:' sprintf('\n')];
+    for i=1:numel(info)
+        message = [message sprintf('\n') info(i).path]; %#ok<AGROW>
+    end
+    error(message)
+end
+
 [folder, ~, ~] = fileparts(info(1).path);
+
+% add the FMIKit folder to the MATLAB path
+addpath(folder);
 
 % add the src folder to the MATLAB path
 if isempty(which('FMU.cpp'))
