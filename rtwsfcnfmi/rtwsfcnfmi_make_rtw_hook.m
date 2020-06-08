@@ -49,6 +49,8 @@ switch hookMethod
         command = get_param(modelName, 'CMakeCommand');
         command = grtfmi_find_cmake(command);
         generator = get_param(modelName, 'CMakeGenerator');
+        toolset             = get_param(modelName, 'CMakeToolset');
+        build_configuration = get_param(modelName, 'CMakeBuildConfiguration');
         
         % MATLAB version for conditional compilation
         if verLessThan('matlab', '7.12')
@@ -92,16 +94,23 @@ switch hookMethod
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', custom_source);
         fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);
         fprintf(fid, 'BINARY_SFUNCTIONS:STRING=%s\n', cmake_list(mex_functions));
-        %fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationLevel'));
-        %fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationFlags'));
+        fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationLevel'));
+        fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationFlags'));
         fclose(fid);
         
         disp('### Generating project')
-        status = system(['"' command '" -G "' generator '" "' strrep(cmakelists_dir, '\', '/') '"']);
+        
+        if ~isempty(toolset)
+            toolset_option = [' -T "' toolset '"'];
+        else
+            toolset_option = '';
+        end
+        
+        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(grtfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
-        status = system(['"' command '" --build . --config Release']);
+        status = system(['"' command '" --build . --config ' build_configuration]);
         assert(status == 0, 'Failed to build FMU');
         
         % copy the FMU to the working directory

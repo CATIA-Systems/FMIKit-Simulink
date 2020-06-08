@@ -103,6 +103,13 @@
   rtwoptions(i).makevariable  = '';
 
   i = i + 1;
+  rtwoptions(i).prompt        = 'CMake command';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'CMakeCommand';
+  rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
+
+  i = i + 1;
   rtwoptions(i).prompt        = 'CMake generator';
   rtwoptions(i).type          = 'Popup';
   rtwoptions(i).default       = grtfmi_cmake_default_generator();
@@ -129,11 +136,11 @@
   rtwoptions(i).tooltip       = 'CMake generator to build the shared library';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'CMake command';
+  rtwoptions(i).prompt        = 'Toolset';
   rtwoptions(i).type          = 'Edit';
   rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'CMakeCommand';
-  rtwoptions(i).tooltip       = 'CMake command or path the executable (leave empty for default command)';
+  rtwoptions(i).tlcvariable   = 'CMakeToolset';
+  rtwoptions(i).tooltip       = 'CMake toolset specification (optional)';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Build configuration';

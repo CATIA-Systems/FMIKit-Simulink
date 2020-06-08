@@ -43,9 +43,10 @@ switch hookMethod
             copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
         end
         
-        generator           = get_param(modelName, 'CMakeGenerator');
         command             = get_param(modelName, 'CMakeCommand');
         command             = grtfmi_find_cmake(command);
+        generator           = get_param(modelName, 'CMakeGenerator');
+        toolset             = get_param(modelName, 'CMakeToolset');
         build_configuration = get_param(modelName, 'CMakeBuildConfiguration');
         source_code_fmu     = get_param(modelName, 'SourceCodeFMU');
         fmi_version         = get_param(modelName, 'FMIVersion');
@@ -102,8 +103,13 @@ switch hookMethod
         fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));
         fclose(fid);
         
-        disp('### Generating project')
-        status = system(['"' command '" -G "' generator '" "' strrep(grtfmi_dir, '\', '/') '"']);
+        disp('### Generating project')       
+        if ~isempty(toolset)
+            toolset_option = [' -T "' toolset '"'];
+        else
+            toolset_option = '';
+        end
+        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(grtfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
