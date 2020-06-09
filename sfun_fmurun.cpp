@@ -271,15 +271,20 @@ static void setInput(SimStruct *S, bool direct) {
 
 	for (int i = 0; i < nu(S); i++) {
 
-		if (direct && !inputPortDirectFeedThrough(S, i)) continue;
+		const auto w = inputPortWidth(S, i);
+
+		if (direct && !inputPortDirectFeedThrough(S, i)) {
+			iu += w;
+			continue;
+		}
 
 		auto type = variableType(S, inputPortTypesParam, i);
 
 		const void *y = ssGetInputPortSignal(S, i);
 
-		for (int j = 0; j < inputPortWidth(S, i); j++) {
+		for (int j = 0; j < w; j++) {
 
-			auto vr = valueReference(S, inputPortVariableVRsParam, iu);
+			const auto vr = valueReference(S, inputPortVariableVRsParam, iu);
 
 			// set the input
 			switch (type) {
