@@ -1374,25 +1374,26 @@ public class FMUBlockDialog extends JDialog {
         ArrayList<Integer> inputPortTypes = new ArrayList<Integer>();
         ArrayList<Integer> inputPortFeedThrough = new ArrayList<Integer>();
         ArrayList<String> inputVariableVRs = new ArrayList<String>();
-        ScalarVariable previousInport = null;
 
-        for (ScalarVariable sv : modelDescription.scalarVariables) {
+        List<List<ScalarVariable>> inputPorts = getInputPorts();
+        List<List<ScalarVariable>> outputPorts = getOutputPorts();
+        List<Boolean> inputPortDirectFeedThrough = getInputPortDirectFeedThrough(inputPorts, outputPorts);
 
-            if ("input".equals(sv.causality)) {
-
-                if (belongsToSameArray(sv, previousInport)) {
-                    int size = inputPortWidths.size();
-                    Integer last = inputPortWidths.get(size - 1);
-                    inputPortWidths.set(size - 1, last + 1);
-                } else {
-                    inputPortWidths.add(1);
-                    inputPortTypes.add(Util.typeEnumForName(sv.type));
-                    inputPortFeedThrough.add(1);
-                }
-
-                inputVariableVRs.add(sv.valueReference);
+        for (List<ScalarVariable> inputPort : inputPorts) {
+            ScalarVariable first = inputPort.get(0);
+            inputPortWidths.add(inputPort.size());
+            inputPortTypes.add(Util.typeEnumForName(first.type));
+            for (ScalarVariable v : inputPort) {
+                inputVariableVRs.add(v.valueReference);
             }
+        }
 
+        for (Boolean v : inputPortDirectFeedThrough) {
+            if (v) {
+                inputPortFeedThrough.add(1);
+            } else {
+                inputPortFeedThrough.add(0);
+            }
         }
 
         // output ports
@@ -1400,28 +1401,17 @@ public class FMUBlockDialog extends JDialog {
         ArrayList<Integer> outputPortTypes = new ArrayList<Integer>();
         ArrayList<String> outputPortVariableVRs = new ArrayList<String>();
 
-        for (int i = 0; i < outportRoot.getChildCount(); i++) {
-
-            DefaultMutableTreeNode outportNode = (DefaultMutableTreeNode) outportRoot.getChildAt(i);
-
-            outputPortWidths.add(outportNode.getChildCount());
-
-            DefaultMutableTreeNode first = (DefaultMutableTreeNode) outportNode.getChildAt(0);
-            ScalarVariable varibale = (ScalarVariable) first.getUserObject();
-            outputPortTypes.add(Util.typeEnumForName(varibale.type));
-
-            for (int j = 0; j < outportNode.getChildCount(); j++) {
-                DefaultMutableTreeNode scalarVariableNode = (DefaultMutableTreeNode) outportNode.getChildAt(j);
-                ScalarVariable scalarVaribale = (ScalarVariable) scalarVariableNode.getUserObject();
-                outputPortVariableVRs.add(scalarVaribale.valueReference);
+        for (List<ScalarVariable> outputPort : outputPorts) {
+            ScalarVariable first = outputPort.get(0);
+            outputPortWidths.add(outputPort.size());
+            outputPortTypes.add(Util.typeEnumForName(first.type));
+            for (ScalarVariable v : outputPort) {
+                outputPortVariableVRs.add(v.valueReference);
             }
-
         }
 
         PrintWriter w = new PrintWriter(mdlDirectory + File.separator + "sfun_" + modelIdentifier + ".c");
 
-        w.println("/* Copyright (c) 2019 Dassault Systemes. All rights reserved. */");
-        w.println();
         w.println("#define MODEL_IDENTIFIER " + modelIdentifier);
         w.println("#define MODEL_GUID \"" + modelDescription.guid + "\"");
         w.println();
