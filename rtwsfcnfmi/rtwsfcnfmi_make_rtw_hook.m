@@ -25,6 +25,12 @@ switch hookMethod
                 fmi_platform = 'win64';
         end
         
+        pathstr = which('grtfmi.tlc');
+        [grtfmi_dir, ~, ~] = fileparts(pathstr);
+        
+        pathstr = which('rtwsfcnfmi.tlc');
+        [rtwsfcnfmi_dir, ~, ~] = fileparts(pathstr);
+        
         % create the archive directory (uncompressed FMU)
         mkdir(fullfile('FMUArchive', 'binaries', fmi_platform));
         
@@ -44,8 +50,6 @@ switch hookMethod
             copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
         end
         
-        pathstr = which('rtwsfcnfmi.tlc');
-        [cmakelists_dir, ~, ~] = fileparts(pathstr);
         command = get_param(modelName, 'CMakeCommand');
         command = grtfmi_find_cmake(command);
         generator = get_param(modelName, 'CMakeGenerator');
@@ -106,7 +110,7 @@ switch hookMethod
             toolset_option = '';
         end
         
-        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(grtfmi_dir, '\', '/') '"']);
+        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(rtwsfcnfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
