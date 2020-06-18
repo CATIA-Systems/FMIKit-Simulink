@@ -90,7 +90,7 @@ switch hookMethod
         
         % write the CMakeCache.txt file
         fid = fopen('CMakeCache.txt', 'w');
-        fprintf(fid, 'MODEL:STRING=%s\n', modelName);
+        fprintf(fid, 'MODEL_NAME:STRING=%s\n', modelName);
         fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
