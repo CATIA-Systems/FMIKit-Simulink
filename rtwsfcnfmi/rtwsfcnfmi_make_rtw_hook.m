@@ -63,8 +63,10 @@ switch hookMethod
             matlab_version = 'MATLAB_R2011a_';  % R2011a - R2014b
         elseif verLessThan('matlab', '9.3')
             matlab_version = 'MATLAB_R2015a_';  % R2015a - R2017a
+        elseif verLessThan('matlab', '9.8')
+            matlab_version = 'MATLAB_R2017b_';  % R2017b - R2019b
         else
-            matlab_version = 'MATLAB_R2017b_';  % R2017b - R2018b
+            matlab_version = 'MATLAB_R2020a_';  % R2020a and later
         end
         
         solver = buildOpts.solver;

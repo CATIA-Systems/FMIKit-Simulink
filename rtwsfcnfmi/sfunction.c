@@ -316,9 +316,9 @@ SimStruct *CreateSimStructForFMI(const char* instanceName)
 	S->blkInfo.block = NULL;   /* Accessed by ssSetOutputPortBusMode in mdlInitializeSizes */
 	S->regDataType.setNumDWorkFcn = setNumDWork_FMI;
 
-#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_)
+#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 	S->states.statesInfo2 = (struct _ssStatesInfo2 *) calloc(1, sizeof(struct _ssStatesInfo2));
-#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_)
+#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 	S->states.statesInfo2->periodicStatesInfo = (ssPeriodicStatesInfo *)calloc(1, sizeof(ssPeriodicStatesInfo));
 #endif
 #endif
@@ -367,10 +367,10 @@ void FreeSimStruct(SimStruct *S) {
 		sfcn_fmi_mxGlobalTunable_(S, 0, 0);
 		free(S->sfcnParams.dlgParams);
 
-#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_)
+#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 		free(S->states.statesInfo2->absTol);
 		free(S->states.statesInfo2->absTolControl);
-#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_)
+#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 		free(S->states.statesInfo2->periodicStatesInfo);
 #endif
 		free(S->states.statesInfo2);
@@ -519,6 +519,9 @@ void allocateSimStructVectors(Model* m) {
 	S->stInfo.sampleTimes = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
 	S->stInfo.offsetTimes = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
 	S->stInfo.sampleTimeTaskIDs = (int_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(int_T));
+#if defined(MATLAB_R2020a_)
+	S->states.statesInfo2->jacPerturbBounds = (ssJacobianPerturbationBounds*)calloc(1, sizeof(ssJacobianPerturbationBounds));
+#endif
 	/* Allocating per-task sample hit matrix */
 	S->mdlInfo->sampleHits = (int_T*)calloc(S->sizes.numSampleTimes*S->sizes.numSampleTimes + 1, sizeof(int_T));
 	S->mdlInfo->perTaskSampleHits = S->mdlInfo->sampleHits;
@@ -933,7 +936,7 @@ void NewDiscreteStates(Model *model, int *valuesOfContinuousStatesChanged, real_
 //    eventInfo->terminateSimulation                    = fmi2False;
 //    eventInfo->nominalsOfContinuousStatesChanged    = fmi2False;
 //    eventInfo->valuesOfContinuousStatesChanged        = fmi2False;
-#if defined(MATLAB_R2017b_)
+#if defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
     if (model->S->mdlInfo->mdlFlags.blockStateForSolverChangedAtMajorStep) {
         model->S->mdlInfo->mdlFlags.blockStateForSolverChangedAtMajorStep = 0U;
 #else
