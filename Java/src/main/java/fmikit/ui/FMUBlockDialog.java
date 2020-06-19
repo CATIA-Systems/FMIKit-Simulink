@@ -1365,9 +1365,10 @@ public class FMUBlockDialog extends JDialog {
         String fmiVersion = modelDescription.fmiVersion.substring(0, 1);
 
         Implementation implemenation = getImplemenation();
+        boolean isModelExchange = implemenation instanceof ModelExchange;
 
         String modelIdentifier = implemenation.modelIdentifier;
-        String kind = implemenation instanceof ModelExchange ? "me" : "cs";
+        String kind = isModelExchange ? "me" : "cs";
 
         // input ports
         ArrayList<Integer> inputPortWidths = new ArrayList<Integer>();
@@ -1389,11 +1390,7 @@ public class FMUBlockDialog extends JDialog {
         }
 
         for (Boolean v : inputPortDirectFeedThrough) {
-            if (v) {
-                inputPortFeedThrough.add(1);
-            } else {
-                inputPortFeedThrough.add(0);
-            }
+            inputPortFeedThrough.add(v && isModelExchange ? 1 : 0);
         }
 
         // output ports
