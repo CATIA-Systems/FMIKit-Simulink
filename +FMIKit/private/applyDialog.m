@@ -20,7 +20,7 @@ if userData.useSourceCode
     % build the S-function
     clear(['sfun_' model_identifier])
 
-    disp(['Compiling S-function ' model_identifier])
+    disp(['Compiling S-function sfun_' model_identifier])
 
     mex_args = {['sfun_' model_identifier '.c'], ...
                 ['-I' fullfile(fmikitdir, 'include')], ...
