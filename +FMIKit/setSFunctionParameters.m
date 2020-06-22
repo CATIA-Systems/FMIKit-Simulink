@@ -2,6 +2,7 @@ function setSFunctionParameters(block)
 % Internal API - do not use
 
 userData = getUserData(block);
+dialog = FMIKit.getBlockDialog(block);
 
 if isempty(userData)
     return
@@ -16,15 +17,22 @@ mdl = getfullname(bdroot(block));
 unzipdir = fullfile(mdldir, userData.unzipDirectory);
 
 includedir = ['"' fullfile(fmikitdir, 'include') '"'];
+sources = ''; %#ok<*AGROW>
 
 if userData.useSourceCode
     % generated S-function
-    sources    = ['"' fullfile(unzipdir, 'sources', 'all.c') '"'];
+    includedir = [includedir ' "' fullfile(unzipdir, 'sources') '"'];
+    
+    it = dialog.getSourceFiles().listIterator();
+    
+    while it.hasNext()
+        sources = [sources ' "' fullfile(unzipdir, 'sources', it.next()) '"'];
+    end
 else
     % generic S-function
-    sources    = ['"' fullfile(fmikitdir, 'src', 'FMU.cpp') '" ' ...
-                  '"' fullfile(fmikitdir, 'src', 'FMU1.cpp') '" ' ...
-                  '"' fullfile(fmikitdir, 'src', 'FMU2.cpp') '"'];
+    sources = ['"' fullfile(fmikitdir, 'src', 'FMU.cpp') '" ' ...
+               '"' fullfile(fmikitdir, 'src', 'FMU1.cpp') '" ' ...
+               '"' fullfile(fmikitdir, 'src', 'FMU2.cpp') '"'];
 end
 
 % S-function sources
