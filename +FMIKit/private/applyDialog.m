@@ -24,8 +24,12 @@ if userData.useSourceCode
 
     mex_args = {['sfun_' model_identifier '.c'], ...
                 ['-I' fullfile(fmikitdir, 'include')], ...
-                ['-I' fullfile(unzipdir, 'sources')], ...
-                '-lshlwapi'};
+                ['-I' fullfile(unzipdir, 'sources')]};
+    
+    % add Shlwapi.lib for Dymola FMUs
+    if ispc
+        mex_args{end+1} = '-lshlwapi';
+    end
 
     it = dialog.getSourceFiles().listIterator();
 
