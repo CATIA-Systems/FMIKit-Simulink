@@ -343,8 +343,14 @@ static void setOutput(SimStruct *S, FMU *fmu) {
 
 static void getLibraryPath(SimStruct *S, char *path) {
 
+#ifdef GRTFMI
+	auto unzipdir = FMU_RESOURCES_DIR + string("/") + modelIdentifier(S);
+#else
+	auto unzipdir = unzipDirectory(S);
+#endif
+
 #ifdef _WIN32
-	strcpy(path, unzipDirectory(S).c_str());
+	strcpy(path, unzipdir.c_str());
 	PathAppend(path, "binaries");
 
 #ifdef _WIN64
