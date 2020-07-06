@@ -7,8 +7,10 @@ end
 
 sources = {};
 
-% generated RTW model
-include{1} = rtw_dir;
+model_file = which(model);
+[filepath,~,~] = fileparts(model_file);
+
+include = {rtw_dir, filepath};
 
 gen_sources = dir(fullfile(rtw_dir, '*.c'));
 
