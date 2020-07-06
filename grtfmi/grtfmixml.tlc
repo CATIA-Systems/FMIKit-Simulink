@@ -196,7 +196,11 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign variableName = varGroupName + "." + variableName
       %endif
       %assign variableName = "Parameters." + variableName
-      %assign dataName = "&(rtmGetDefaultParam(S)->%<identifier>"
+      %if ISFIELD(param, "StorageClass") && param.StorageClass == "ExportedGlobal"
+        %assign dataName = "&(%<identifier>"
+      %else
+        %assign dataName = "&(rtmGetDefaultParam(S)->%<identifier>"
+      %endif
       %if FMIVersion == "2"
         %assign vr = VariableFMI2(param, variableName, dataName, vr, " causality=\"parameter\" variability=\"tunable\"", "")
       %else
