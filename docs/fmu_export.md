@@ -9,18 +9,19 @@ The table below gives an overview of the different capabilities:
 
 |                  |      GRT        |   S-Function    |
 |------------------|:---------------:|:---------------:|
-| MATLAB Version   | R2012b - R2019a | R2012b - R2018b |
 | Model References |      yes        |       no        |
 | Source Code      |      yes        |       no        |
 | Co-Simulation    |      yes        |      yes        |
 | Model Exchange   |       no        |      yes        |
-| Requires CMake   |      yes        |       no        |
+| Requires CMake   |      yes        |      yes        |
 
 **Supported compilers**
 
-`grtfmi.tlc`: all compilers supported by [CMake](https://cmake.org/)
+`Windows`: Visual Studio 2013 and later
 
-`rtwsfcnfmi.tlc`: all Visual Studio versions supported by MATLAB on Windows or GCC on Linux
+`Linux`: GCC
+
+`macOS`: clang
 
 ## Exporting an FMU
 
@@ -55,8 +56,10 @@ and under **Simulation > Model Configuration Parameters > CMake**:
 
 | Parameter                          | Description                                                            |
 |------------------------------------|------------------------------------------------------------------------|
-| CMake generator                    | CMake generator to build the shared library                            |
 | CMake command                      | CMake command or path the executable (leave empty for default command) |
+| CMake generator                    | CMake generator to build the shared library                            |
+| Toolset                            | CMake toolset specification (optional)                                 |
+| Build configuration                | CMake build configuration                                              |
 | Compiler optimization level        | Compiler optimization level                                            |
 | Custom compiler optimization flags | Custom compiler optimization flags                                     |
 
@@ -80,19 +83,26 @@ Note that only files under `binaries`, `documentation`, `resources`, and `source
 
 The `rtwsfcnfmi.tlc` target has the following options under **Simulation > Model Configuration Parameters > FMI**:
 
-| Parameter                                                           | Description                                                                 |
-|---------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| FMI type                                                            | specifies FMI type (ModelExchange or CoSimulation) |
-| Model author                                                        | specifies model author for FMU XML description |
-| Generate black-box FMU                                              | selects if the FMU should be generated as a black box (only inputs and outputs) |
-| Include block hierarchy in variable names                           | selects if variable names of the FMU XML should use block hierarchy notation |
-| Include global block outputs                                        | selects if block outputs should be included in FMU XML description |
-| Include discrete states (DWork)                                     | selects if discrete states and modes should be included in FMU XML description |
-| <nobr>Export image (.png) of Simulink model to FMU resources</nobr> | selects if an image of the Simulink model should be exported with the FMU |
-| Copy Simulink model to FMU resources                                | selects if the whole Simulink model should be copied to the FMU |
-| Load S-functions from binary MEX files                              | selects that S-functions in the model will be loaded from pre-compiled binary MEX files instead of using stand-alone compilation of S-function sources. This option will create dependencies on MATLAB binaries, which are not included in the exported FMU. On Windows, the FMU will by default try to load these from the bin directory of the exporting MATLAB installation. The environment variable `SFCN_FMI_MATLAB_BIN` can be used to specify a different directory from where to load the MATLAB binaries (for example a MATLAB run-time installation). On Linux, it is required to use the environment variable `LD_LIBRARY_PATH` to specify the path to the MATLAB binaries. The S-function MEX files used by the model are copied to `/resources/SFunctions` of the FMU and are loaded automatically when the FMU is instantiated. |
-| Additional S-function sources                                       | List of additional user source files for stand-alone S-function compilation. Should be used instead of `Custom Code > Source Files` to ensure that the correct compiler options are used |
-| Compiler optimization flags                                         | User-defined optimization flags to be used by the compiler (default: `/O2 /Oy` - for Visual Studio on Windows and `-O2` for GCC on Linux)
+| Parameter                              | Description                                                        |
+|----------------------------------------|--------------------------------------------------------------------|
+| FMI version                            | FMI version of the FMU                                             |
+| FMI type                               | specifies FMI type (ModelExchange or CoSimulation)                 |
+| Model author                           | Model author to be written to the model description                |
+| Template directory                     | Template directory with files and folders to be added to the FMU   |
+| Include global block outputs           | selects if block outputs should be included in FMU XML description |
+| Add image of Simulink model            | Add an image of the Simulink model to the FMU (model.png)          |
+| Load S-functions from binary MEX files | selects that S-functions in the model will be loaded from pre-compiled binary MEX files instead of using stand-alone compilation of S-function sources. This option will create dependencies on MATLAB binaries, which are not included in the exported FMU. On Windows, the FMU will by default try to load these from the bin directory of the exporting MATLAB installation. The environment variable `SFCN_FMI_MATLAB_BIN` can be used to specify a different directory from where to load the MATLAB binaries (for example a MATLAB run-time installation). On Linux, it is required to use the environment variable `LD_LIBRARY_PATH` to specify the path to the MATLAB binaries. The S-function MEX files used by the model are copied to `/resources/SFunctions` of the FMU and are loaded automatically when the FMU is instantiated. |
+
+and under **Simulation > Model Configuration Parameters > CMake**:
+
+| Parameter                          | Description                                                            |
+|------------------------------------|------------------------------------------------------------------------|
+| CMake command                      | CMake command or path the executable (leave empty for default command) |
+| CMake generator                    | CMake generator to build the shared library                            |
+| Toolset                            | CMake toolset specification (optional)                                 |
+| Build configuration                | CMake build configuration                                              |
+| Compiler optimization level        | Compiler optimization level                                            |
+| Custom compiler optimization flags | Custom compiler optimization flags                                     |
 
 It is recommended to set the **Tasking mode** to **SingleTasking**.
 
