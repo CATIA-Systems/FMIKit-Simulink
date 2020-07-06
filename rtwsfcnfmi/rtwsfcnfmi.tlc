@@ -107,9 +107,10 @@
   i = i + 1;
   rtwoptions(i).prompt         = 'Model author';
   rtwoptions(i).type           = 'Edit';
-  rtwoptions(i).default        = 'Unknown';
+  rtwoptions(i).default        = getenv('username');
   rtwoptions(i).tlcvariable    = 'ModelAuthor';
-  rtwoptions(i).tooltip        = 'Model author to be written in model description file (modelDescription.xml)';
+  rtwoptions(i).tooltip        = ...
+    'Model author to be written to the model description';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Template directory';
