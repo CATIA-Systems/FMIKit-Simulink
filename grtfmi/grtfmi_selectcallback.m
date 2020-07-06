@@ -1,5 +1,9 @@
 function grtfmi_selectcallback(hDlg, hSrc)
 
+% set target language to "C"
+slConfigUISetVal(hDlg, hSrc, 'TargetLang', 'C');
+slConfigUISetEnabled(hDlg, hSrc, 'TargetLang', false);
+
 % disable "Package code and artifacts"
 slConfigUISetVal(hDlg, hSrc, 'PackageGeneratedCodeAndArtifacts', 'off');
 slConfigUISetEnabled(hDlg, hSrc, 'PackageGeneratedCodeAndArtifacts', false);
@@ -8,6 +12,7 @@ slConfigUISetEnabled(hDlg, hSrc, 'PackageGeneratedCodeAndArtifacts', false);
 slConfigUISetVal(hDlg, hSrc, 'GenerateMakefile', 'off');
 slConfigUISetEnabled(hDlg, hSrc, 'GenerateMakefile', false);
 
+% keep the *.rtw file
 slConfigUISetVal(hDlg, hSrc, 'RetainRTWFile', 'on');
 
 % Reusable functions are not supported in R2012b
