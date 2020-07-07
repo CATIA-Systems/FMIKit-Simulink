@@ -79,14 +79,14 @@
   i = i + 1;
   rtwoptions(i).prompt        = 'Include sources in FMU';
   rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'on';
+  rtwoptions(i).default       = 'off';
   rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
   rtwoptions(i).tooltip       = 'Add model sources to FMU';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Include block outputs';
   rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'on';
+  rtwoptions(i).default       = 'off';
   rtwoptions(i).tlcvariable   = 'IncludeBlockOutputs';
   rtwoptions(i).tooltip       = 'Include global block outputs in the model description';
 
