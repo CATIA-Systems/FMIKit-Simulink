@@ -22,7 +22,10 @@
 #if defined(MDL_START)
 static void mdlStart(SimStruct *S) {
 
-	static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
+  time_T startTime = ssGetT(S);
+  time_T stopTime = ssGetTFinal(S);
+
+  static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
 
 	COMPONENT = fmi2Instantiate(ssGetPath(S), fmi2CoSimulation, MODEL_GUID, "", &callbacks, fmi2False, fmi2False);
 
@@ -37,7 +40,7 @@ static void mdlStart(SimStruct *S) {
 		return;  // may have been set by setStartValues()
 	}
 
-	ASSERT_OK(fmi2SetupExperiment(COMPONENT, fmi2False, 0, ssGetT(S), fmi2True, ssGetTFinal(S)), "Failed to set up experiment")
+	ASSERT_OK(fmi2SetupExperiment(COMPONENT, fmi2False, 0, startTime, stopTime > startTime, stopTime), "Failed to set up experiment")
 
 	ASSERT_OK(fmi2EnterInitializationMode(COMPONENT), "Failed to enter initialization mode")
 
