@@ -15,6 +15,14 @@ The table below gives an overview of the different capabilities:
 | Model Exchange   |       no        |      yes        |
 | Requires CMake   |      yes        |      yes        |
 
+**Which target should I use?**
+
+Use `grtfmi.tlc` unless you...
+
+- can't use a fixed-step solver
+- need a Model Exchange FMU
+- have to use binary S-functions
+
 **Supported compilers**
 
 `Windows`: Visual Studio 2013 and later
@@ -32,7 +40,7 @@ To export a Simulink model as an FMU
 - open **Simulation > Model Configuration Parameters** (CTRL+E)
 - under **Solver > Type** select **Fixed-step** for a Co-Simulation FMU or **Variable-step** for a Model Exchange FMU
 - under **Code Generation > System target file** click **Browse** and select **grtfmi.tlc** for a Generic Real-Time based FMU or **rtwsfcnfmi.tlc** for an S-function based FMU
-- set the respective FMI options (optional)
+- under **Code Generation > CMake** select the **CMake generator** for your toolchain
 - apply the **Model Configuration Parameters** dialog
 - select **Code > C/C++ Code > Build Model** (CTRL+B) to export the FMU to the current working directory
 
