@@ -16,43 +16,47 @@ mdl = getfullname(bdroot(block));
 [mdldir, ~, ~] = fileparts(which(mdl));
 unzipdir = fullfile(mdldir, userData.unzipDirectory);
 
-includedir = ['"' fullfile(fmikitdir, 'include') '"'];
-sources = ''; %#ok<*AGROW>
+include_dirs = {['"' fullfile(fmikitdir, 'include') '"']};
+sources_files = {}; %#ok<*AGROW>
 
 if userData.useSourceCode
     % generated S-function
-    includedir = [includedir ' "' fullfile(unzipdir, 'sources') '"'];
+    include_dirs{end+1} = ['"' fullfile(unzipdir, 'sources') '"'];
     
     it = dialog.getSourceFiles().listIterator();
     
     while it.hasNext()
-        sources = [sources ' "' fullfile(unzipdir, 'sources', it.next()) '"'];
+        sources_files{end+1} = ['"' fullfile(unzipdir, 'sources', it.next()) '"'];
     end
 else
     % generic S-function
-    sources = ['"' fullfile(fmikitdir, 'src', 'FMU.cpp') '" ' ...
-               '"' fullfile(fmikitdir, 'src', 'FMU1.cpp') '" ' ...
-               '"' fullfile(fmikitdir, 'src', 'FMU2.cpp') '"'];
+    sources_files{end+1} = ['"' fullfile(fmikitdir, 'src', 'FMU.cpp') '"'];
+    sources_files{end+1} = ['"' fullfile(fmikitdir, 'src', 'FMU1.cpp') '"'];
+    sources_files{end+1} = ['"' fullfile(fmikitdir, 'src', 'FMU2.cpp') '"'];
 end
 
 % S-function sources
-setSrcParam(mdl, 'SimUserIncludeDirs', includedir);
-setSrcParam(mdl, 'SimUserSources', sources);
+setSrcParams(mdl, 'SimUserIncludeDirs', include_dirs);
+setSrcParams(mdl, 'SimUserSources', sources_files);
 
 % RTW sources
-setSrcParam(mdl, 'CustomInclude',  includedir);
-setSrcParam(mdl, 'CustomSource', sources);
+setSrcParams(mdl, 'CustomInclude',  include_dirs);
+setSrcParams(mdl, 'CustomSource', sources_files);
 
 end
 
 
-function setSrcParam(object, name, value)
+function setSrcParams(object, name, values)
 
-old_value = get_param(object, name);
+param_value = get_param(object, name);
 
-if isempty(strfind(old_value, value))
-    new_value = [old_value ' ' value];
-    set_param(object, name, new_value);
+for i=1:numel(values)
+    value = values{i};
+    if isempty(strfind(param_value, value))
+        param_value = [param_value ' ' value];
+    end
 end
+
+set_param(object, name, param_value);
 
 end
