@@ -40,6 +40,9 @@ static void mdlInitializeConditions(SimStruct *S) {
 #if defined(MDL_START)
 static void mdlStart(SimStruct *S) {
 
+  time_T startTime = ssGetT(S);
+  time_T stopTime = ssGetTFinal(S);
+  
 	static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
 
 	EVENT_INFO_PTR = calloc(1, sizeof(fmi2EventInfo));
@@ -53,7 +56,7 @@ static void mdlStart(SimStruct *S) {
 
 	setStartValues(S);
 
-	ASSERT_OK(fmi2SetupExperiment(COMPONENT, fmi2False, 0, ssGetT(S), fmi2True, ssGetTFinal(S)), "Failed to set up experiment")
+	ASSERT_OK(fmi2SetupExperiment(COMPONENT, fmi2False, 0, startTime, stopTime > startTime, stopTime), "Failed to set up experiment")
 
 	ASSERT_OK(fmi2EnterInitializationMode(COMPONENT), "Failed to enter initialization mode")
 	ASSERT_OK(fmi2ExitInitializationMode(COMPONENT), "Failed to exit initialization mode")
