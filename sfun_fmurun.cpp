@@ -10,6 +10,7 @@
 #ifdef _WIN32
 #include "shlwapi.h"
 #include <wininet.h>
+#pragma comment(lib, "shlwapi.lib")
 #endif
 
 #include <stdio.h>

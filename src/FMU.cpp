@@ -13,10 +13,9 @@
 
 #ifdef _WIN32
 #include <direct.h>
-#include "Shlwapi.h"
-#endif
-
-#ifndef _WIN32
+#include "shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
+#else
 #include <stdarg.h>
 #include <dlfcn.h>
 #endif
