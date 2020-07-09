@@ -24,6 +24,9 @@ if userData.useSourceCode
 
     mex_args = {};
     
+    % debug build
+    % mex_args{end+1} = '-g';
+    
     % custom inlcude directories
     include_dirs = get_param(gcs, 'SimUserIncludeDirs');
     include_dirs = split_paths(include_dirs);
