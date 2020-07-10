@@ -40,8 +40,10 @@ setSrcParams(mdl, 'SimUserIncludeDirs', include_dirs);
 setSrcParams(mdl, 'SimUserSources', sources_files);
 
 % RTW sources
-setSrcParams(mdl, 'CustomInclude',  include_dirs);
-setSrcParams(mdl, 'CustomSource', sources_files);
+if strcmp(get_param(mdl, 'RTWUseSimCustomCode'), 'off')
+    setSrcParams(mdl, 'CustomInclude',  include_dirs);
+    setSrcParams(mdl, 'CustomSource', sources_files);
+end
 
 end
 
