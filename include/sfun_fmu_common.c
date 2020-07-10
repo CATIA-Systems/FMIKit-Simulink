@@ -144,7 +144,7 @@ static void setStartValues(SimStruct *S) {
 
         vr = (FMI_API(ValueReference))STRING_START_VRS[i];
 
-		ASSERT_OK(FMI_API(SetString)(COMPONENT, &vr, 1, &string_value), "Failed to set string start value")
+		ASSERT_OK(FMI_API(SetString)(COMPONENT, &vr, 1, (const char * const*)&string_value), "Failed to set string start value")
     }
 
     free(buffer);
