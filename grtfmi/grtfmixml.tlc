@@ -217,11 +217,10 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
         %assign port = ExternalInput[portid]
+        %assign variableName = FEVAL("get_param", port.BlockName, "Name")
         %if port.StorageClass == "ExportedGlobal"
-          %assign variableName = FEVAL("get_param", port.BlockName, "Name")
           %assign dataName = "&(%<port.Identifier>"
         %else
-          %assign variableName = port.Identifier
           %assign dataName = "&(rtmGetU(S)->%<port.Identifier>"
         %endif
         %if FMIVersion == "2"
@@ -243,7 +242,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign sysid        = port.Block[0]
         %assign blkid        = port.Block[1]
         %assign block        = System[sysid].Block[blkid]
-        %assign variableName = block.Identifier
+        %assign variableName = FEVAL("get_param", port.BlockName, "Name")
         %if ISFIELD(port, "SigLabel") && !ISEMPTY(port.SigLabel)
           %assign dataName = "&(%<port.SigLabel>"
         %else
