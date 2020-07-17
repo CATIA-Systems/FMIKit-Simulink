@@ -242,7 +242,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign sysid        = port.Block[0]
         %assign blkid        = port.Block[1]
         %assign block        = System[sysid].Block[blkid]
-        %assign variableName = FEVAL("get_param", port.BlockName, "Name")
+        %assign variableName = FEVAL("get_param", block.Name, "Name")
         %if !ISFIELD(port, "VarGroupIdx") && ISFIELD(port, "SigLabel") && !ISEMPTY(port.SigLabel)
           %assign dataName = "&(%<port.SigLabel>"
         %else
