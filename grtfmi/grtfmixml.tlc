@@ -13,7 +13,7 @@
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-alpha.X"
+  fmiVersion="3.0-alpha.5"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
@@ -27,8 +27,7 @@
   %if !ISEMPTY(ModelAuthor)
   author="%<ModelAuthor>"
   %endif
-  version="%<ModelVersion>"
-  numberOfEventIndicators="%<ZCVectorlength>">
+  version="%<ModelVersion>">
 
   <CoSimulation
     modelIdentifier="%<OrigName>"
