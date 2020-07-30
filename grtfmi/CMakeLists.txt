@@ -196,7 +196,7 @@ add_library (${MODEL_NAME} SHARED
 
 target_include_directories (${MODEL_NAME} PUBLIC
   ${CUSTOM_INCLUDE}
-  ${CURRENT_DIR}
+  ${CURRENT_DIR}/../include
   ${CMAKE_SOURCE_DIR}
   ${RTW_DIR}
   ${RTW_DIR}/../slprj/grtfmi/_sharedutils
