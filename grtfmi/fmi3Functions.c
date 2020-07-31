@@ -175,7 +175,7 @@ static fmi3Status getVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	size_t i, index, copied = 0;
+	size_t i, j, index, copied = 0;
 	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
@@ -196,10 +196,17 @@ static fmi3Status getVariables(ModelInstance *instance,
 			return fmi3Error;
 		}
 
-		memcpy(values, v.address, typeSize * v.size);
-
+		if (datatypeID == SS_BOOLEAN) {
+			for (j = 0; j < v.size; j++) {
+				((fmi3Boolean*)values)[j] = ((boolean_T *)v.address)[j] ? fmi3True : fmi3False;
+			}
+			values = (char *)values + (v.size * sizeof(fmi3Boolean));
+		} else {
+			memcpy(values, v.address, typeSize * v.size);
+			values = (char *)values + (v.size * typeSize);
+		}
+		
 		copied += v.size;
-		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
@@ -283,7 +290,7 @@ static fmi3Status setVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	size_t i, index, copied = 0;
+	size_t i, j, index, copied = 0;
 	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
@@ -304,10 +311,18 @@ static fmi3Status setVariables(ModelInstance *instance,
 			return fmi3Error;
 		}
 
-		memcpy(v.address, values, typeSize * v.size);
+		if (datatypeID == SS_BOOLEAN) {
+			for (j = 0; j < v.size; j++) {
+				((boolean_T *)v.address)[j] = ((fmi3Boolean*)values)[j] != fmi3False;
+			}
+			values = (char *)values + (v.size * sizeof(fmi3Boolean));
+		}
+		else {
+			memcpy(v.address, values, typeSize * v.size);
+			values = (char *)values + (v.size * typeSize);
+		}
 
 		copied += v.size;
-		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
