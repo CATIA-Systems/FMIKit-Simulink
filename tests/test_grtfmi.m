@@ -84,4 +84,6 @@ close_system(h, 0);
 
 assert(exist([model '.fmu'], 'file') == 2);
 
+assert(system(['fmpy simulate ' model '.fmu --output-file ' model '_out.csv']) == 0);
+
 end
