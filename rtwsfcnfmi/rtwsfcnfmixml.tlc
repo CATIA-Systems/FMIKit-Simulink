@@ -1,6 +1,7 @@
 %% Starting generation of modelDescription.xml
 %openfile xmlfile = "modelDescription.xml"
-%openfile incfile = "fmiwrapper.inc"
+%openfile hfile   = "model_interface.h"
+%openfile incfile = "model_interface.c"
 %with CompiledModel
   %assign reusableFunction = ISFIELD(ConfigSet, "CodeInterfacePackaging") && ConfigSet.CodeInterfacePackaging == "Reusable function"
   %selectfile STDOUT
@@ -13,62 +14,32 @@
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-alpha.5"
+  fmiVersion="3.0-alpha.X"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
-  generationTool="Simulink %<Version> with FMI Kit 2.8 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  %if FMIType == "CoSimulation"
+  generationTool="Simulink %<Version> with FMI Kit 2.8 (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  %else
+  generationTool="Simulink %<Version> with FMI Kit 2.8 (rtwsfcnfmi.tlc)"
+  %endif
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
   %assign description = FEVAL("get_param", "%<OrigName>", "Description")
   %if !ISEMPTY(description)
+    %assign description = FEVAL("strrep", description, "\"", "&quot;")
   description="%<description>"
   %endif
   %if !ISEMPTY(ModelAuthor)
   author="%<ModelAuthor>"
   %endif
-  version="%<ModelVersion>">
+  version="%<ModelVersion>"
+  numberOfEventIndicators="%<ZCVectorlength>">
 
-  <CoSimulation
-    modelIdentifier="%<OrigName>"
-  %if !reusableFunction
-    canBeInstantiatedOnlyOncePerProcess="true"
-  %endif
-    canHandleVariableCommunicationStepSize="true">
-  %if SourceCodeFMU
-    %assign simscapeBlocks = FEVAL("find_system", modelName, "BlockType", "SimscapeBlock")
-    %if ISEMPTY(simscapeBlocks)
-      %assign sourceFiles = []
-    %else
-      %assign sourceFiles = FEVAL("grtfmi_simscape_sources")
-    %endif
-    %assign modelSources = FEVAL("grtfmi_model_sources", modelName, RTWGenSettings.RelativeBuildDir)
-    %assign modelSources = modelSources[1]
-    %foreach i = SIZE(modelSources, 1)
-      %assign sourceFiles = sourceFiles + modelSources[i]
-    %endforeach
-    %if FMIVersion == "2"
-    <SourceFiles>
-      <File name="fmi2Functions.c"/>
-      %foreach i = SIZE(sourceFiles, 1)
-        %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
-      <File name="%<sourceFile>"/>
-      %endforeach
-    </SourceFiles>
-    %endif
-  %endif
-  </CoSimulation>
-  %if FMIVersion == "3" && SourceCodeFMU
-
-  <BuildConfiguration modelIdentifier="%<OrigName>">
-    <SourceFileSet>
-      <SourceFile name="fmi3Functions.c"/>
-    %foreach i = SIZE(sourceFiles, 1)
-      %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
-      <SourceFile name="%<sourceFile>"/>
-    %endforeach
-    </SourceFileSet>
-  </BuildConfiguration>
+  %if FMIType == "CoSimulation"
+  <CoSimulation modelIdentifier="%<OrigName>" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="true"/>
+  %else
+  <ModelExchange modelIdentifier="%<OrigName>"/>
   %endif
   %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
 
@@ -121,56 +92,33 @@
   %if "%<StopTime>" != "rtInf"
     stopTime="%<StopTime>"
   %endif
-    stepSize="%<FixedStepOpts.FixedStep>"/>
+  %if "%<SolverType>" == "FixedStep"
+    stepSize="%<FixedStepOpts.FixedStep>"
+  %endif
+  />
 
   <ModelVariables>
   %assign vr = 1
   %assign outputIndices = []
+  %assign derivativeIndices = []
   %selectfile incfile
-#include "%<OrigName>.h"
-#include "%<OrigName>_private.h"
+#include "%<OrigName>_sf.h"
+#include "model_interface.h"
 
-typedef struct {
-	BuiltInDTypeId dtypeID;
-	size_t size;
-	void* address;
-} ModelVariable;
 
-#ifndef NO_FMI_FUNCTION_PREFIX
-  %if FMIVersion == "2"
-#define FMI2_FUNCTION_PREFIX %<OrigName>_
-  %else
-#define FMI3_FUNCTION_PREFIX %<OrigName>_
-  %endif
-#endif
+size_t getCGTypeSize(int typeIndex) {
 
-#define MODEL_GUID       "%<GUID>"
-#define MODEL            %<OrigName>
-#define MODEL_INITIALIZE %<OrigName>_initialize
-#define MODEL_STEP       %<OrigName>_step
-#define MODEL_TERMINATE  %<OrigName>_terminate
-#define RT_MDL_TYPE      %<tSimStructType>
-#define STEP_SIZE        %<FixedStepOpts.FixedStep>
-#define NUM_TASKS        %<NumTasks>
-#define NUM_SAMPLE_TIMES %<NumSampleTimes>
-#define FIRST_TASK_ID    %<FixedStepOpts.TID01EQ>
+  switch (typeIndex) {
+  %foreach dataTypeIdx = DataTypes.NumDataTypes
+    %assign dataType = DataTypes.DataType[dataTypeIdx]
+    case %<dataType.CGTypeIdx>: return %<dataType.Size>; /* %<dataType.Name> */
+  %endforeach
+    default: return 0; /* unknown type */
+  }
 
-/* R2019a defines the block parameters as extern */
-#ifndef rtmGetDefaultParam
-#define rtmGetDefaultParam(S) (&%<tParameters>)
-#endif
+}
 
-%if reusableFunction
-#define REUSABLE_FUNCTION
-%else
-/* Definitions for non-reusable models */
-#define RT_MDL_INSTANCE     %<tSimStruct>
-#define rtmGetU(S)          (&%<tInput>)
-#define rtmGetY(S)          (&%<tOutput>)
-#define rtmGetBlockIO(S)    (&%<tBlockIO>)
-%endif
-
-static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
+void initializeModelVariables(SimStruct* S, ModelVariable modelVariables[]) {
   %% Parameters
   %selectfile xmlfile
 
@@ -195,11 +143,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign variableName = varGroupName + "." + variableName
       %endif
       %assign variableName = "Parameters." + variableName
-      %if ISFIELD(param, "StorageClass") && param.StorageClass == "ExportedGlobal"
-        %assign dataName = "&(%<identifier>"
-      %else
-        %assign dataName = "&(rtmGetDefaultParam(S)->%<identifier>"
-      %endif
+      %assign dataName = "((%<GlobalScope.tParametersType> *)ssGetLocalDefaultParam(S))->%<identifier>"
       %if FMIVersion == "2"
         %assign vr = VariableFMI2(param, variableName, dataName, vr, " causality=\"parameter\" variability=\"tunable\"", "")
       %else
@@ -215,12 +159,13 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
 
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
-        %assign port = ExternalInput[portid]
-        %assign variableName = FEVAL("get_param", port.BlockName, "Name")
-        %if port.StorageClass == "ExportedGlobal"
-          %assign dataName = "&(%<port.Identifier>"
-        %else
-          %assign dataName = "&(rtmGetU(S)->%<port.Identifier>"
+        %assign port         = ExternalInput[portid]
+        %assign variableName = port.Identifier
+        %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
+        %assign width        = LibGetRecordWidth(port)
+        %assign dataName     = "*((%<dataTypeName> **)ssGetInputPortSignalPtrs(S, %<portid>))"
+        %if width == 1
+          %assign dataName = "(" + dataName + "[0])"
         %endif
         %if FMIVersion == "2"
           %assign vr = VariableFMI2(port, variableName, dataName, vr, " causality=\"input\"", " start=\"0\"")
@@ -241,11 +186,12 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign sysid        = port.Block[0]
         %assign blkid        = port.Block[1]
         %assign block        = System[sysid].Block[blkid]
-        %assign variableName = FEVAL("get_param", block.Name, "Name")
-        %if !ISFIELD(port, "VarGroupIdx") && ISFIELD(port, "SigLabel") && !ISEMPTY(port.SigLabel)
-          %assign dataName = "&(%<port.SigLabel>"
-        %else
-          %assign dataName = "&(rtmGetY(S)->%<block.Identifier>"
+        %assign variableName = block.Identifier
+        %assign dataTypeName = SLibGetRecordDataTypeName(port, "")
+        %assign width        = LibGetRecordWidth(port)
+        %assign dataName     = "((%<dataTypeName> *)ssGetOutputPortSignal(S, %<portid>))"
+        %if width == 1
+          %assign dataName = dataName + "[0]"
         %endif
         %if FMIVersion == "2"
           %assign nextVR = VariableFMI2(port, variableName, dataName, vr, " causality=\"output\"", "")
@@ -261,26 +207,10 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   %endwith
   %% Block Outputs
   %with ::CompiledModel.BlockOutputs
-    %if IncludeBlockOutputs && NumExternalBlockOutputs > 0
-      %selectfile xmlfile
-
-    <!-- External Block Outputs -->
-      %foreach blockoutputid = NumExternalBlockOutputs
-        %assign blockoutput  = ExternalBlockOutput[blockoutputid]
-        %assign identifier   = LibGetRecordIdentifier(blockoutput)
-        %assign variableName = identifier
-        %assign dataName = "&(%<identifier>"
-        %if FMIVersion == "2"
-          %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "")
-        %else
-          %assign vr = VariableFMI3(blockoutput, variableName, dataName, vr, "", "")
-        %endif
-      %endforeach
-    %endif
     %if IncludeBlockOutputs && NumGlobalBlockOutputs > 0
       %selectfile xmlfile
 
-    <!-- Global Block Outputs -->
+    <!-- Block Outputs -->
       %foreach blockoutputid = NumGlobalBlockOutputs
         %assign blockoutput = GlobalBlockOutput[blockoutputid]
         %if ISFIELD(blockoutput, "IsRemovedInIR") && blockoutput.IsRemovedInIR
@@ -294,13 +224,13 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %if ISFIELD(blockoutput, "GrSrc") && blockoutput.GrSrc[1] != -1
           %assign varPath = LibGetFormattedBlockPath(SLibGrBlock(blockoutput.GrSrc))
           %assign varPath = FEVAL("grtfmi_block_path", varPath)
-          %assign variableName = "%<varPath>.%<variableName>"
+          %assign variableName = "BlockOutputs.%<varPath>.%<variableName>"
         %endif
         %assign varGroup = ::CompiledModel.VarGroups.VarGroup[blockoutput.VarGroupIdx[0]]
         %if varGroup.ParentVarGroupIdx == -1
-          %assign dataName = "&(rtmGetBlockIO(S)->%<identifier>"
+          %assign dataName = "((%<GlobalScope.tBlockIOType> *) ssGetLocalBlockIO(S))->%<identifier>"
         %else
-          %assign dataName = "&(rtmGetBlockIO(S)->%<varGroup.Name>.%<identifier>"
+          %assign dataName = "((%<GlobalScope.tBlockIOType> *) ssGetLocalBlockIO(S))->%<varGroup.Name>.%<identifier>"
         %endif
         %if FMIVersion == "2"
           %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "")
@@ -310,12 +240,53 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endforeach
     %endif
   %endwith
+%% Continuous States
+  %with ::CompiledModel.ContStates
+    %selectfile xmlfile
+
+    <!-- Continuous States -->
+    %foreach cstateid = NumContStates
+      %assign cstate   = ContState[cstateid]
+      %assign width    = LibGetRecordWidth(cstate)
+      %assign varGroup = ::CompiledModel.VarGroups.VarGroup[cstate.VarGroupIdx[0]]
+      %if varGroup.ParentVarGroupIdx == -1
+        %assign identifier = cstate.Identifier
+      %else
+        %assign identifier = varGroup.Name + "." + cstate.Identifier
+      %endif
+      %foreach index = width
+        %if width > 1
+          %assign dataSubs = "[%<index>]"
+          %assign varSubs  = "[%<index+1>]"
+        %else
+          %assign dataSubs = ""
+          %assign varSubs  = ""
+        %endif
+        %selectfile incfile
+    modelVariables[%<vr-1>].dtypeID = 0;
+    modelVariables[%<vr-1>].size    = 0;
+    modelVariables[%<vr-1>].address = &(((%<GlobalScope.tContStateType> *)ssGetContStates(S))->%<identifier>%<dataSubs>);
+    modelVariables[%<vr>].dtypeID = 0;
+    modelVariables[%<vr>].size    = 0;
+    modelVariables[%<vr>].address = &(((%<GlobalScope.tXdotType> *)ssGetdX(S))->%<identifier>%<dataSubs>);
+        %selectfile xmlfile
+    <!-- width: %<width> -->
+    <ScalarVariable name="ContinuousStates.%<identifier>%<varSubs>" valueReference="%<vr>" initial="calculated">
+      <Real reinit="true"/>
+    </ScalarVariable>
+        %assign vr = vr + 1
+    <ScalarVariable name="der(ContinuousStates.%<identifier>%<varSubs>)" valueReference="%<vr>">
+      <Real derivative="%<vr-1>"/>
+    </ScalarVariable>
+        %assign derivativeIndices = derivativeIndices + vr
+        %assign vr = vr + 1
+      %endforeach
+    %endforeach
+  %endwith
   %% close fmiwrapper.inc
   %selectfile incfile
 }
 
-%assign nModelVariables = vr - 1
-#define N_MODEL_VARIABLES %<nModelVariables>
   %selectfile xmlfile
 
   </ModelVariables>
@@ -334,10 +305,44 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endforeach
     %endif
   %endif
+  %if SIZE(derivativeIndices, 1) > 0
+    %if FMIVersion == "2"
+    <Derivatives>
+      %foreach iDerivativeIndex = SIZE(derivativeIndices, 1)
+      <Unknown index="%<derivativeIndices[iDerivativeIndex]>"/>
+      %endforeach
+    </Derivatives>
+    %else
+      %foreach iDerivativeIndex = SIZE(derivativeIndices, 1)
+    <Derivative valueReference="%<derivativeIndices[iDerivativeIndex]>"/>
+      %endforeach
+    %endif
+  %endif
   </ModelStructure>
 
 </fmiModelDescription>
 %endwith
 
+%selectfile hfile
+#ifndef model_interface_h
+#define model_interface_h
+
+#include "tmwtypes.h"
+
+#define N_MODEL_VARIABLES %<vr>
+
+typedef struct {
+    BuiltInDTypeId dtypeID;
+    size_t size;
+    void* address;
+} ModelVariable;
+
+size_t getCGTypeSize(int typeIndex);
+
+void initializeModelVariables(SimStruct* S, ModelVariable modelVariables[]);
+
+#endif /* model_interface_h */
+
 %closefile incfile
+%closefile hfile
 %closefile xmlfile

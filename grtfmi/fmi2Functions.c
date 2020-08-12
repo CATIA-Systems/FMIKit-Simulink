@@ -2,7 +2,8 @@
 #pragma warning(disable : 4996)
 #endif
 
-#include <float.h>  /* for DBL_EPSILON */
+#include <float.h>  /* for DBL_EPSILON, FLT_MAX */
+#include <math.h>   /* for fabs() */
 #include <string.h> /* for strcpy(), strncmp() */
 
 #include "fmiwrapper.inc"
@@ -101,9 +102,7 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 
 #ifdef REUSABLE_FUNCTION
 	instance->S = MODEL();
-	MODEL_INITIALIZE(instance->S);
 #else
-	MODEL_INITIALIZE();
 	instance->S = RT_MDL_INSTANCE;
 #endif
 
@@ -127,10 +126,24 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	fmi2Real startTime,
 	fmi2Boolean stopTimeDefined,
 	fmi2Real stopTime) {
+
+	if (stopTimeDefined && stopTime <= startTime) {
+		return fmi2Error;
+	}
+
 	return fmi2OK;
 }
 
 fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
+
+	ModelInstance *instance = (ModelInstance *)c;
+
+#ifdef REUSABLE_FUNCTION
+	MODEL_INITIALIZE(instance->S);
+#else
+	MODEL_INITIALIZE();
+#endif
+
 	return fmi2OK;
 }
 
@@ -301,7 +314,11 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 			*((REAL64_T *)v.address) = value[i];
 			break;
 		case SS_SINGLE:
-			*((REAL32_T *)v.address) = value[i];
+			if (value[i] < -FLT_MAX || value[i] > FLT_MAX) {
+				// TODO: log this
+				return fmi2Error;
+			}
+			*((REAL32_T *)v.address) = (REAL32_T)value[i];
 			break;
 		default:
 			return fmi2Error;
@@ -444,21 +461,58 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
 	ModelInstance *instance = (ModelInstance *)c;
-	const char *errorStatus;
-
-	time_T tNext = currentCommunicationPoint + communicationStepSize;
+	RT_MDL_TYPE *S = instance->S;
+	const char *errorStatus = NULL;
 
 #ifdef rtmGetT
-	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON)
+	time_T tNext = currentCommunicationPoint + communicationStepSize;
+	double epsilon = (1.0 + fabs(rtmGetT(S))) * 2 * DBL_EPSILON;
+	
+    while (rtmGetT(S) + STEP_SIZE < tNext + epsilon)
 #endif
 	{
 
+#if NUM_TASKS > 1 // multitasking
+
 #ifdef REUSABLE_FUNCTION
-		MODEL_STEP(instance->S);
+		// step the model for the base sample time
+		MODEL_STEP(S, 0);
+
+		// step the model for any other sample times (subrates)
+		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+			if (rtmStepTask(S, i)) {
+				MODEL_STEP(S, i);
+			}
+			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+				rtmTaskCounter(S, i) = 0;
+			}
+		}
+#else
+		// step the model for the base sample time
+		MODEL_STEP(0);
+
+		// step the model for any other sample times (subrates)
+		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+			if (rtmStepTask(S, i)) {
+				MODEL_STEP(i);
+			}
+			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+				rtmTaskCounter(S, i) = 0;
+			}
+		}
+#endif
+
+#else // multitasking
+
+#ifdef REUSABLE_FUNCTION
+		MODEL_STEP(S);
 #else
         MODEL_STEP();
 #endif
-		errorStatus = rtmGetErrorStatus(instance->S);
+
+#endif // multitasking
+
+		errorStatus = rtmGetErrorStatus(S);
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;

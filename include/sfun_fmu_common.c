@@ -6,9 +6,12 @@
  
 #if FMI_VERSION == 1
 #define FMI_API(F) fmi ## F
+#define ASSERT_OK(F, M)  if (F != fmiOK) { ssSetErrorStatus(S, M); return; }
 #elif FMI_VERSION == 2
 #define FMI_API(F) fmi2 ## F
+#define ASSERT_OK(F, M)  if (F != fmi2OK) { ssSetErrorStatus(S, M); return; }
 #endif
+
 
 typedef enum {
 	REAL, INTEGER, BOOLEAN, STRING
@@ -18,7 +21,6 @@ typedef enum {
 #define COMPONENT	(ssGetPWork(S)[0])
 
 #define FMU_TIME		(ssGetRWork(S)[0])
-#define PRE_U     		(&ssGetRWork(S)[1])
 
 #ifndef CO_SIMULATION
 #define EVENT_INFO_PTR 	(ssGetPWork(S)[1])
@@ -62,11 +64,6 @@ typedef enum {
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-
-static void assertNoError(SimStruct *S, FMI_API(Status) status, const char *message) {
-	if (status >= FMI_API(Error)) ssSetErrorStatus(S, message);
-}
-
 #define MAX_MESSAGE_SIZE 4096
 
 static DTypeId simulinkVariableType(Type type) {
@@ -92,8 +89,7 @@ static void logFMUMessage(FMI_API(Component) c, FMI_API(String) instanceName, FM
 
 static void setStartValues(SimStruct *S) {
 
-	int i, j;
-	size_t size, m, n;
+	size_t i, j, size, m, n;
 	FMI_API(ValueReference) vr;
 	int type;
 	FMI_API(Real) real_value;
@@ -104,21 +100,21 @@ static void setStartValues(SimStruct *S) {
     // scalar start values
     for (i = 0; i < mxGetNumberOfElements(SCALAR_START_VALUES_PARAM); i++) {
 
-		type = SCALAR_START_TYPES[i];
-		vr = SCALAR_START_VRS[i];
+		type = (int)SCALAR_START_TYPES[i];
+		vr = (FMI_API(ValueReference))SCALAR_START_VRS[i];
 
 		switch (((int)SCALAR_START_TYPES[i])) {
         case REAL:
 			real_value = SCALAR_START_VALUES[i];
-			assertNoError(S, FMI_API(SetReal)   (COMPONENT, &vr, 1, &real_value),    "Failed to set real start value");
+			ASSERT_OK(FMI_API(SetReal)(COMPONENT, &vr, 1, &real_value), "Failed to set real start value")
 			break;
         case INTEGER:
-			integer_value = SCALAR_START_VALUES[i];
-			assertNoError(S, FMI_API(SetInteger)(COMPONENT, &vr, 1, &integer_value), "Failed to set integer start value");
+			integer_value = (FMI_API(Integer))SCALAR_START_VALUES[i];
+			ASSERT_OK(FMI_API(SetInteger)(COMPONENT, &vr, 1, &integer_value), "Failed to set integer start value")
 			break;
         case BOOLEAN:
 			boolean_value = SCALAR_START_VALUES[i] != 0;
-			assertNoError(S, FMI_API(SetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to set boolean start value");
+			ASSERT_OK(FMI_API(SetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to set boolean start value")
 			break;
         }
     }
@@ -146,9 +142,9 @@ static void setStartValues(SimStruct *S) {
             string_value[j] = '\0';
         }
 
-        vr = STRING_START_VRS[i];
+        vr = (FMI_API(ValueReference))STRING_START_VRS[i];
 
-        assertNoError(S, FMI_API(SetString)(COMPONENT, &vr, 1, &string_value), "Failed to set string start value");
+		ASSERT_OK(FMI_API(SetString)(COMPONENT, &vr, 1, (const char * const*)&string_value), "Failed to set string start value")
     }
 
     free(buffer);
@@ -158,7 +154,7 @@ static void setStartValues(SimStruct *S) {
 
 
 /* Set the S-function's inputs to the FMU */
-static void setInputs(SimStruct *S) {
+static void setInputs(SimStruct *S, int direct) {
 
 #if NU > 0
 
@@ -167,57 +163,37 @@ static void setInputs(SimStruct *S) {
 	const int   input_feed_through[NU] = { INPUT_PORT_FEED_THROUGH };
 	const FMI_API(ValueReference) input_variable_vrs[N_INPUT_VARIABLES] = { INPUT_VARIABLE_VRS };
 
-    FMI_API(Real) real_value;
-    FMI_API(Integer) integer_value, order = 1;
-    FMI_API(Boolean) boolean_value;
-	int iu, i, j;
-    real_T du;
+	int iu, i, j, w;
 	const void *u;
     time_T h = ssGetT(S) - FMU_TIME;
-	Type type;
+	FMI_API(Boolean) boolean_value;
 
     iu = 0;
     for (i = 0; i < NU; i++) {
 
+		w = inport_port_widths[i];
+
+		if (direct && !input_feed_through[i]) {
+			iu += w;
+			continue;
+		}
+
 		u = ssGetInputPortSignal(S, i);
 
-        for (j = 0; j < inport_port_widths[i]; j++) {
+        for (j = 0; j < w; j++) {
 
             FMI_API(ValueReference) vr = input_variable_vrs[iu];
 
-#ifdef DIRECT_INPUT
-            switch (input_port_types[i]) {
-			case REAL:
-				real_value = ((const real_T *)u)[j];
-				break;
-			case INTEGER:
-				real_value = ((const int32_T *)u)[j];
-				break;
-			case BOOLEAN:
-				real_value = ((const boolean_T *)u)[j];
-				break;
-			}
-#else
-            real_value = PRE_U[iu];
-#endif
-
             switch (input_port_types[i]) {
             case REAL:
-                assertNoError(S, FMI_API(SetReal)(COMPONENT, &vr, 1, &real_value), "Failed to set real input");
-#ifdef SET_INPUT_DERIVATIVES
-				if (h > 0 && input_feed_through[i]) {
-                    du = (((const real_T *)u)[j] - PRE_U[iu]) / h;
-                    assertNoError(S, FMI_API(SetRealInputDerivatives)(COMPONENT, &vr, 1, &order, &du), "Failed to set real input derivatives");
-                }
-#endif
+                ASSERT_OK(FMI_API(SetReal)(COMPONENT, &vr, 1, &(((const real_T *)u)[j])), "Failed to set real input")
                 break;
             case INTEGER:
-                integer_value = real_value;
-                assertNoError(S, FMI_API(SetInteger)(COMPONENT, &vr, 1, &integer_value), "Failed to set integer input");
+				ASSERT_OK(FMI_API(SetInteger)(COMPONENT, &vr, 1, &(((const int32_T *)u)[j])), "Failed to set integer input")
                 break;
             case BOOLEAN:
-                boolean_value = real_value != 0.0;
-                assertNoError(S, FMI_API(SetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to set boolean input");
+				boolean_value = ((const boolean_T *)u)[j];
+				ASSERT_OK(FMI_API(SetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to set boolean input")
                 break;
             }
 
@@ -255,15 +231,15 @@ static void setOutputs(SimStruct *S) {
 
             switch (outport_variable_types[i]) {
             case REAL:
-                assertNoError(S, FMI_API(GetReal)(COMPONENT, &vr, 1, &real_value), "Failed to get real output");
+				ASSERT_OK(FMI_API(GetReal)(COMPONENT, &vr, 1, &real_value), "Failed to get real output")
                 ((real_T *)y)[j] = real_value;
                 break;
             case INTEGER:
-                assertNoError(S, FMI_API(GetInteger)(COMPONENT, &vr, 1, &integer_value), "Failed to get integer input");
+				ASSERT_OK(FMI_API(GetInteger)(COMPONENT, &vr, 1, &integer_value), "Failed to get integer input")
                 ((int32_T *)y)[j] = integer_value;
                 break;
             case BOOLEAN:
-                assertNoError(S, FMI_API(GetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to get boolean input");
+				ASSERT_OK(FMI_API(GetBoolean)(COMPONENT, &vr, 1, &boolean_value), "Failed to get boolean input")
 				((boolean_T *)y)[j] = boolean_value;
                 break;
             }
@@ -279,50 +255,16 @@ static void setOutputs(SimStruct *S) {
 #define MDL_UPDATE
 #if defined(MDL_UPDATE)
 static void mdlUpdate(SimStruct *S, int_T tid) {
-
-#if NU > 0
-    const int   inport_port_widths[NU] = { INPUT_PORT_WIDTHS };
-	const Type  input_port_types[NU]   = { INPUT_PORT_TYPES };
-
-	int iu, i, j;
-    const void *u;
-
-	//ssPrintf("mdlUpdate() (t=%.16g, %s)\n", ssGetT(S), ssIsMajorTimeStep(S) ? "major" : "minor");
-
-	// record the inputs
-    iu = 0;
-    for (i = 0; i < NU; i++) {
-
-		u = ssGetInputPortSignal(S, i);
-
-		for (j = 0; j < inport_port_widths[i]; j++) {
-
-			switch (input_port_types[i]) {
-            case REAL:
-				PRE_U[iu] = ((const real_T *)u)[j];
-                break;
-            case INTEGER:
-				PRE_U[iu] = ((const int32_T *)u)[j];
-                break;
-            case BOOLEAN:
-				PRE_U[iu] = ((const boolean_T *)u)[j];
-                break;
-            }
-
-			iu++;
-        }
-    }
-#endif
-
+	setInputs(S, 0);  // may call ssSetErrorStatus()
 }
-#endif /* MDL_UPDATE */
+#endif // MDL_UPDATE
 
 
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
 static void mdlCheckParameters(SimStruct *S) {
 
-	int i;
+	size_t i;
 	real_T v;
 
     if (!mxIsChar(UNIZIP_DIRECTORY_PARAM)) {
@@ -330,8 +272,9 @@ static void mdlCheckParameters(SimStruct *S) {
         return;
     }
 
-    if (!mxIsNumeric(LOG_LEVEL_PARAM) || mxGetNumberOfElements(LOG_LEVEL_PARAM) != 1 || (LOG_LEVEL != 1 && LOG_LEVEL != 2 && LOG_LEVEL != 3)) {
-        ssSetErrorStatus(S, "Parameter 2 (log level) must be one of 1 (= DEBUG), 2 (= INFO) or 3 (= WARNING)");
+    if (!mxIsNumeric(LOG_LEVEL_PARAM) || mxGetNumberOfElements(LOG_LEVEL_PARAM) != 1 ||
+        (LOG_LEVEL != 0 && LOG_LEVEL != 1 && LOG_LEVEL != 2 && LOG_LEVEL != 3 && LOG_LEVEL != 4 && LOG_LEVEL !=5)) {
+        ssSetErrorStatus(S, "Parameter 2 (log level) must be one of 0 (Info), 1 (Warning), 2 (Discard), 3 (Error), 4 (Fatal) or 5 (None)");
         return;
     }
 
@@ -462,11 +405,11 @@ static void mdlInitializeSizes(SimStruct *S)
 
 #ifdef CO_SIMULATION
 	ssSetNumNonsampledZCs(S, 0);
-	ssSetNumRWork(S, 1 + N_INPUT_VARIABLES); // [FMU_TIME, PRE_U]
+	ssSetNumRWork(S, 1); // [FMU_TIME]
 	ssSetNumPWork(S, 1); // [COMPONENT]
 #else
 	ssSetNumNonsampledZCs(S, NZ + 1);
-	ssSetNumRWork(S, 1 + N_INPUT_VARIABLES + 2 * NZ); // [FMU_TIME, PRE_U, PREZ, Z]
+	ssSetNumRWork(S, 1 + 2 * NZ); // [FMU_TIME, PREZ, Z]
 	ssSetNumPWork(S, 2);  // [COMPONENT, EVENT_INFO]
 #endif
 
@@ -485,5 +428,4 @@ static void mdlInitializeSampleTimes(SimStruct *S) {
 #endif
 
 	ssSetOffsetTime(S, 0, OFFSET_TIME);
-
 }

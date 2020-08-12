@@ -13,6 +13,9 @@
 *.html
 html/images/
 
+# re-saved block library
+FMIKit_blocks.slx
+
 # MATLAB App Installers
 *.mlappinstall
 

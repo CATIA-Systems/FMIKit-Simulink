@@ -1,0 +1,299 @@
+%% 
+%% TLC script to generate model-specific code required 
+%% to build an FMI executable from a Simulink model 
+%%
+%%  Generated file:
+%%           sfcn_fmi.h
+%%
+
+%function IsNoninlinedCMEXSfunction(sfcnname) void
+  %with ::CompiledModel
+    %foreach sysid = NumSystems
+      %assign sys = System[sysid]
+      %with sys
+        %foreach blockid = NumBlocks
+          %assign block = Block[blockid]
+          %with block
+            %if Type == "S-Function" && ParamSettings.FunctionType == "C-MEX" && ParamSettings.Inlined == "no" && ParamSettings.FunctionName == sfcnname
+              %return TLC_TRUE
+            %endif
+          %endwith
+        %endforeach
+      %endwith
+    %endforeach
+  %endwith
+  %return TLC_FALSE
+%endfunction
+
+%openfile deffile = "sfcn_fmi.h"
+%with CompiledModel
+/*
+ * Model-specific defintions for "%<OrigName>"
+ *
+ * Generated on : %<GeneratedOn>
+ */
+#pragma once
+
+#include "simstruc.h"
+
+#define MODEL_GUID "%<GUID>"
+
+/* Solver settings selected in Simulink */
+%if SolverType == "VariableStep"
+#define SFCN_FMI_IS_VARIABLE_STEP_SOLVER 1
+  %assign fixedstep = "0.0"
+  %assign extrapolation = "0"
+  %assign newtoniter = "0"
+  %assign solvermode = "0"
+%else
+#define  SFCN_FMI_IS_VARIABLE_STEP_SOLVER 0
+  %with FixedStepOpts
+    %assign fixedstep = %<FixedStep>
+    %assign extrapolation = %<ExtrapolationOrder>
+    %assign newtoniter = %<NumberNewtonIterations>
+    %if SolverMode == "MultiTasking"
+      %assign solvermode = "1"
+    %else
+      %assign solvermode = "0"
+    %endif
+  %endwith
+%endif
+#define SFCN_FMI_FIXED_STEP_SIZE %<fixedstep>
+#define SFCN_FMI_IS_MT %<solvermode>
+#define SFCN_FMI_EXTRAPOLATION_ORDER %<extrapolation>
+#define SFCN_FMI_NEWTON_ITER %<newtoniter>
+
+/* Model sizes */
+#define SFCN_FMI_ZC_LENGTH %<ZCVectorlength>
+%%#define SFCN_FMI_NBR_INPUTS %<nbrInputsScalar>
+
+/* Model identifier */
+#define SFCN_FMI_MODEL_IDENTIFIER "%<OrigName>"
+
+/* Loading of MEX binaries, path to MATLAB bin */
+#define SFCN_FMI_LOAD_MEX %<LoadBinaryMEX>
+%assign Matlab_bin = FEVAL("makeMatlabBin")
+#define SFCN_FMI_MATLAB_BIN "%<Matlab_bin>"
+%assign numNonInlinedCMEXSFcns = 0
+%if ISFIELD(::CompiledModel, "NumSFunctionNameCounts")
+  %foreach id = NumSFunctionNameCounts
+    %if IsNoninlinedCMEXSfunction(SFunctionNameCount[id].Name)
+      %assign numNonInlinedCMEXSFcns = numNonInlinedCMEXSFcns + 1
+    %endif
+  %endforeach
+%endif
+%assign mexext = FEVAL("mexext")
+%if numNonInlinedCMEXSFcns > 0
+  %assign isFirst = TLC_TRUE
+#define SFCN_FMI_NBR_MEX %<numNonInlinedCMEXSFcns>
+static const char* SFCN_FMI_MEX_NAMES[%<numNonInlinedCMEXSFcns>] = {
+  %foreach id = NumSFunctionNameCounts
+    %if IsNoninlinedCMEXSfunction(SFunctionNameCount[id].Name)
+      %if isFirst
+"%<SFunctionNameCount[id].Name>.%<mexext>"
+      %else
+,"%<SFunctionNameCount[id].Name>.%<mexext>"
+      %endif
+      %assign isFirst = TLC_FALSE
+    %endif
+  %endforeach
+};
+%else
+#define SFCN_FMI_NBR_MEX 0
+
+static const char* SFCN_FMI_MEX_NAMES[1] = {""};
+
+extern void  sfcn_fmi_mxGlobalTunable_(SimStruct* S, int_T create, int_T update);
+extern void* sfcn_fmi_allocateBusObject(int_T isInput, int_T portid, int_T width);
+extern void  sfcn_fmi_registerMdlCallbacks_(SimStruct* S);
+extern void  sfcn_fmi_registerRTModelCallbacks_(SimStruct*S);
+extern void  sfcn_fmi_copyToSFcnParams_(SimStruct* S);
+extern void  sfcn_fmi_mxGlobalTunable_(SimStruct* S, int_T create, int_T update);
+
+%endif
+
+%endwith
+%closefile deffile
+
+%openfile deffile = "sfcn_fmi.c"
+%with CompiledModel
+/*
+ * sfcn_fmi.c
+ *
+ *  Model-specific code required to build FMI executable 
+ *  from Simulink model "%<OrigName>".
+ *
+ * Generated on : %<GeneratedOn>
+ */
+
+#include <stddef.h>
+
+
+%with GlobalScope
+  %assign parType = tParametersType
+  %assign defParam = tDefaultParameters
+  %assign blockIO = tBlockIOType
+%endwith
+
+%assign isRelBeforeR2015b = FEVAL("verLessThan", "matlab", "8.6")
+%assign isRelBeforeR2018a = FEVAL("verLessThan", "matlab", "9.4")
+
+%assign nbrGlobalTunable = 0
+#if defined(MATLAB_MEX_FILE)
+#define mexCallMATLAB sfcn_fmi_load_mex
+#else
+%if ( (::CompiledModel.ConfigSet.InlineParams) || (isRelBeforeR2015b == 0) )
+/* Code to enable global tunable parameters in stand-alone mode */ 
+#define RTW_GENERATED_SFCN_TUNABLE_PRMS_%<OrigName>_sf
+#define RTW_GENERATED_S_FUNCTION
+#include "simstruc.h"
+#include "fixedpoint.h"
+%if ( isRelBeforeR2018a == 0 )
+#if defined (_MSC_VER)
+#pragma warning(disable:4005)
+#endif
+%endif
+#define mxGetData(x) x
+  %with ::CompiledModel.ModelParameters
+    %foreach gparamid = NumParameters
+      %assign gparam = Parameter[gparamid]
+      %if (gparam.StorageClass == "Auto_SFCN" && ( !ISEMPTY(gparam.WorkspaceVarName) || (ISFIELD(gparam, "IsPseudoWorkspaceVar") && gparam.IsPseudoWorkspaceVar == "yes") ) )
+        %assign nbrGlobalTunable = nbrGlobalTunable + 1
+#define %<gparam.Identifier>(S)    &(((%<parType> *) ssGetLocalDefaultParam(S))->%<gparam.Identifier>)
+      %endif
+    %endforeach
+  %endwith
+%endif
+#define ssFxpSetU32BitRegionCompliant(S, v)
+#include "rt_nonfinite.c"
+#endif
+
+/* Include Simulink Coder-generated model code */
+#include "%<OrigName>_sf.c"
+
+/* Register model callback routines in SimStruct */
+void sfcn_fmi_registerMdlCallbacks_(SimStruct*S)
+{
+  ssSetmdlInitializeSizes(S, mdlInitializeSizes);
+  ssSetmdlInitializeSampleTimes(S, mdlInitializeSampleTimes);
+#if defined(MDL_INITIALIZE_CONDITIONS)
+  ssSetmdlInitializeConditions(S, mdlInitializeConditions);
+#else
+  ssSetmdlInitializeConditions(S, NULL);
+#endif
+#if defined(MDL_START)
+  ssSetmdlStart(S, mdlStart);
+#else
+  ssSetmdlStart(S, NULL);
+#endif
+#if defined(RTW_GENERATED_ENABLE)
+  _ssSetRTWGeneratedEnable(S, mdlEnable);
+#else
+  _ssSetRTWGeneratedEnable(S, NULL);
+#endif
+  ssSetmdlOutputs(S,mdlOutputs);
+#if defined(MDL_ZERO_CROSSINGS)
+  ssSetmdlZeroCrossings(S, mdlZeroCrossings);
+#else
+  ssSetmdlZeroCrossings(S, NULL);
+#endif
+#if defined(MDL_DERIVATIVES)
+  ssSetmdlDerivatives(S, mdlDerivatives);
+#else
+  ssSetmdlDerivatives(S, NULL);
+#endif
+#if defined (MDL_UPDATE)
+  ssSetmdlUpdate(S, mdlUpdate);
+#else
+  ssSetmdlUpdate(S, NULL);
+#endif
+  ssSetmdlTerminate(S, mdlTerminate);
+}
+
+/* Register SolverInfo model method pointers */
+
+/* Empty callback for use as mdlProjection in ODE solver */
+static void mdlNoOpFunc(SimStruct *S) {
+	return;
+}
+
+void sfcn_fmi_registerRTModelCallbacks_(SimStruct*S)
+{
+#if defined(MDL_DERIVATIVES)
+  S->mdlInfo->solverInfo->modelMethodsPtr->rtmDervisFcn = (rtMdlDerivativesFcn) mdlDerivatives;
+#else
+  S->mdlInfo->solverInfo->modelMethodsPtr->rtmDervisFcn = (rtMdlProjectionFcn) mdlNoOpFunc;
+#endif
+  S->mdlInfo->solverInfo->modelMethodsPtr->rtmProjectionFcn = (rtMdlProjectionFcn) mdlNoOpFunc;
+  S->mdlInfo->solverInfo->modelMethodsPtr->rtmOutputsFcn = (rtMdlOutputsFcn) mdlOutputs;
+}
+
+/* Copy parameter values to S-function mxArrays */
+void sfcn_fmi_copyToSFcnParams_(SimStruct* S)
+{
+%% TODO: get nbrParamsScalar from XML
+%assign nbrParamsScalar = 0
+%if nbrParamsScalar > 0
+  %if ISFIELD(::CompiledModel, "NumSFunctionNameCounts") && LoadBinaryMEX
+    %if ( (nbrGlobalTunable == 0) || (isRelBeforeR2015b == 0) )
+  %<OutputSFcnParameterCode(0)>
+    %else
+  return;   /* Inlining with global tunable parameters */
+    %endif
+  %else
+  return;   /* No loading of binary MEX files */
+  %endif
+%else
+  return; /* No parameters in model (probably due to inlining) */
+%endif
+}
+
+/* Handle mxArrays for global tunable parameters */
+void sfcn_fmi_mxGlobalTunable_(SimStruct* S, int_T create, int_T update)
+{
+%if (nbrGlobalTunable > 0) && (%<LoadBinaryMEX> == 1)
+  %assign nbrArrays = 0
+  mxArray *param;
+  int_T i;
+  if (create && !update) {
+    S->sfcnParams.dlgParams = (mxArray**) calloc(%<nbrGlobalTunable>, sizeof(mxArray*));
+  }
+  %with ::CompiledModel.ModelParameters
+    %foreach gparamid = NumParameters
+      %assign gparam = Parameter[gparamid]
+      %if ( gparam.StorageClass == "Auto_SFCN" && ( !ISEMPTY(gparam.WorkspaceVarName) || (ISFIELD(gparam, "IsPseudoWorkspaceVar") && gparam.IsPseudoWorkspaceVar == "yes") ) )
+        %assign typeName = SLibGetRecordDataTypeName(gparam, "")
+        %assign mxClass = GetMxClass(typeName)
+        %assign dims = LibGetRecordDimensions(gparam)
+        %assign nRows = dims[0]
+        %assign nCols = (SIZE(dims, 1) == 1) ? 1 : dims[1]
+  if (create) {
+    {
+      %<typeName> *vals%<nbrArrays>;
+      if (update) {
+	    param = _ssGetSFcnParam(S, %<nbrArrays>);
+        vals%<nbrArrays> = (%<typeName> *) &(((%<parType> *) ssGetLocalDefaultParam(S))->%<gparam.Identifier>);
+	  } else {
+	    param = mxCreateNumericMatrix(%<nRows>, %<nCols>, %<mxClass>, mxREAL);
+        mexMakeArrayPersistent(param);
+        _ssSetSFcnParam(S, %<nbrArrays>, param);
+		vals%<nbrArrays> = (%<typeName> *) &(%<defParam>.%<gparam.Identifier>);
+	  }
+	  for (i=0;i< %<nRows> * %<nCols>;i++) {
+        ((%<typeName>*)mxGetData(param))[i] = vals%<nbrArrays>[i];
+      }
+    }
+  } else {
+    mxDestroyArray(_ssGetSFcnParam(S, %<nbrArrays>));
+  }
+        %assign nbrArrays = nbrArrays + 1
+      %endif
+    %endforeach
+  %endwith
+%else
+  return; /* no global tunable parameters as mxArrays */
+%endif
+}
+
+%endwith
+%closefile deffile

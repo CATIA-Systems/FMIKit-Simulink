@@ -1,4 +1,4 @@
-function varargout = grtfmi_model_sources(model, rtw_dir)
+function varargout = rtwsfcnfmi_model_sources(model, rtw_dir)
 
 % convert to absolute path
 if ~strncmp(rtw_dir, pwd, numel(pwd))
@@ -15,44 +15,40 @@ include = {rtw_dir, filepath};
 gen_sources = dir(fullfile(rtw_dir, '*.c'));
 
 for i = 1:numel(gen_sources)
-  sources{end+1} = fullfile(rtw_dir, gen_sources(i).name); %#ok<AGROW>
+    filename = gen_sources(i).name;
+    if strcmp(filename, [model '_sf.c']) || ...
+        strcmp(filename, 'rt_nonfinite.c')
+        continue
+    end
+    sources{end+1} = fullfile(rtw_dir, gen_sources(i).name); %#ok<AGROW>
 end
 
 % S-functions sources
+mex_functions = {};
 modules = {};
 sfcns = find_system(model, 'LookUnderMasks', 'on', 'FollowLinks', 'on', 'BlockType', 'S-Function');
 for i = 1:numel(sfcns)
     block = sfcns{i};
-    modules = [modules get_param(block, 'FunctionName') ...
+    function_name = get_param(block, 'FunctionName');
+    mex_functions{end+1} = which(function_name);
+    modules = [modules function_name ...
       regexp(get_param(block, 'SFunctionModules'), '\s+', 'split')]; %#ok<AGROW>
 end
+mex_functions = unique(mex_functions);
+modules = unique(modules);
 
 % add S-function sources
-for i = 1:numel(modules)
-    src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
-    for j = 1:numel(src_file_ext)
-        source_file = which([modules{i} src_file_ext{j}]);
-        if ~isempty(source_file) && ~any(strcmp(sources, source_file))
-            sources{end+1} = source_file; %#ok<AGROW>
-            break
+if strcmp(get_param(model, 'LoadBinaryMEX'), 'off')
+    for i = 1:numel(modules)
+        src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
+        for j = 1:numel(src_file_ext)
+            source_file = which([modules{i} src_file_ext{j}]);
+            if ~isempty(source_file) && ~any(strcmp(sources, source_file))
+                sources{end+1} = source_file; %#ok<AGROW>
+                break
+            end
         end
     end
-end
-
-% referenced models
-[parent_dir, ~, ~] = fileparts(rtw_dir);
-
-referenced_models = find_mdlrefs(model);
-
-include{end+1} = fullfile(parent_dir, 'slprj', 'grtfmi', '_sharedutils');
-
-for i = 1:numel(referenced_models)
-    referenced_model = referenced_models{i};
-    if strcmp(referenced_model, model)
-        continue
-    end
-    include{end+1} = fullfile(parent_dir, 'slprj', 'grtfmi', referenced_model); %#ok<AGROW>
-    sources{end+1} = fullfile(parent_dir, 'slprj', 'grtfmi', referenced_model, [referenced_model '.c']); %#ok<AGROW>
 end
 
 % custom includes, sources and libraries
@@ -65,10 +61,10 @@ include   = strrep(include, '\', '/');
 sources   = strrep(sources, '\', '/');
 libraries = strrep(libraries, '\', '/');
 
-if nargout == 3
-   varargout = {include, sources, libraries};
+if nargout == 4
+   varargout = {include, sources, libraries, mex_functions};
 else
-   varargout = {{include, sources, libraries}};
+   varargout = {{include, sources, libraries, mex_functions}};
 end
 
 end

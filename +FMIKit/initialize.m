@@ -7,20 +7,20 @@ function initialize()
 msg = false;
 
 info = what('+FMIKit');
-[folder, ~, ~] = fileparts(info(1).path);
-      
-% initialize the RTWSFCNFMI
-if isempty(which('rtwsfcnfmi_init'))
-    rtwsfcnfmi_m_folder = fullfile(folder, 'rtwsfcnfmi', 'm');
-    if exist(rtwsfcnfmi_m_folder, 'dir')
-        addpath(rtwsfcnfmi_m_folder);
-        msg = true;
+
+% check for multiple FMIKit installations on the MATLAB path
+if numel(info) > 1
+    message = ['Multiple FMIKit installations found:' sprintf('\n')];
+    for i=1:numel(info)
+        message = [message sprintf('\n') info(i).path]; %#ok<AGROW>
     end
+    error(message)
 end
 
-if ~isempty(which('rtwsfcnfmi_init'))
-    rtwsfcnfmi_init();
-end
+[folder, ~, ~] = fileparts(info(1).path);
+
+% add the FMIKit folder to the MATLAB path
+addpath(folder);
 
 % add the src folder to the MATLAB path
 if isempty(which('FMU.cpp'))
@@ -40,6 +40,15 @@ if isempty(which('grtfmi.tlc'))
     end
 end
 
+% add the RTWSFCNFMI target to the MATLAB path
+if isempty(which('rtwsfcnfmi.tlc'))
+    rtwsfcnfmi_folder = fullfile(folder, 'rtwsfcnfmi');
+    if exist(rtwsfcnfmi_folder, 'dir')
+        addpath(rtwsfcnfmi_folder);
+        msg = true;
+    end
+end
+
 % add the Java libraries to the path
 if isempty(which('org.jdesktop.swingx.JXTreeTable'))
     javaaddpath(fullfile(folder, 'swingx-1.6.jar'))
@@ -55,6 +64,18 @@ if isempty(which('fmikit.ui.FMUBlockDialog'))
     javaaddpath(fullfile(folder, 'fmikit.jar'))
     msg = true;
 end
+
+% delete re-saved block library
+close_system('FMIKit_blocks', 0);
+library_file = fullfile(folder, 'FMIKit_blocks.slx');
+if exist(library_file, 'file')
+    delete(library_file);
+end
+
+% re-save block library for current release
+h = load_system('FMIKit_blocks_R2012b');
+save_system(h, library_file);
+close_system(h);
 
 % add repository information to avoid "fix" message in library browser
 if ~verLessThan('matlab', '8.4') % R2014b

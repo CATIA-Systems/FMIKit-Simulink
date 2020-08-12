@@ -10,6 +10,7 @@
 #ifdef _WIN32
 #include "shlwapi.h"
 #include <wininet.h>
+#pragma comment(lib, "shlwapi.lib")
 #endif
 
 #include <stdio.h>
@@ -271,15 +272,20 @@ static void setInput(SimStruct *S, bool direct) {
 
 	for (int i = 0; i < nu(S); i++) {
 
-		if (direct && !inputPortDirectFeedThrough(S, i)) continue;
+		const auto w = inputPortWidth(S, i);
+
+		if (direct && !inputPortDirectFeedThrough(S, i)) {
+			iu += w;
+			continue;
+		}
 
 		auto type = variableType(S, inputPortTypesParam, i);
 
 		const void *y = ssGetInputPortSignal(S, i);
 
-		for (int j = 0; j < inputPortWidth(S, i); j++) {
+		for (int j = 0; j < w; j++) {
 
-			auto vr = valueReference(S, inputPortVariableVRsParam, iu);
+			const auto vr = valueReference(S, inputPortVariableVRsParam, iu);
 
 			// set the input
 			switch (type) {
@@ -338,8 +344,14 @@ static void setOutput(SimStruct *S, FMU *fmu) {
 
 static void getLibraryPath(SimStruct *S, char *path) {
 
+#ifdef GRTFMI
+	auto unzipdir = FMU_RESOURCES_DIR + string("/") + modelIdentifier(S);
+#else
+	auto unzipdir = unzipDirectory(S);
+#endif
+
 #ifdef _WIN32
-	strcpy(path, unzipDirectory(S).c_str());
+	strcpy(path, unzipdir.c_str());
 	PathAppend(path, "binaries");
 
 #ifdef _WIN64
@@ -837,11 +849,9 @@ static void mdlStart(SimStruct *S) {
 
 #ifdef _WIN32
 	if (!PathFileExists(libraryFile)) {
-#ifdef _WIN64
-		ssSetErrorStatus(S, "The current platform (Windows 64-bit) is not supported by the FMU");
-#else
-		ssSetErrorStatus(S, "The current platform (Windows 32-bit) is not supported by the FMU");
-#endif
+		static char errorMessage[1024];
+		snprintf(errorMessage, 1024, "Cannot find the FMU's platform binary %s for %s.", libraryFile, instanceName);
+		ssSetErrorStatus(S, errorMessage);
 		return;
 	}
 #endif
@@ -896,7 +906,10 @@ static void mdlStart(SimStruct *S) {
 
 		fmu->instantiate(loggingOn);
 		setStartValues(S, fmu);
-		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, true, ssGetTFinal(S));
+
+		const auto stopTime = ssGetTFinal(S);  // can be -1
+		fmu->setupExperiment(toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime);
+
 		fmu->enterInitializationMode();
 		fmu->exitInitializationMode();
 

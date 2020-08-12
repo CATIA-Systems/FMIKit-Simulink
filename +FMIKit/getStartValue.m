@@ -8,7 +8,7 @@ function startValue = getStartValue(block, variableName)
 % returns the start value of variable 'step' or '' if no start
 % value is defined.
 
-assert(strcmp(get_param(gcb, 'ReferenceBlock'), 'FMIKit_blocks/FMU'), 'Block is not an FMU')
+assert(strcmp(get_param(block, 'ReferenceBlock'), 'FMIKit_blocks/FMU'), 'Block is not an FMU')
 assert(ischar(variableName), 'variableName must be a string')
 
 dialog = FMIKit.showBlockDialog(block, false);

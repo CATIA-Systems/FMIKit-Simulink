@@ -43,11 +43,13 @@ switch hookMethod
             copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
         end
         
-        command = get_param(modelName, 'CMakeCommand');
-        command = grtfmi_find_cmake(command);
-        generator = get_param(modelName, 'CMakeGenerator');
-        source_code_fmu = get_param(modelName, 'SourceCodeFMU');
-        fmi_version = get_param(modelName, 'FMIVersion');
+        command             = get_param(modelName, 'CMakeCommand');
+        command             = grtfmi_find_cmake(command);
+        generator           = get_param(modelName, 'CMakeGenerator');
+        toolset             = get_param(modelName, 'CMakeToolset');
+        build_configuration = get_param(modelName, 'CMakeBuildConfiguration');
+        source_code_fmu     = get_param(modelName, 'SourceCodeFMU');
+        fmi_version         = get_param(modelName, 'FMIVersion');
         
         % copy extracted nested FMUs
         nested_fmus = find_system(modelName, 'ReferenceBlock', 'FMIKit_blocks/FMU');
@@ -88,7 +90,7 @@ switch hookMethod
         
         % write the CMakeCache.txt file
         fid = fopen('CMakeCache.txt', 'w');
-        fprintf(fid, 'MODEL:STRING=%s\n', modelName);
+        fprintf(fid, 'MODEL_NAME:STRING=%s\n', modelName);
         fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
         fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
@@ -101,12 +103,17 @@ switch hookMethod
         fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));
         fclose(fid);
         
-        disp('### Generating project')
-        status = system(['"' command '" -G "' generator '" "' strrep(grtfmi_dir, '\', '/') '"']);
+        disp('### Generating project')       
+        if ~isempty(toolset)
+            toolset_option = [' -T "' toolset '"'];
+        else
+            toolset_option = '';
+        end
+        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(grtfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')
-        status = system(['"' command '" --build . --config Release']);
+        status = system(['"' command '" --build . --config ' build_configuration]);
         assert(status == 0, 'Failed to build FMU');
 
         % copy the FMU to the working directory

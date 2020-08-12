@@ -76,6 +76,7 @@ The sample time for the FMU block (use `-1` for inherited)
 ### Relative Tolerance
 
 The relative tolerance for a Co-Simulation FMU (use `0` for the default tolerance).
+For Model Exchange FMUs the relative tolerance is the value of `RelTol` for variable step and `0` for fixed step solvers.
 
 ### Log Level
 

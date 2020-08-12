@@ -3,7 +3,7 @@
 %%  model description (XML) generation.
 %%
 
-%function GetFMIType(record) void
+%function GetFMIType_(record) void
   %assign dataTypeId   = LibGetRecordDataTypeId(record)
   %assign dataType     = ::CompiledModel.DataTypes.DataType[dataTypeId]
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
@@ -100,9 +100,13 @@
 %endfunction
 
 %function VariableFMI2(record, variableName, dataName, vr, variableAttr, typeAttr) Output
-  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
-  %assign fmiType      = GetFMIType(record)
-  %assign dtypeID      = LibGetRecordContainerDataTypeId(record) 
+  %if ISFIELD(record, "Identifier") && FEVAL("grtfmi_is_cstate", record.Identifier)
+    %assign dataTypeName = "real_T"
+  %else
+    %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %endif
+  %assign fmiType      = GetFMIType_(record)
+  %assign dtypeID      = LibGetRecordDataTypeId(record)
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
@@ -180,7 +184,7 @@
       %selectfile incfile
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = %<dataName>%<dataSubs>);
+    modelVariables[%<vr-1>].address = &(%<dataName>%<dataSubs>);
       %selectfile xmlfile
     <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
       <%<fmiType>%<startAttr>%<typeAttr>/>
@@ -231,7 +235,7 @@
   %selectfile incfile
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = %<width>;
-    modelVariables[%<vr-1>].address = %<dataName>);
+    modelVariables[%<vr-1>].address = &(%<dataName>);
   %assign vr = vr + 1
   %return vr
 %endfunction

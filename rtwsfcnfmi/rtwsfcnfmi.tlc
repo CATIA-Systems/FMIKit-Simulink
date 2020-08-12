@@ -1,61 +1,114 @@
-%% SYSTLC: FMU based on GRT (Functional Mock-up Unit) \
+%% SYSTLC: FMU based on RTW S-Function (Functional Mock-up Unit) \
 %%    TMF: none MAKE: make_rtw EXTMODE: no_ext_comm
-%%
-%selectfile NULL_FILE
 
-%assign TargetType = "RT"
+%% 
+%% TLC file for generation of S-function with FMI
+%%
+%%  Customized version of rtwsfcn.tlc in MATLAB distribution.
+%%
+
+%assign TargetType = "NRT"
 %assign Language   = "C"
-%assign GenRTModel = 1
-%assign _GRT_      = 1
-%assign TargetRegistMutexOp   = 1 
-%assign TargetRegistSynchroOp = 1
+
+%assign MatFileLogging = 0
+%assign CodeFormat = "S-Function"
+
+%assign res = FEVAL("revert2013b")
+
+%with CompiledModel
+  %if FMIType == "CoSimulation"
+    %if SolverType == "VariableStep"
+      %exit FMI type 'CoSimulation' requires a Fixed-step solver. Please change solver type in the Simulink Configuration.
+    %endif
+  %endif
+  %with ConfigSet
+    %if TargetLang == "C++"
+      %exit C++ is currently not supported as code generation language. Please select C as target language.
+    %endif
+  %endwith
+%endwith
 
 %include "codegenentry.tlc"
 %assign GUID = FEVAL("grtfmi_generate_guid")
-%include "grtfmilib.tlc"
-%include "grtfmixml.tlc"
+%include "sfcnmei.tlc"
 
+%assign SourceCodeFMU = 0
+%assign VisibleParameters = ""
+%include "rtwsfcnfmilib.tlc"
+%include "rtwsfcnfmixml.tlc"
 
-%% The contents between 'BEGIN_RTW_OPTIONS' and 'END_RTW_OPTIONS' in this file
-%% are used to maintain backward compatibility to R13 and preR13 custom target 
-%% file only.
+%% The contents between 'BEGIN_RTW_OPTIONS' and 'END_RTW_OPTIONS' are strictly
+%% written by the standard format. We need to use this cell structure to construct
+%% RTW target structure and UI.
 %%
 /%
   BEGIN_RTW_OPTIONS
 
   i = 1;
-  rtwoptions(i).prompt        = 'FMI';
+  rtwoptions(i).prompt        = 'S-Function Target';
   rtwoptions(i).type          = 'Category';
-  rtwoptions(i).enable        = 'on';
-  rtwoptions(i).default       = 5;   % number of items under this category
+  rtwoptions(i).enable        = 'on';  
+  rtwoptions(i).default       = 2;   % number of items under this category
                                      % excluding this one.
-  rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
-  rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
+  rtwoptions(i).popupstrings  = '';
+  rtwoptions(i).tlcvariable   = '';
   rtwoptions(i).tooltip       = '';
   rtwoptions(i).callback      = '';
+  rtwoptions(i).opencallback  = '';
+  rtwoptions(i).closecallback = '';
   rtwoptions(i).makevariable  = '';
+				      
+  i = i + 1;
+  rtwoptions(i).prompt         = 'Create new model';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'off';
+  rtwoptions(i).tlcvariable    = 'CreateModel';
+  rtwoptions(i).makevariable   = 'CREATEMODEL';
+  rtwoptions(i).tooltip        = 'Create a new model containing the generated Real-Time Workshop S-Function block inside it';
 
   i = i + 1;
-  rtwoptions(i).prompt         = 'FMI version';
+  rtwoptions(i).prompt         = 'Use value for tunable parameters';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'off';
+  rtwoptions(i).tlcvariable    = 'UseParamValues';
+  rtwoptions(i).makevariable   = 'USEPARAMVALUES';
+  rtwoptions(i).tooltip        = 'Use value for variable instead of variable name in generated block mask edit fields';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'FMI';
+  rtwoptions(i).type          = 'Category';
+  rtwoptions(i).enable        = 'on';  
+  rtwoptions(i).default       = 7;    % number of items under this category
+                                      % excluding this one.
+  rtwoptions(i).popupstrings  = '';
+  rtwoptions(i).tlcvariable   = '';
+  rtwoptions(i).tooltip       = '';
+  rtwoptions(i).callback      = '';
+  rtwoptions(i).opencallback  = '';
+  rtwoptions(i).closecallback = '';
+  
+  i = i + 1;
+  rtwoptions(i).prompt         = 'FMI version:';
   rtwoptions(i).type           = 'Popup';
   rtwoptions(i).default        = '2';
+  rtwoptions(i).enable         = 'off';
   rtwoptions(i).tlcvariable    = 'FMIVersion';
-  rtwoptions(i).popupstrings   = '2|3';
-  rtwoptions(i).tooltip        = 'FMI version';
+  rtwoptions(i).popupstrings   = '2';
+  rtwoptions(i).tooltip        = 'Specify FMI version for the export';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Visible parameters';
-  rtwoptions(i).type          = 'Edit';
-  rtwoptions(i).default       = '';
-  rtwoptions(i).tlcvariable   = 'VisibleParameters';
-  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
+  rtwoptions(i).prompt         = 'FMI type:';
+  rtwoptions(i).type           = 'Popup';
+  rtwoptions(i).default        = 'ModelExchange';
+  rtwoptions(i).tlcvariable    = 'FMIType';
+  rtwoptions(i).popupstrings   = 'ModelExchange|CoSimulation';
+  rtwoptions(i).tooltip        = 'Specify FMI type for the export (Model Exchange or Co-Simulation)';
 
   i = i + 1;
   rtwoptions(i).prompt         = 'Model author';
   rtwoptions(i).type           = 'Edit';
   rtwoptions(i).default        = getenv('username');
   rtwoptions(i).tlcvariable    = 'ModelAuthor';
-  rtwoptions(i).makevariable   = '';
   rtwoptions(i).tooltip        = ...
     'Model author to be written to the model description';
 
@@ -68,27 +121,37 @@
     'Template directory with files and folders to be added to the FMU';
 
   i = i + 1;
+  rtwoptions(i).prompt         = 'Include global block outputs';
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'off';
+  rtwoptions(i).tlcvariable    = 'IncludeBlockOutputs';
+  rtwoptions(i).tooltip        = 'Check this box to include global block outputs in the XML model description.';
+
+  i = i + 1;
   rtwoptions(i).prompt         = 'Add image of Simulink model';
   rtwoptions(i).type           = 'Checkbox';
   rtwoptions(i).default        = 'on';
   rtwoptions(i).tlcvariable    = 'AddModelImage';
-  rtwoptions(i).makevariable   = '';
   rtwoptions(i).tooltip        = ...
     'Add an image of the Simulink model to the FMU (model.png)';
 
   i = i + 1;
-  rtwoptions(i).prompt        = 'Include sources in FMU';
-  rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'off';
-  rtwoptions(i).tlcvariable   = 'SourceCodeFMU';
-  rtwoptions(i).tooltip       = 'Add model sources to FMU';
+if ispc
+  rtwoptions(i).prompt         = 'Load S-functions from binary MEX files (*.mexw32 / *.mexw64)';
+else
+  rtwoptions(i).prompt         = 'Load S-functions from binary MEX files (*.mexglx / *.mexa64)';
+end
+  rtwoptions(i).type           = 'Checkbox';
+  rtwoptions(i).default        = 'off';
+  rtwoptions(i).tlcvariable    = 'LoadBinaryMEX';
+  rtwoptions(i).tooltip        = ...
+    ['Check this box to load internal S-functions from pre-compiled binary MEX files instead of using stand-alone compilation of S-function sources.'];
 
+  % Override the default setting for model name prefixing because
+  % the generated S-function is typically used in multiple models.
   i = i + 1;
-  rtwoptions(i).prompt        = 'Include block outputs';
-  rtwoptions(i).type          = 'Checkbox';
-  rtwoptions(i).default       = 'off';
-  rtwoptions(i).tlcvariable   = 'IncludeBlockOutputs';
-  rtwoptions(i).tooltip       = 'Include global block outputs in the model description';
+  rtwoptions(i).default       = 'on';
+  rtwoptions(i).tlcvariable   = 'PrefixModelToSubsysFcnNames';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake';
@@ -100,7 +163,6 @@
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
   rtwoptions(i).tooltip       = '';
   rtwoptions(i).callback      = '';
-  rtwoptions(i).makevariable  = '';
 
   i = i + 1;
   rtwoptions(i).prompt        = 'CMake command';
@@ -172,15 +234,16 @@
   rtwoptions(i).tlcvariable   = 'CMakeCompilerOptimizationFlags';
   rtwoptions(i).tooltip       = 'Custom compiler optimization flags';
 
-  %----------------------------------------%
-  % Configure code generation settings %
-  %----------------------------------------%
-  
-  rtwgensettings.BuildDirSuffix = '_grt_fmi_rtw';
-  rtwgensettings.DerivedFrom    = 'grt.tlc';
-  rtwgensettings.Version        = '1';
+  rtwgensettings.IsRTWSfcn = 'yes';
 
-  rtwgensettings.SelectCallback = 'grtfmi_selectcallback(hDlg, hSrc)';
+  %----------------------------------------%
+  % Configure RTW code generation settings %
+  %----------------------------------------%
   
-  END_RTW_OPTIONS 
+  rtwgensettings.BuildDirSuffix = '_sfcn_rtw_fmi';
+  rtwgensettings.UsingMalloc    = 'yes';
+  rtwgensettings.Version        = '1';
+  rtwgensettings.SelectCallback = 'rtwsfcnfmi_selectcallback(hDlg, hSrc)';
+  
+  END_RTW_OPTIONS
  %/

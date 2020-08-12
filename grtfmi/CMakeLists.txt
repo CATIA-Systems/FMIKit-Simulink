@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.2)
 
-set(MODEL "" CACHE STRING "Model name")
+set(MODEL_NAME "" CACHE STRING "Model name")
 set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install directory")
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
@@ -17,7 +17,7 @@ set(COMPILER_OPTIMIZATION_FLAGS "/Ox" CACHE STRING "Custom compiler optimization
 
 get_filename_component(CURRENT_DIR ${RTW_DIR} DIRECTORY)
 
-project (${MODEL})
+project (${MODEL_NAME})
 
 if ("${FMI_VERSION}" STREQUAL "3")
 
@@ -121,6 +121,7 @@ FILE(GLOB SHARED_SOURCES   "${RTW_DIR}/../slprj/grtfmi/_sharedutils/*.c")
 FILE(GLOB REFMODEL_SOURCES "${RTW_DIR}/../slprj/grtfmi/sldemo_mdlref_counter_bus/*.c")
 
 set(SOURCES
+  "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c"
   ${RTW_SOURCES}
   ${SHARED_SOURCES}
   ${REFMODEL_SOURCES}
@@ -187,27 +188,27 @@ if (${SIMSCAPE})
 
 endif ()
 
-add_library (${MODEL} SHARED
+add_library (${MODEL_NAME} SHARED
   ${RTW_DIR}/modelDescription.xml
   ${HEADERS}
   ${SOURCES}
 )
 
-target_include_directories (${MODEL} PUBLIC
+target_include_directories (${MODEL_NAME} PUBLIC
+  ../include
   ${CUSTOM_INCLUDE}
-  ${CURRENT_DIR}
   ${CMAKE_SOURCE_DIR}
   ${RTW_DIR}
   ${RTW_DIR}/../slprj/grtfmi/_sharedutils
-  ${RTW_DIR}/../slprj/grtfmi/${MODEL}
+  ${RTW_DIR}/../slprj/grtfmi/${MODEL_NAME}
   ${RTW_INCLUDE}
   ${SIMSCAPE_INCLUDE}
 )
 
 # don't add the "lib" prefix to the shared library on Linux
-set_target_properties(${MODEL} PROPERTIES PREFIX "")
+set_target_properties(${MODEL_NAME} PROPERTIES PREFIX "")
 
-target_compile_definitions(${MODEL} PUBLIC
+target_compile_definitions(${MODEL_NAME} PUBLIC
   _CRT_SECURE_NO_WARNINGS
   RT
   RT_MALLOC
@@ -216,10 +217,10 @@ target_compile_definitions(${MODEL} PUBLIC
   GRTFMI
 )
 
-target_link_libraries(${MODEL} ${CUSTOM_LIBRARY})
+target_link_libraries(${MODEL_NAME} ${CUSTOM_LIBRARY})
 
 if (${SIMSCAPE})
-  target_link_libraries(${MODEL} ex mc ne pm ssc_core ssc_sli)
+  target_link_libraries(${MODEL_NAME} ex mc ne pm ssc_core ssc_sli)
 endif ()
 
 file(READ ${MATLAB_ROOT}/simulink/include/simstruc.h CONTENTS)
@@ -231,16 +232,25 @@ file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
 file(APPEND ${RTW_DIR}/Temp/simstruc_rt.h "${CONTENTS}")
 
 # modelDescription.xml
-add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   ${RTW_DIR}/modelDescription.xml
   ${FMU_BUILD_DIR}/modelDescription.xml
 )
 
 # shared library
-add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-  $<TARGET_FILE:${MODEL}>
-  ${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_FILE_NAME:${MODEL}>
+add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  $<TARGET_FILE:${MODEL_NAME}>
+  ${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_FILE_NAME:${MODEL_NAME}>
 )
+
+# debug info
+if (MSVC)
+  add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND
+    "${CMAKE_SOURCE_DIR}/copypdb.bat"
+    "$<TARGET_PDB_FILE:${MODEL_NAME}>"
+    "${FMU_BUILD_DIR}/binaries/${FMI_PLATFORM}/$<TARGET_PDB_FILE_NAME:${MODEL_NAME}>"
+  )
+endif()
 
 set (ARCHIVE_FILES modelDescription.xml binaries)
 
@@ -263,14 +273,14 @@ if (SOURCE_CODE_FMU)
   # source code
   foreach (SOURCE_FILE ${HEADERS} ${SOURCES} ${SIMSCAPE_HEADERS} ${SIMSCAPE_SOURCES})
     get_filename_component(BASE_NAME ${SOURCE_FILE} NAME)
-    add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+    add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
       ${SOURCE_FILE}
       ${FMU_BUILD_DIR}/sources/${BASE_NAME}
     )
   endforeach(SOURCE_FILE)
 
   # copy simstruc.h with RT definitions
-  add_custom_command(TARGET ${MODEL} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
     ${RTW_DIR}/Temp/simstruc_rt.h
     ${FMU_BUILD_DIR}/sources/simstruc.h
   )
@@ -280,8 +290,8 @@ if (SOURCE_CODE_FMU)
 endif ()
 
 # create ZIP archive
-add_custom_command(TARGET ${MODEL} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E tar "cfv" ${CMAKE_CURRENT_BINARY_DIR}/${MODEL}.fmu --format=zip
+add_custom_command(TARGET ${MODEL_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E tar "cfv" ${CMAKE_CURRENT_BINARY_DIR}/${MODEL_NAME}.fmu --format=zip
   ${ARCHIVE_FILES}
   WORKING_DIRECTORY ${FMU_BUILD_DIR}
 )

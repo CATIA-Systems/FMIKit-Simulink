@@ -22,7 +22,10 @@
 #if defined(MDL_START)
 static void mdlStart(SimStruct *S) {
 
-	static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
+  time_T startTime = ssGetT(S);
+  time_T stopTime = ssGetTFinal(S);
+
+  static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
 
 	COMPONENT = fmi2Instantiate(ssGetPath(S), fmi2CoSimulation, MODEL_GUID, "", &callbacks, fmi2False, fmi2False);
 
@@ -33,10 +36,15 @@ static void mdlStart(SimStruct *S) {
 
 	setStartValues(S);
 
-	assertNoError(S, fmi2SetupExperiment(COMPONENT, fmi2False, 0, ssGetT(S), fmi2True, ssGetTFinal(S)), "Failed to set up experiment");
+	if (ssGetErrorStatus(S)) {
+		return;  // may have been set by setStartValues()
+	}
 
-	assertNoError(S, fmi2EnterInitializationMode(COMPONENT), "Failed to enter initialization mode");
-	assertNoError(S, fmi2ExitInitializationMode(COMPONENT), "Failed to exit initialization mode");
+	ASSERT_OK(fmi2SetupExperiment(COMPONENT, fmi2False, 0, startTime, stopTime > startTime, stopTime), "Failed to set up experiment")
+
+	ASSERT_OK(fmi2EnterInitializationMode(COMPONENT), "Failed to enter initialization mode")
+
+	ASSERT_OK(fmi2ExitInitializationMode(COMPONENT), "Failed to exit initialization mode")
 
 	FMU_TIME = ssGetT(S);
 }
@@ -47,19 +55,21 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
     if (ssGetT(S) > FMU_TIME) {
 
-		setInputs(S);
-
-		assertNoError(S, fmi2DoStep(COMPONENT, FMU_TIME, ssGetT(S) - FMU_TIME, fmi2True), "Failed to do step");
+		ASSERT_OK(fmi2DoStep(COMPONENT, FMU_TIME, ssGetT(S) - FMU_TIME, fmi2True), "Failed to do step")
 
 		FMU_TIME = ssGetT(S);
 	}
 
 	setOutputs(S);
+
+	if (ssGetErrorStatus(S)) {
+		return;  // may have been set by setOutputs()
+	}
 }
 
 
 static void mdlTerminate(SimStruct *S) {
-	fmi2Terminate(COMPONENT);
+	ASSERT_OK(fmi2Terminate(COMPONENT), "Failed to terminate model");
 	fmi2FreeInstance(COMPONENT);
 }
 

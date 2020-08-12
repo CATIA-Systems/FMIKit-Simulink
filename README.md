@@ -10,7 +10,7 @@ A Simulink library to import and export [Functional Mock-up Units](https://fmi-s
 - Model Exchange and Co-Simulation
 - Rapid Accelerator mode
 - import of C code FMUs
-- MATLAB R2012b - R2019b
+- MATLAB R2012b - R2020a
 
 ## Quick start
 
