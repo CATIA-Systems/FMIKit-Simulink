@@ -1,4 +1,4 @@
-me = false;
+me = true;
 
 models = {
   {'f14',            '1e-2', '60', 'alpharad'}, ...

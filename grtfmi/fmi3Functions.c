@@ -34,16 +34,33 @@ fmi3Status  fmi3SetDebugLogging(fmi3Instance c,
 	const fmi3String categories[]) { return fmi3Error; }
 
 /* Creation and destruction of FMU instances and setting debug status */
-fmi3Instance fmi3Instantiate(fmi3String instanceName,
-	fmi3InterfaceType fmuType,
-	fmi3String fmuGUID,
-	fmi3String fmuResourceLocation,
-	const fmi3CallbackFunctions* functions,
-	fmi3Boolean visible,
-	fmi3Boolean loggingOn) {
+fmi3Instance fmi3InstantiateModelExchange(
+	fmi3String                 instanceName,
+	fmi3String                 instantiationToken,
+	fmi3String                 resourceLocation,
+	fmi3Boolean                visible,
+	fmi3Boolean                loggingOn,
+	fmi3InstanceEnvironment    instanceEnvironment,
+	fmi3CallbackLogMessage     logMessage) {
+
+	return NULL; // not supported
+}
+
+fmi3Instance fmi3InstantiateCoSimulation(
+	fmi3String                     instanceName,
+	fmi3String                     instantiationToken,
+	fmi3String                     resourceLocation,
+	fmi3Boolean                    visible,
+	fmi3Boolean                    loggingOn,
+	fmi3Boolean                    eventModeRequired,
+	const fmi3ValueReference       requiredIntermediateVariables[],
+	size_t                         nRequiredIntermediateVariables,
+	fmi3InstanceEnvironment        instanceEnvironment,
+	fmi3CallbackLogMessage         logMessage,
+	fmi3CallbackIntermediateUpdate intermediateUpdate) {
 
 	/* check GUID */
-	if (strcmp(fmuGUID, MODEL_GUID) != 0) {
+	if (strcmp(instantiationToken, MODEL_GUID) != 0) {
 		return NULL;
 	}
 
@@ -52,8 +69,8 @@ fmi3Instance fmi3Instantiate(fmi3String instanceName,
 	size_t len = strlen(instanceName);
 	instance->instanceName = malloc((len + 1) * sizeof(char));
 	strncpy((char *)instance->instanceName, instanceName, len + 1);
-	instance->logger = functions->logMessage;
-	instance->componentEnvironment = functions->instanceEnvironment;
+	instance->logger = logMessage;
+	instance->componentEnvironment = instanceEnvironment;
 
 #ifdef REUSABLE_FUNCTION
 	instance->S = MODEL();
@@ -69,28 +86,49 @@ fmi3Instance fmi3Instantiate(fmi3String instanceName,
 	return instance;
 }
 
+fmi3Instance fmi3InstantiateScheduledExecution(
+	fmi3String                     instanceName,
+	fmi3String                     instantiationToken,
+	fmi3String                     resourceLocation,
+	fmi3Boolean                    visible,
+	fmi3Boolean                    loggingOn,
+	const fmi3ValueReference       requiredIntermediateVariables[],
+	size_t                         nRequiredIntermediateVariables,
+	fmi3InstanceEnvironment        instanceEnvironment,
+	fmi3CallbackLogMessage         logMessage,
+	fmi3CallbackIntermediateUpdate intermediateUpdate,
+	fmi3CallbackLockPreemption     lockPreemption,
+	fmi3CallbackUnlockPreemption   unlockPreemption) {
+
+	return NULL; // not supported
+}
+
 void fmi3FreeInstance(fmi3Instance c) {
 	ModelInstance *instance = (ModelInstance *)c;
 	free((void *)instance->instanceName);
 	free(instance);
 }
 
-/* Enter and exit initialization mode, terminate and reset */
-fmi3Status fmi3SetupExperiment(fmi3Instance c,
-	fmi3Boolean toleranceDefined,
-	fmi3Float64 tolerance,
-	fmi3Float64 startTime,
-	fmi3Boolean stopTimeDefined,
-	fmi3Float64 stopTime) {
-	return fmi3OK;
-}
-
-fmi3Status fmi3EnterInitializationMode(fmi3Instance c) {
+fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
+									   fmi3Boolean toleranceDefined,
+									   fmi3Float64 tolerance,
+									   fmi3Float64 startTime,
+									   fmi3Boolean stopTimeDefined,
+									   fmi3Float64 stopTime) {
 	return fmi3OK;
 }
 
 fmi3Status fmi3ExitInitializationMode(fmi3Instance c) {
 	return fmi3OK;
+}
+
+fmi3Status fmi3EnterEventMode(fmi3Instance instance,
+							  fmi3Boolean stepEvent,
+							  const fmi3Int32 rootsFound[],
+							  size_t nEventIndicators,
+							  fmi3Boolean timeEvent) {
+
+	return fmi3Error; // not supported
 }
 
 fmi3Status fmi3Terminate(fmi3Instance c) {
@@ -137,7 +175,7 @@ static fmi3Status getVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	size_t i, index, copied = 0;
+	size_t i, j, index, copied = 0;
 	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
@@ -158,10 +196,17 @@ static fmi3Status getVariables(ModelInstance *instance,
 			return fmi3Error;
 		}
 
-		memcpy(values, v.address, typeSize * v.size);
-
+		if (datatypeID == SS_BOOLEAN) {
+			for (j = 0; j < v.size; j++) {
+				((fmi3Boolean*)values)[j] = ((boolean_T *)v.address)[j] ? fmi3True : fmi3False;
+			}
+			values = (char *)values + (v.size * sizeof(fmi3Boolean));
+		} else {
+			memcpy(values, v.address, typeSize * v.size);
+			values = (char *)values + (v.size * typeSize);
+		}
+		
 		copied += v.size;
-		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
@@ -245,7 +290,7 @@ static fmi3Status setVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const void *values, size_t nValues, BuiltInDTypeId datatypeID, size_t typeSize) {
 
-	size_t i, index, copied = 0;
+	size_t i, j, index, copied = 0;
 	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
@@ -266,10 +311,18 @@ static fmi3Status setVariables(ModelInstance *instance,
 			return fmi3Error;
 		}
 
-		memcpy(v.address, values, typeSize * v.size);
+		if (datatypeID == SS_BOOLEAN) {
+			for (j = 0; j < v.size; j++) {
+				((boolean_T *)v.address)[j] = ((fmi3Boolean*)values)[j] != fmi3False;
+			}
+			values = (char *)values + (v.size * sizeof(fmi3Boolean));
+		}
+		else {
+			memcpy(v.address, values, typeSize * v.size);
+			values = (char *)values + (v.size * typeSize);
+		}
 
 		copied += v.size;
-		values = (char *)values + (v.size * typeSize);
 	}
 
 	return fmi3OK;
@@ -373,9 +426,18 @@ Types for Functions for FMI3 for Model Exchange
 ****************************************************/
 
 /* Enter and exit the different modes */
-fmi3Status fmi3EnterEventMode(fmi3Instance c) { NOT_IMPLEMENTED }
-fmi3Status fmi3NewDiscreteStates(fmi3Instance c, fmi3EventInfo* fmi3eventInfo) { NOT_IMPLEMENTED }
+fmi3Status fmi3NewDiscreteStates(fmi3Instance instance,
+								 fmi3Boolean *newDiscreteStatesNeeded,
+								 fmi3Boolean *terminateSimulation,
+								 fmi3Boolean *nominalsOfContinuousStatesChanged,
+								 fmi3Boolean *valuesOfContinuousStatesChanged,
+								 fmi3Boolean *nextEventTimeDefined,
+								 fmi3Float64 *nextEventTime) { 
+	NOT_IMPLEMENTED
+}
+
 fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance c) { NOT_IMPLEMENTED }
+
 fmi3Status fmi3CompletedIntegratorStep(fmi3Instance c,
 	fmi3Boolean   noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean*  enterEventMode,
@@ -412,9 +474,12 @@ fmi3Status fmi3GetOutputDerivatives(fmi3Instance c,
 	size_t nValues) { NOT_IMPLEMENTED }
 
 fmi3Status fmi3DoStep(fmi3Instance c,
-	fmi3Float64      currentCommunicationPoint,
-	fmi3Float64      communicationStepSize,
-	fmi3Boolean   noSetFMUStatePriorToCurrentPoint) {
+				  	  fmi3Float64 currentCommunicationPoint,
+				      fmi3Float64 communicationStepSize,
+					  fmi3Boolean noSetFMUStatePriorToCurrentPoint,
+					  fmi3Boolean* terminate,
+					  fmi3Boolean* earlyReturn,
+					  fmi3Float64* lastSuccessfulTime) {
 
 	ModelInstance *instance = (ModelInstance *)c;
 

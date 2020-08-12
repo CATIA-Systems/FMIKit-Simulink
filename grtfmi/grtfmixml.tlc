@@ -11,13 +11,13 @@
 <fmiModelDescription
   %if FMIVersion == "2"
   fmiVersion="2.0"
-  guid="%<GUID>" 
+  guid="%<GUID>"
   %else
-  fmiVersion="3.0-alpha.X"
-  instantiationToken="%<GUID>" 
+  fmiVersion="3.0-alpha.5"
+  instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
-  generationTool="Simulink %<Version> with FMI Kit 2.7 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  generationTool="Simulink %<Version> with FMI Kit 2.8 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
   %assign description = FEVAL("get_param", "%<OrigName>", "Description")
@@ -27,9 +27,8 @@
   %if !ISEMPTY(ModelAuthor)
   author="%<ModelAuthor>"
   %endif
-  version="%<ModelVersion>"
-  numberOfEventIndicators="%<ZCVectorlength>">
-  
+  version="%<ModelVersion>">
+
   <CoSimulation
     modelIdentifier="%<OrigName>"
   %if !reusableFunction
@@ -72,7 +71,7 @@
   </BuildConfiguration>
   %endif
   %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
-  
+
   <UnitDefinitions>
     %foreach unitIdx = Units.NumUnits
       %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
@@ -190,7 +189,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %if sigSrc[1] < 0
         %assign identifier = param.Identifier
       %else
-        %assign varGroupIdx  = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1]) 
+        %assign varGroupIdx  = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1])
         %assign varGroupName = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name
         %assign identifier   = varGroupName + "." + param.Identifier
         %assign variableName = varGroupName + "." + variableName
@@ -242,8 +241,8 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign sysid        = port.Block[0]
         %assign blkid        = port.Block[1]
         %assign block        = System[sysid].Block[blkid]
-        %assign variableName = FEVAL("get_param", port.BlockName, "Name")
-        %if ISFIELD(port, "SigLabel") && !ISEMPTY(port.SigLabel)
+        %assign variableName = FEVAL("get_param", block.Name, "Name")
+        %if !ISFIELD(port, "VarGroupIdx") && ISFIELD(port, "SigLabel") && !ISEMPTY(port.SigLabel)
           %assign dataName = "&(%<port.SigLabel>"
         %else
           %assign dataName = "&(rtmGetY(S)->%<block.Identifier>"

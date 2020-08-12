@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.8
+
+This release improves the import of source code FMUs and fixes issues with export of FMUs.
+The build system for the S-function based target has been changed to CMake for improved flexibility.
+
+### FMU import
+
+- `new` model image preview in block dialog
+- `new` improved handling of source code FMUs
+- `new` use one FMI Kit installation with multiple MATLAB versions
+
+### FMU export (grtfmi.tlc)
+
+- `new` export of signals with storage class "ExportGlobal"
+- `new` model directory is added to include path
+- `new` debug builds
+- `new` compiler optimization flags
+- `new` CMake toolset option (-T)
+- `fixed` shared library paths of nested FMUs
+- `fixed` handle multiple sample rates
+
+### FMU export (rtwfscnfmi.tlc)
+
+- `new` build system changed to CMake (same as for grtfmi.tlc)
+
 ## 2.7
 
 This release brings fixes and improvements for the import and export of FMUs.
