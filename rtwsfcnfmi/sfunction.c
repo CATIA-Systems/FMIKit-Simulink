@@ -250,7 +250,6 @@ Model *InstantiateModel(const char* instanceName, logMessageCallback logMessage,
 
 	model->status = modelInstantiated;
 
-	logMessage(model, OK, "Instantiation succeeded");
 	return model;
 
 fail:
@@ -670,37 +669,32 @@ static int LoadMEXAndDependencies(Model *model)
         model->logMessage(model, OK, "Setting DLL directory for MATLAB dependencies: %s", _SFCN_FMI_MATLAB_BIN);
         model->logMessage(model, OK, "Environment variable SFCN_FMI_MATLAB_BIN was used to override default path.");
     }
-    model->logMessage(model, OK, "Loading from MATLAB bin...");
-    if (hInst=LoadLibraryA("libmx.dll")) {
-        model->logMessage(model, OK, "...libmx.dll");
-    } else  {
-        model->logMessage(model, Error, "Failed to load binary libmx.dll");
-        return 0;
-    }
-    if (hInst=LoadLibraryA("libmex.dll")) {
-        model->logMessage(model, OK, "...libmex.dll");
-    } else  {
-        model->logMessage(model, Error, "Failed to load binary libmex.dll");
-        return 0;
-    }
-    if (hInst=LoadLibraryA("libmat.dll")) {
-        model->logMessage(model, OK, "...libmat.dll");
-    } else  {
-        model->logMessage(model, Error, "Failed to load binary libmat.dll");
-        return 0;
-    }
-    if (hInst=LoadLibraryA("libfixedpoint.dll")) {
-        model->logMessage(model, OK, "...libfixedpoint.dll");
-    } else  {
-        model->logMessage(model, Error, "Failed to load binary libfixedpoint.dll");
-        return 0;
-    }
-    if (hInst=LoadLibraryA("libut.dll")) {
-        model->logMessage(model, OK, "...libut.dll");
-    } else  {
-        model->logMessage(model, Error, "Failed to load binary libut.dll");
-        return 0;
-    }
+
+	hInst = LoadLibraryA("libmx.dll");
+	if (!hInst) {
+		model->logMessage(model, Warning, "Failed to load libmx.dll");
+	}
+
+	hInst = LoadLibraryA("libmex.dll");
+	if (!hInst) {
+		model->logMessage(model, Warning, "Failed to load libmex.dll");
+	}
+
+	hInst = LoadLibraryA("libmat.dll");
+	if (!hInst) {
+		model->logMessage(model, Warning, "Failed to load libmat.dll");
+	}
+
+	hInst = LoadLibraryA("libfixedpoint.dll");
+	if (!hInst) {
+		model->logMessage(model, Warning, "Failed to load libfixedpoint.dll");
+	}
+
+	hInst = LoadLibraryA("libut.dll");
+	if (!hInst) {
+		model->logMessage(model, Warning, "Failed to load libut.dll");
+	}
+
     hMySelf=GetModuleHandleA(SFCN_FMI_MODEL_IDENTIFIER);
     if (GetModuleFileNameA(hMySelf, fmuPath, sizeof(fmuPath)/sizeof(*fmuPath))==0) {
 #else
@@ -730,9 +724,8 @@ static int LoadMEXAndDependencies(Model *model)
 #else
     mexDir = strcat(fmuPath, "resources/SFunctions/");
 #endif
-    for (i=0; i<SFCN_FMI_NBR_MEX; i++) {
+    for (i = 0; i < SFCN_FMI_NBR_MEX; i++) {
         if (i==0) {
-            model->logMessage(model, OK, "Loading S-function MEX files from FMU resources...");
 #if defined(_MSC_VER)
             SetDllDirectory(mexDir); /* To handle dependencies to other DLLs in the same folder */
 #endif
@@ -740,16 +733,15 @@ static int LoadMEXAndDependencies(Model *model)
         strncpy(mexFile, mexDir, strlen(mexDir)+1);
         strcat(mexFile, SFCN_FMI_MEX_NAMES[i]);
 #if defined(_MSC_VER)
-        if (hInst=LoadLibraryA(mexFile)) {
+        if (hInst = LoadLibraryA(mexFile)) {
 #else
         if (stat(mexFile, &sb) == 0) {
             hInst = dlopen(mexFile, RTLD_NOW);
             if (hInst != NULL) {
 #endif
                 model->mexHandles[i]=hInst;
-                model->logMessage(model, OK, "...%s", SFCN_FMI_MEX_NAMES[i]);
             } else  {
-                model->logMessage(model, Error, "Failed to load binary MEX file: %s", SFCN_FMI_MEX_NAMES[i]);
+                model->logMessage(model, Error, "Failed to load MEX S-function %s", SFCN_FMI_MEX_NAMES[i]);
                 return 0;
             }
 #if !defined(_MSC_VER)
@@ -765,7 +757,6 @@ int sfcn_fmi_load_mex(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[], cons
 {
     int i;
     char mexName[256];
-	const char* mexext = "mexw64";
     mexFunctionPtr mexFunc = NULL;
 #if defined(_MSC_VER)
     HINSTANCE hInst = 0;
@@ -773,14 +764,14 @@ int sfcn_fmi_load_mex(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[], cons
     void* hInst = 0;
 #endif
 
-    sprintf(mexName, "%s.%s", functionName, mexext);
+    sprintf(mexName, "%s.%s", functionName, SFCN_FMI_MEXEXT);
     /* Find handle index */
-    for (i=0; i<SFCN_FMI_NBR_MEX; i++) {
+    for (i=0; i < SFCN_FMI_NBR_MEX; i++) {
         if (strcmp(mexName, SFCN_FMI_MEX_NAMES[i]) == 0) {
             break;
         }
     }
-    if (i<SFCN_FMI_NBR_MEX) {
+    if (i < SFCN_FMI_NBR_MEX) {
         hInst = currentModel->mexHandles[i];
     }
     if (hInst) {
@@ -796,7 +787,6 @@ int sfcn_fmi_load_mex(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[], cons
         }
 #endif
         if (mexFunc) {
-            currentModel->logMessage(currentModel, OK, "Calling MEX S-function: %s", mexName);
             mexFunc(nlhs, plhs, nrhs, (const mxArray**)prhs);
             if (currentModel->S != NULL) {
                 if (ssGetErrorStatus(currentModel->S) != NULL) {
