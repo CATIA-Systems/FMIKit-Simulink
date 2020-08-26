@@ -106,12 +106,18 @@
 #include "model_interface.h"
 
 
+%assign CGTypIndices = []
+
 size_t getCGTypeSize(int typeIndex) {
 
   switch (typeIndex) {
   %foreach dataTypeIdx = DataTypes.NumDataTypes
     %assign dataType = DataTypes.DataType[dataTypeIdx]
+    %if FEVAL("ismember", dataType.CGTypeIdx, CGTypIndices)
+      %continue
+    %endif
     case %<dataType.CGTypeIdx>: return %<dataType.Size>; /* %<dataType.Name> */
+    %assign CGTypIndices = CGTypIndices + dataType.CGTypeIdx
   %endforeach
     default: return 0; /* unknown type */
   }
