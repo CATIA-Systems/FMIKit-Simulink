@@ -117,14 +117,12 @@ set(HEADERS ${HEADERS} ${MATLAB_HEADERS})
 set(HEADERS ${HEADERS} ${SIMULINK_HEADERS})
 
 FILE(GLOB RTW_SOURCES      "${RTW_DIR}/*.c")
-FILE(GLOB SHARED_SOURCES   "${RTW_DIR}/../slprj/grtfmi/_sharedutils/*.c")
-FILE(GLOB REFMODEL_SOURCES "${RTW_DIR}/../slprj/grtfmi/sldemo_mdlref_counter_bus/*.c")
+FILE(GLOB SHARED_SOURCES   "${RTW_DIR}/../slprj/grtfmi/*/*.c")
 
 set(SOURCES
   "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c"
   ${RTW_SOURCES}
   ${SHARED_SOURCES}
-  ${REFMODEL_SOURCES}
   ${RTW_DIR}/fmiwrapper.inc
   ${CMAKE_SOURCE_DIR}/fmi${FMI_VERSION}Functions.c
   ${CUSTOM_SOURCE}
