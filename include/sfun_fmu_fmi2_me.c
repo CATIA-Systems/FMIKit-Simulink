@@ -3,7 +3,7 @@
  *  This file is part of FMIKit. See LICENSE.txt in the project  *
  *  root for license information.                                *
  *****************************************************************/
- 
+
 #include <stdarg.h>
 
 #define S_FUNCTION_LEVEL 2
@@ -42,7 +42,7 @@ static void mdlStart(SimStruct *S) {
 
   time_T startTime = ssGetT(S);
   time_T stopTime = ssGetTFinal(S);
-  
+
 	static fmi2CallbackFunctions callbacks = { logFMUMessage, calloc, free, NULL, NULL };
 
 	EVENT_INFO_PTR = calloc(1, sizeof(fmi2EventInfo));
@@ -79,12 +79,11 @@ static void mdlStart(SimStruct *S) {
 
 static void update(SimStruct *S) {
 
-	fmi2Boolean timeEvent, stateEvent;
-	fmi2Boolean enterEventMode, terminateSimulation;
+	fmi2Boolean timeEvent, stateEvent, enterEventMode, terminateSimulation;
 	int i;
 
 	// Work around for the event handling in Dymola FMUs:
-	timeEvent = ssGetT(S) >= EVENT_INFO->nextEventTime;
+	timeEvent = EVENT_INFO->nextEventTimeDefined && ssGetT(S) >= EVENT_INFO->nextEventTime;
 
 	ASSERT_OK(fmi2CompletedIntegratorStep(COMPONENT, fmi2True, &enterEventMode, &terminateSimulation), "Completed integrator step failed")
 
