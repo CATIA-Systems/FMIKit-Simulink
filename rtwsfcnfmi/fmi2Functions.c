@@ -21,12 +21,6 @@
 #include "model_interface.h"
 
 
-typedef struct {
-	fmi2CallbackFunctions functions;
-	fmi2EventInfo eventInfo;
-} UserData;
-
-
 /* -------------- Macro to check if initialized -------------- */
 
 #define CHECK_INITIALIZED(model, label)                                        \
@@ -55,9 +49,9 @@ static void logMessage(Model *model, int status, const char *message, ...) {
 	vsnprintf(buf, 1024, message, args);
 	va_end(args);
 
-	UserData *userData = (UserData *)model->userData;
+	fmi2CallbackFunctions *functions = (fmi2CallbackFunctions *)model->userData;
 
-	userData->functions.logger(userData->functions.componentEnvironment, model->instanceName, status, "", buf);
+	functions->logger(functions->componentEnvironment, model->instanceName, status, "", buf);
 }
 
 /* Function for double precision comparison */
@@ -118,29 +112,29 @@ fmi2Component fmi2Instantiate(fmi2String	instanceName,
 {
 	/* The following arguments are ignored: fmuResourceLocation, visible */
 
-	// TODO: check GUID
-	///* verify GUID */
-	//if (strcmp(GUID, MODEL_GUID) != 0) {
-	//	logMessage(model, fmi2Error, "Invalid GUID: %s, expected %s\n", GUID, MODEL_GUID);
-	//	functions->freeMemory(model);
-	//	return NULL;
-	//}
+	// check logger callback
+	if (!functions || !functions->logger) {
+		return NULL;
+	}
 
-	// TODO: check logger callback
+	/* verify GUID */
+	if (strcmp(GUID, MODEL_GUID) != 0) {
+		functions->logger(NULL, instanceName, fmi2Error, "logError", "Invalid GUID \"%s\", expected \"%s\".", GUID, MODEL_GUID);
+		return NULL;
+	}
 
-	UserData *userData = (UserData *)calloc(1, sizeof(UserData));
-	userData->functions = *functions;
+	fmi2CallbackFunctions *callbacks = (fmi2CallbackFunctions *)calloc(1, sizeof(fmi2CallbackFunctions));
+	
+	memcpy(callbacks, functions, sizeof(fmi2CallbackFunctions));
 
-	Model *model = InstantiateModel(instanceName, logMessage, userData);
+	Model *model = InstantiateModel(instanceName, logMessage, fmuType == fmi2CoSimulation, callbacks);
 
     initializeModelVariables(model->S, model->modelVariables);
-    
-	model->isCoSim = fmi2False;
-	model->hasEnteredContMode = fmi2False;
+	
 	if (fmuType == fmi2CoSimulation) {
-		model->isCoSim = fmi2True;
-		if (functions->stepFinished != NULL) {
-			logMessage(model, fmi2Warning, "fmi2Instantiate: Callback function stepFinished != NULL but asynchronous fmi2DoStep is not supported");
+		
+		if (functions->stepFinished) {
+			logMessage(model, fmi2Warning, "Callback function stepFinished != NULL but asynchronous fmi2DoStep is not supported.");
 		}
 	}
 
@@ -149,9 +143,10 @@ fmi2Component fmi2Instantiate(fmi2String	instanceName,
 
 void fmi2FreeInstance(fmi2Component c)
 {
-	Model* model = (Model*) c;
-	// TODO: fix this
-    //FreeModel(model);
+	Model* model = (Model*)c;
+	free(model->userData);
+	model->userData = NULL;
+    FreeModel(model);
 }
 
 fmi2Status fmi2SetTime(fmi2Component c, fmi2Real time);
@@ -234,12 +229,13 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c)
 {
 	Model* model = (Model*) c;
 	fmi2Status status = fmi2OK;
+	fmi2EventInfo eventInfo = { 0 };
 
 	model->status = modelEventMode;
 
 	if (model->isCoSim) {
 		/* Evaluate model at t=0 */
-		status = fmi2NewDiscreteStates(c, &(((UserData *)model->userData)->eventInfo));
+		status = fmi2NewDiscreteStates(c, &eventInfo);
 		if (status != fmi2OK) {
 			model->status = modelInstantiated;
 			return status;
@@ -270,11 +266,18 @@ fmi2Status fmi2Terminate(fmi2Component c)
 fmi2Status fmi2Reset(fmi2Component c)
 {
 	Model* model = (Model*) c;
+	
+	Model *temp = (Model *)calloc(1, sizeof(Model));
 
-    ResetModel(model);
+	memcpy(temp, model, sizeof(Model));
 
-	UserData *userData = (UserData *)model->userData;
-	memset(&(userData->eventInfo), 0, sizeof(fmi2EventInfo));
+	Model *new_model = InstantiateModel(model->instanceName, logMessage, model->isCoSim, model->userData);
+	
+	initializeModelVariables(new_model->S, new_model->modelVariables);
+
+	memcpy(model, new_model, sizeof(Model));
+
+	FreeModel(temp);
 
 	return fmi2OK;
 }
@@ -925,8 +928,8 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
 		/* Extrapolate inputs */
 		extrapolateInputs(model, nextSolverTime);
 		/* Set sample hits and call mdlOutputs / mdlUpdate (always a discrete sample time = Fixed-step size) */
-		UserData *userData = (UserData *)model->userData;
-		fmi2NewDiscreteStates(c, &(userData->eventInfo));
+		fmi2EventInfo eventInfo = { 0 };
+		fmi2NewDiscreteStates(c, &eventInfo);
 		/* Update solver times */
 		lastSolverTime = nextSolverTime;
 		model->nbrSolverSteps++;
@@ -1020,8 +1023,8 @@ static void logger(fmi2Component c, fmi2String instanceName, fmi2Status status,
 	vsnprintf(buf, capacity, message, ap);
 #endif
 	va_end(ap);
-	fmi2ComponentEnvironment componentEnvironment = ((UserData *)model->userData)->functions.componentEnvironment;
-	((UserData *)model->userData)->functions.logger(componentEnvironment, instanceName, status, category, buf);
+	fmi2CallbackFunctions *functions = (fmi2CallbackFunctions *)model->userData;
+	functions->logger(functions->componentEnvironment, instanceName, status, category, buf);
 }
 
 /* FMU mapping of ssPrintf for child C source S-functions (through rtPrintfNoOp) */
