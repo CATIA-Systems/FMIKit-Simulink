@@ -135,10 +135,10 @@
     %foreach rowid = nRows
       %if nCols > 1 && nRows > 1
         %assign dataSubs     = "[%<index>]"
-        %assign variableSubs = "[%<rowid+1>,%<colid+1>]"
+        %assign variableSubs = "[%<rowid>,%<colid>]"
       %elseif width > 1
         %assign dataSubs     = "[%<index>]"
-        %assign variableSubs = "[%<index+1>]"
+        %assign variableSubs = "[%<index>]"
       %else
         %assign dataSubs     = ""
         %assign variableSubs = "" 
