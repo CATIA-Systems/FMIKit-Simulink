@@ -185,6 +185,8 @@ fmi2Status fmi2Reset(fmi2Component c) {
 	MODEL_INITIALIZE();
 #endif
 
+	initializeModelVariables(instance->S, instance->modelVariables);
+
 	return fmi2OK;
 }
 
