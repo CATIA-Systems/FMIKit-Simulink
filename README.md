@@ -19,10 +19,10 @@ To get started with FMI Kit run the following commands in the MATLAB Command Win
 ```matlab
 % download and extract the distribution archive to the current folder
 unzip(['https://github.com/CATIA-Systems/FMIKit-Simulink/releases/' ...
-  'download/v2.8/FMIKit-Simulink-2.8.zip'], 'FMIKit-Simulink-2.8')
+  'download/v2.9/FMIKit-Simulink-2.9.zip'], 'FMIKit-Simulink-2.9')
 
 % add the folder to the MATLAB path
-addpath(fullfile(pwd, 'FMIKit-Simulink-2.8'))
+addpath(fullfile(pwd, 'FMIKit-Simulink-2.9'))
 
 % initialize FMI Kit
 FMIKit.initialize()
@@ -31,7 +31,7 @@ FMIKit.initialize()
 fmikit_demo_BouncingBall
 
 % open the documentation
-web('FMIKit-Simulink-2.8/html/index.html')
+web('FMIKit-Simulink-2.9/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
