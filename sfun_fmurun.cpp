@@ -439,7 +439,7 @@ static void update(SimStruct *S) {
 		nextEventTime = model->nextEventTime();
 
 		// Work around for the event handling in Dymola FMUs:
-		bool timeEvent = time >= nextEventTime;
+		bool timeEvent = upcomingTimeEvent && time >= nextEventTime;
 
 		if (timeEvent/* && logLevel(S) <= DEBUG*/) {
 			logDebug(S, "Time event at t=%.16g", time);

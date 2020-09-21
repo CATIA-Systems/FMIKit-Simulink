@@ -19,9 +19,9 @@
   %endif
   modelName="%<OrigName>"
   %if FMIType == "CoSimulation"
-  generationTool="Simulink %<Version> with FMI Kit 2.8 (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %else
-  generationTool="Simulink %<Version> with FMI Kit 2.8 (rtwsfcnfmi.tlc)"
+  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc)"
   %endif
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
@@ -106,12 +106,18 @@
 #include "model_interface.h"
 
 
+%assign CGTypIndices = []
+
 size_t getCGTypeSize(int typeIndex) {
 
   switch (typeIndex) {
   %foreach dataTypeIdx = DataTypes.NumDataTypes
     %assign dataType = DataTypes.DataType[dataTypeIdx]
+    %if FEVAL("ismember", dataType.CGTypeIdx, CGTypIndices)
+      %continue
+    %endif
     case %<dataType.CGTypeIdx>: return %<dataType.Size>; /* %<dataType.Name> */
+    %assign CGTypIndices = CGTypIndices + dataType.CGTypeIdx
   %endforeach
     default: return 0; /* unknown type */
   }

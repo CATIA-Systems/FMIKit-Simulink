@@ -55,13 +55,14 @@ target_include_directories(${SOLVER} PRIVATE
   "${MATLAB_ROOT}/rtw/c/src"
 )
 
-set(MODEL_SOURCES 
+set(MODEL_SOURCES
   ../include/fmi2Functions.h
   ../include/fmi2FunctionTypes.h
   ../include/fmi2TypesPlatform.h
   fmi2Functions.c
   sfunction.h
   sfunction.c
+  "${RTW_DIR}/sfcn_fmi.h"
   "${RTW_DIR}/modelDescription.xml"
 )
 
@@ -69,8 +70,11 @@ if (EXISTS "${RTW_DIR}/rt_zcfcn.c")
   set (MODEL_SOURCES ${MODEL_SOURCES} "${RTW_DIR}/rt_zcfcn.c")
 endif ()
 
+if (NOT LOAD_MEX)
+  set (MODEL_SOURCES ${MODEL_SOURCES} "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c")
+endif ()
+
 add_library(${MODEL_NAME} SHARED
-  "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c"
   ${MODEL_SOURCES}
   ${CUSTOM_SOURCE}
 )

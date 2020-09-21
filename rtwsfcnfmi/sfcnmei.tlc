@@ -1,6 +1,6 @@
-%% 
-%% TLC script to generate model-specific code required 
-%% to build an FMI executable from a Simulink model 
+%%
+%% TLC script to generate model-specific code required
+%% to build an FMI executable from a Simulink model
 %%
 %%  Generated file:
 %%           sfcn_fmi.h
@@ -73,7 +73,9 @@
 /* Loading of MEX binaries, path to MATLAB bin */
 #define SFCN_FMI_LOAD_MEX %<LoadBinaryMEX>
 %assign Matlab_bin = FEVAL("makeMatlabBin")
+%assign mexext = FEVAL("mexext")
 #define SFCN_FMI_MATLAB_BIN "%<Matlab_bin>"
+#define SFCN_FMI_MEXEXT "%<mexext>"
 %assign numNonInlinedCMEXSFcns = 0
 %if ISFIELD(::CompiledModel, "NumSFunctionNameCounts")
   %foreach id = NumSFunctionNameCounts
@@ -120,7 +122,7 @@ extern void  sfcn_fmi_mxGlobalTunable_(SimStruct* S, int_T create, int_T update)
 /*
  * sfcn_fmi.c
  *
- *  Model-specific code required to build FMI executable 
+ *  Model-specific code required to build FMI executable
  *  from Simulink model "%<OrigName>".
  *
  * Generated on : %<GeneratedOn>
@@ -140,10 +142,12 @@ extern void  sfcn_fmi_mxGlobalTunable_(SimStruct* S, int_T create, int_T update)
 
 %assign nbrGlobalTunable = 0
 #if defined(MATLAB_MEX_FILE)
+#include "mex.h"
+#undef mexCallMATLAB
 #define mexCallMATLAB sfcn_fmi_load_mex
 #else
 %if ( (::CompiledModel.ConfigSet.InlineParams) || (isRelBeforeR2015b == 0) )
-/* Code to enable global tunable parameters in stand-alone mode */ 
+/* Code to enable global tunable parameters in stand-alone mode */
 #define RTW_GENERATED_SFCN_TUNABLE_PRMS_%<OrigName>_sf
 #define RTW_GENERATED_S_FUNCTION
 #include "simstruc.h"

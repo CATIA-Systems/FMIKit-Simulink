@@ -67,7 +67,7 @@ struct Model_s {
 /* Function to copy per-task sample hits */
 void copyPerTaskSampleHits(SimStruct* S);
 
-Model *InstantiateModel(const char* instanceName, logMessageCallback logMessage, void *userData);
+Model *InstantiateModel(const char* instanceName, logMessageCallback logMessage, int isCoSim, void *userData);
 
 SimStruct *CreateSimStructForFMI(const char* instanceName);
 
@@ -76,7 +76,6 @@ typedef void(*FreeMemoryCallback)(void*);
 void FreeSimStruct(SimStruct *S);
 void FreeModel(Model* model);
 void resetSimStructVectors(SimStruct *S);
-void ReseModel(Model* model);
 void allocateSimStructVectors(Model* m);
 void setSampleStartValues(Model* m);
 void NewDiscreteStates(Model *model, int *valuesOfContinuousStatesChanged, real_T *nextT);

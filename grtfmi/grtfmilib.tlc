@@ -100,6 +100,7 @@
 %endfunction
 
 %function VariableFMI2(record, variableName, dataName, vr, variableAttr, typeAttr) Output
+  %assign variableName = FEVAL("grtfmi_xml_encode", variableName)
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
   %assign fmiType      = GetFMIType(record)
   %assign dtypeID      = LibGetRecordContainerDataTypeId(record) 
@@ -131,10 +132,10 @@
     %foreach rowid = nRows
       %if nCols > 1 && nRows > 1
         %assign dataSubs     = "[%<index>]"
-        %assign variableSubs = "[%<rowid+1>,%<colid+1>]"
+        %assign variableSubs = "[%<rowid>,%<colid>]"
       %elseif width > 1
         %assign dataSubs     = "[%<index>]"
-        %assign variableSubs = "[%<index+1>]"
+        %assign variableSubs = "[%<index>]"
       %else
         %assign dataSubs     = ""
         %assign variableSubs = "" 
@@ -194,6 +195,7 @@
 %endfunction
 
 %function VariableFMI3(record, variableName, dataName, vr, variableAttr, typeAttr) Output
+  %assign variableName = FEVAL("grtfmi_xml_encode", variableName)
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
   %assign fmiType      = GetFMI3Type(dataTypeName)
   %assign dtypeID      = LibGetRecordDataTypeId(record)

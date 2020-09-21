@@ -5,6 +5,7 @@ string = strrep(string, '//', '/');
 string = strrep(string, '&', '&amp;');
 string = strrep(string, '<', '&lt;');
 string = strrep(string, '>', '&gt;');
+string = strrep(string, '"', '&quot;');
 string = strrep(string, char(hex2dec('D')), ' '); % carriage return
 string = strrep(string, char(hex2dec('A')), ' '); % line feed
 string = strrep(string, char(hex2dec('9')), ' '); % tab

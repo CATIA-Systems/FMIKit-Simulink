@@ -87,6 +87,9 @@ switch hookMethod
             for i = 1:numel(mex_functions)
                 copyfile(which(mex_functions{i}), fullfile('FMUArchive', 'binaries', fmi_platform));
             end
+            load_mex = 'YES';
+        else
+            load_mex = 'NO';
         end
         
         % write the CMakeCache.txt file
@@ -99,6 +102,7 @@ switch hookMethod
         fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
         fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', custom_source);
         fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);
+        fprintf(fid, 'LOAD_MEX:BOOL=%s\n', load_mex);
         fprintf(fid, 'BINARY_SFUNCTIONS:STRING=%s\n', cmake_list(mex_functions));
         fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationLevel'));
         fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(modelName, 'CMakeCompilerOptimizationFlags'));
