@@ -1,6 +1,19 @@
 # Changelog
 
-## 2.8
+## v2.9
+
+This release resolves issues with the FMU export:
+
+- Fix memory allocation and fmi2Reset() in rtwsfcnfmi.tlc (#31)
+- Initialize model variables in fmi2Reset() in grtfmi.tlc (#211)
+- Use 0-based indexing when exporting FMI 2.0 arrays in grtfmi.tlc and rtwsfcnfmi.tlc (#208)
+- Add sources of referenced models in grtfmi.tlc
+- Evaluate nextEventTimeDefined in Model Exchange (#209)
+- Skip duplicate CGType indices in rtwsfcnfmi.tlc (#205)
+- Escape special characters in input and output variables in grtfmi.tlc (#206)
+- Fix loading of MEX S-functions in rtwsfcnfmi.tlc (#203)
+
+## v2.8
 
 This release improves the import of source code FMUs and fixes issues with export of FMUs.
 The build system for the S-function based target has been changed to CMake for improved flexibility.
@@ -25,7 +38,7 @@ The build system for the S-function based target has been changed to CMake for i
 
 - `new` build system changed to CMake (same as for grtfmi.tlc)
 
-## 2.7
+## v2.7
 
 This release brings fixes and improvements for the import and export of FMUs.
 It is now distributed as a ZIP archive (instead of a MATLAB App) for easier deployment.

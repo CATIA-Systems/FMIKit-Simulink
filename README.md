@@ -19,10 +19,10 @@ To get started with FMI Kit run the following commands in the MATLAB Command Win
 ```matlab
 % download and extract the distribution archive to the current folder
 unzip(['https://github.com/CATIA-Systems/FMIKit-Simulink/releases/' ...
-  'download/v2.7/FMIKit-Simulink-2.7.zip'], 'FMIKit-Simulink-2.7')
+  'download/v2.8/FMIKit-Simulink-2.8.zip'], 'FMIKit-Simulink-2.8')
 
 % add the folder to the MATLAB path
-addpath(fullfile(pwd, 'FMIKit-Simulink-2.7'))
+addpath(fullfile(pwd, 'FMIKit-Simulink-2.8'))
 
 % initialize FMI Kit
 FMIKit.initialize()
@@ -31,7 +31,7 @@ FMIKit.initialize()
 fmikit_demo_BouncingBall
 
 % open the documentation
-web('FMIKit-Simulink-2.7/html/index.html')
+web('FMIKit-Simulink-2.8/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
@@ -43,5 +43,5 @@ Our partners at [Claytex](https://www.claytex.com/about-us/contact-us/) are read
 
 ## License
 
-Copyright &copy; 2019 Dassault Syst&egrave;mes.
+Copyright &copy; 2020 Dassault Syst&egrave;mes.
 The code is released under the [2-Clause BSD license](LICENSE.txt).
