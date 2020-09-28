@@ -28,8 +28,14 @@
   %endswitch
 %endfunction
 
-%function GetFMI3Type(typeName) void
-  %switch typeName
+%function GetFMI3Type(record) void
+  %assign dataTypeId   = LibGetRecordDataTypeId(record)
+  %assign dataType     = ::CompiledModel.DataTypes.DataType[dataTypeId]
+  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %if ISFIELD(dataType, "Enumeration")
+    %return "Enumeration"
+  %endif
+  %switch dataTypeName
     %case "real_T"
       %return "Float64"
     %case "real32_T"
@@ -104,6 +110,7 @@
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
   %assign fmiType      = GetFMIType(record)
   %assign dtypeID      = LibGetRecordContainerDataTypeId(record) 
+  %assign dataType     = ::CompiledModel.DataTypes.DataType[dtypeID]
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
@@ -116,7 +123,6 @@
     %return vr
   %endif
   %if ISEMPTY(fmiType)
-    %assign dataType = ::CompiledModel.DataTypes.DataType[dtypeID]
     %if ISFIELD(dataType, "Elements") && width == 1
       %% Bus
       %foreach elementIdx = dataType.NumElements
@@ -197,7 +203,7 @@
 %function VariableFMI3(record, variableName, dataName, vr, variableAttr, typeAttr) Output
   %assign variableName = FEVAL("grtfmi_xml_encode", variableName)
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
-  %assign fmiType      = GetFMI3Type(dataTypeName)
+  %assign fmiType      = GetFMI3Type(record)
   %assign dtypeID      = LibGetRecordDataTypeId(record)
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
@@ -220,6 +226,10 @@
   %if ISFIELD(record, "Value")
     %assign startValue = FEVAL("grtfmi_start_value", record.Value)
     %assign variableAttr = "%<variableAttr> start=\"%<startValue>\""
+  %endif
+  %if fmiType == "Enumeration"
+    %assign dtypeID = 6
+    %assign variableAttr = " declaredType=\"%<dataType.DTName>\"%<variableAttr>"
   %endif
   %if width == 1
     <%<fmiType> name="%<variableName>" valueReference="%<vr>"%<variableAttr>/>

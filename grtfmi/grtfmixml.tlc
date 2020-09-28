@@ -92,7 +92,7 @@
     %if !ISEMPTY(enumerationDataTypes)
 
   <TypeDefinitions>
-      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 0)
+      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 1)
         %assign dataType = enumerationDataTypes[dataTypeIdx]
         %if FMIVersion == "2"
     <SimpleType name="%<dataType.DTName>">
@@ -104,12 +104,12 @@
       </Enumeration>
     </SimpleType>
         %else
-    <Enumeration name="%<dataType.DTName>">
+    <EnumerationType name="%<dataType.DTName>">
           %foreach enumerationIdx = SIZE(dataType.Enumeration, 1)
             %assign enumeration = dataType.Enumeration[enumerationIdx]
       <Item name="%<enumeration.String>" value="%<enumeration.Value>"/>
           %endforeach
-    </Enumeration>
+    </EnumerationType>
         %endif
       %endforeach
   </TypeDefinitions>

@@ -63,7 +63,7 @@
     %if !ISEMPTY(enumerationDataTypes)
 
   <TypeDefinitions>
-      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 0)
+      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 1)
         %assign dataType = enumerationDataTypes[dataTypeIdx]
         %if FMIVersion == "2"
     <SimpleType name="%<dataType.DTName>">
