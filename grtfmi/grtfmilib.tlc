@@ -72,10 +72,10 @@
       %if !ISEMPTY(outmax)
         %assign attributes = "%<attributes> max=\"%<outmax>\""
       %endif
-      %if ISFIELD(port, "UnitIdx")
+      %if ISFIELD(port, "UnitIdx") && EXISTS("Units")
         %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
-      %elseif ISFIELD(port, "BlockName")
-        %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
+      %% %elseif ISFIELD(port, "BlockName")
+      %%  %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
       %else
         %assign unit = ""
       %endif

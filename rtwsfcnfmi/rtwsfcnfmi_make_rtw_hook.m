@@ -69,7 +69,7 @@ switch hookMethod
             matlab_version = 'MATLAB_R2020a_';  % R2020a and later
         end
         
-        solver = buildOpts.solver;
+        solver = get_param(modelName, 'Solver');
         if ~strcmp(solver, {'ode1', 'ode2', 'ode3', 'ode4', 'ode5', 'ode8', 'ode14x'})
             solver = 'ode1';  % use ode1 for model exchange
         end
