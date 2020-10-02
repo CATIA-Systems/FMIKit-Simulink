@@ -61,4 +61,5 @@ Prerequisites: [CMake](https://cmake.org)
 
 ## Debugging the block dialog
 
-TODO
+- start MATLAB with Java debugging (`matlab -jdb`)
+- in IntelliJ IDEA select `Run > Attach to Process...` and select the MATLAB process
