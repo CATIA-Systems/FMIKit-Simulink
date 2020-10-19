@@ -310,6 +310,8 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
         }
     }
 
+	model->shouldRecompute = 1;
+
     return fmi2OK;
 }
 
@@ -349,6 +351,8 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
         }
     }
 
+	model->shouldRecompute = 1;
+
     return fmi2OK;
 }
 
@@ -373,6 +377,8 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
         }
     }
 
+	model->shouldRecompute = 1;
+
     return fmi2OK;
 }
 
@@ -380,9 +386,37 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 	FMI_UNSUPPORTED(SetString);
 }
 
+// helper function to update the outputs and derivatives
+static void calculateOutputs(Model *model) {
+
+	if (!model->isCoSim && !model->isDiscrete) {
+
+		if ((!isEqual(ssGetT(model->S), model->lastGetTime)) || model->shouldRecompute) {
+
+			sfcnOutputs(model->S, 0);
+			_ssSetTimeOfLastOutput(model->S, model->S->mdlInfo->t[0]);
+
+			if (ssGetmdlDerivatives(model->S) != NULL) {
+				sfcnDerivatives(model->S);
+			}
+
+			model->S->mdlInfo->simTimeStep = MINOR_TIME_STEP;
+			model->shouldRecompute = 0;
+			model->lastGetTime = ssGetT(model->S);
+		}
+	}
+}
+
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
     
     Model* model = (Model*) c;
+
+	if (model->status == modelInstantiated) {
+		// not allowed before fmi2EnterInitializationMode has been called
+		return fmi2Error;
+	}
+
+	calculateOutputs(model);
 
     for (size_t i = 0; i < nvr; i++) {
         
@@ -410,6 +444,13 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
     
     Model* model = (Model*) c;
+
+	if (model->status == modelInstantiated) {
+		// not allowed before fmi2EnterInitializationMode has been called
+		return fmi2Error;
+	}
+
+	calculateOutputs(model);
 
     for (size_t i = 0; i < nvr; i++) {
         
@@ -449,6 +490,13 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
     
     Model* model = (Model*) c;
+
+	if (model->status == modelInstantiated) {
+		// not allowed before fmi2EnterInitializationMode has been called
+		return fmi2Error;
+	}
+
+	calculateOutputs(model);
 
     for (size_t i = 0; i < nvr; i++) {
         
