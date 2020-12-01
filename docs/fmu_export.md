@@ -91,14 +91,15 @@ Note that only files under `binaries`, `documentation`, `resources`, and `source
 
 The `rtwsfcnfmi.tlc` target has the following options under **Simulation > Model Configuration Parameters > FMI**:
 
-| Parameter                              | Description                                                        |
-|----------------------------------------|--------------------------------------------------------------------|
-| FMI version                            | FMI version of the FMU                                             |
-| FMI type                               | specifies FMI type (ModelExchange or CoSimulation)                 |
-| Model author                           | Model author to be written to the model description                |
-| Template directory                     | Template directory with files and folders to be added to the FMU   |
-| Include global block outputs           | selects if block outputs should be included in FMU XML description |
-| Add image of Simulink model            | Add an image of the Simulink model to the FMU (model.png)          |
+| Parameter                              | Description                                                                 |
+|----------------------------------------|-----------------------------------------------------------------------------|
+| FMI version                            | FMI version of the FMU                                                      |
+| FMI type                               | specifies FMI type (ModelExchange or CoSimulation)                          |
+| Visible parameters                     | Parameters to include in the model description (leave empty to include all) |
+| Model author                           | Model author to be written to the model description                         |
+| Template directory                     | Template directory with files and folders to be added to the FMU            |
+| Include global block outputs           | selects if block outputs should be included in FMU XML description          |
+| Add image of Simulink model            | Add an image of the Simulink model to the FMU (model.png)                   |
 | Load S-functions from binary MEX files | selects that S-functions in the model will be loaded from pre-compiled binary MEX files instead of using stand-alone compilation of S-function sources. This option will create dependencies on MATLAB binaries, which are not included in the exported FMU. On Windows, the FMU will by default try to load these from the bin directory of the exporting MATLAB installation. The environment variable `SFCN_FMI_MATLAB_BIN` can be used to specify a different directory from where to load the MATLAB binaries (for example a MATLAB run-time installation). On Linux, it is required to use the environment variable `LD_LIBRARY_PATH` to specify the path to the MATLAB binaries. The S-function MEX files used by the model are copied to `/resources/SFunctions` of the FMU and are loaded automatically when the FMU is instantiated. |
 
 and under **Simulation > Model Configuration Parameters > CMake**:
