@@ -27,6 +27,15 @@ typedef struct {
 
 ModelInstance *currentInstance = NULL;
 
+#define GET_INSTANCE \
+	if (!c) return fmi2Error; \
+	ModelInstance *instance = (ModelInstance *)c; \
+	RT_MDL_TYPE *S = instance->S; \
+	currentInstance = instance;
+
+#define NOT_IMPLEMENTED \
+	return fmi2Error;
+
 int rtPrintfNoOp(const char *fmt, ...) {
 
 	va_list args;
@@ -130,7 +139,7 @@ const char* fmi2GetVersion() {
 fmi2Status  fmi2SetDebugLogging(fmi2Component c,
 	fmi2Boolean loggingOn,
 	size_t nCategories,
-	const fmi2String categories[]) { return fmi2Error; }
+	const fmi2String categories[]) { NOT_IMPLEMENTED }
 
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName,
@@ -174,7 +183,11 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 }
 
 void fmi2FreeInstance(fmi2Component c) {
+
+	if (!c) return;
+	
 	ModelInstance *instance = (ModelInstance *)c;
+	
 	free((void *)instance->instanceName);
 	free(instance);
     free((void *)FMU_RESOURCES_DIR);
@@ -189,6 +202,8 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 	fmi2Boolean stopTimeDefined,
 	fmi2Real stopTime) {
 
+	GET_INSTANCE
+
 	if (stopTimeDefined && stopTime <= startTime) {
 		return fmi2Error;
 	}
@@ -198,7 +213,7 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 
 fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
 
 #ifdef REUSABLE_FUNCTION
 	MODEL_INITIALIZE(instance->S);
@@ -211,9 +226,7 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 
 fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 
-	ModelInstance *instance = (ModelInstance *)c;
-	RT_MDL_TYPE *S = instance->S;
-	currentInstance = instance;
+	GET_INSTANCE
 
 	doFixedStep(S);
 
@@ -229,8 +242,7 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 
 fmi2Status fmi2Terminate(fmi2Component c) {
 
-	ModelInstance *instance = (ModelInstance *)c;
-	currentInstance = instance;
+	GET_INSTANCE
 
 #ifdef REUSABLE_FUNCTION
 	MODEL_TERMINATE(instance->S);
@@ -245,8 +257,7 @@ fmi2Status fmi2Terminate(fmi2Component c) {
 
 fmi2Status fmi2Reset(fmi2Component c) {
 
-    ModelInstance *instance = (ModelInstance *)c;
-	currentInstance = instance;
+	GET_INSTANCE
 
 #ifdef REUSABLE_FUNCTION
     if (instance->S) {
@@ -271,7 +282,8 @@ fmi2Status fmi2Reset(fmi2Component c) {
 /* Getting and setting variable values */
 fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+		
 	size_t i, index;
 	ModelVariable v;
 
@@ -302,7 +314,8 @@ fmi2Status fmi2GetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Integer value[]) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+		
 	size_t i, index;
 	ModelVariable v;
 
@@ -345,7 +358,8 @@ fmi2Status fmi2GetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2Boolean value[]) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+
 	size_t i, index;
 	ModelVariable v;
 
@@ -371,11 +385,12 @@ fmi2Status fmi2GetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 	return fmi2OK;
 }
 
-fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) { return fmi2Error; }
+fmi2Status fmi2GetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, fmi2String  value[]) { NOT_IMPLEMENTED }
 
 fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Real value[]) { 
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+		
 	size_t i, index;
 	ModelVariable v;
 
@@ -410,7 +425,8 @@ fmi2Status fmi2SetReal(fmi2Component c, const fmi2ValueReference vr[], size_t nv
 
 fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Integer value[]) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+		
 	size_t i, index;
 	ModelVariable v;
 
@@ -453,7 +469,8 @@ fmi2Status fmi2SetInteger(fmi2Component c, const fmi2ValueReference vr[], size_t
 
 fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2Boolean value[]) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+	GET_INSTANCE
+		
 	size_t i, index;
 	ModelVariable v;
 
@@ -479,45 +496,45 @@ fmi2Status fmi2SetBoolean(fmi2Component c, const fmi2ValueReference vr[], size_t
 	return fmi2OK;
 }
 
-fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) { return fmi2Error; }
+fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t nvr, const fmi2String  value[]) { NOT_IMPLEMENTED }
 
 /* Getting and setting the internal FMU state */
-fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) { return fmi2Error; }
-fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) { return fmi2Error; }
-fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) { return fmi2Error; }
-fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) { return fmi2Error; }
-fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) { return fmi2Error; }
-fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) { return fmi2Error; }
+fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) { NOT_IMPLEMENTED }
+fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) { NOT_IMPLEMENTED }
+fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) { NOT_IMPLEMENTED }
+fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) { NOT_IMPLEMENTED }
+fmi2Status fmi2SerializeFMUstate(fmi2Component c, fmi2FMUstate  FMUstate, fmi2Byte serializedState[], size_t size) { NOT_IMPLEMENTED }
+fmi2Status fmi2DeSerializeFMUstate(fmi2Component c, const fmi2Byte serializedState[], size_t size, fmi2FMUstate* FMUstate) { NOT_IMPLEMENTED }
 
 /* Getting partial derivatives */
 fmi2Status fmi2GetDirectionalDerivative(fmi2Component c,
 	const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
 	const fmi2ValueReference vKnown_ref[], size_t nKnown,
 	const fmi2Real dvKnown[],
-	fmi2Real dvUnknown[]) { return fmi2Error; }
+	fmi2Real dvUnknown[]) { NOT_IMPLEMENTED }
 
 /***************************************************
 Types for Functions for FMI2 for Model Exchange
 ****************************************************/
 
 /* Enter and exit the different modes */
-fmi2Status fmi2EnterEventMode(fmi2Component c) { return fmi2Error; }
-fmi2Status fmi2NewDiscreteStates(fmi2Component c, fmi2EventInfo* fmi2eventInfo) { return fmi2Error; }
-fmi2Status fmi2EnterContinuousTimeMode(fmi2Component c) { return fmi2Error; }
+fmi2Status fmi2EnterEventMode(fmi2Component c) { NOT_IMPLEMENTED }
+fmi2Status fmi2NewDiscreteStates(fmi2Component c, fmi2EventInfo* fmi2eventInfo) { NOT_IMPLEMENTED }
+fmi2Status fmi2EnterContinuousTimeMode(fmi2Component c) { NOT_IMPLEMENTED }
 fmi2Status fmi2CompletedIntegratorStep(fmi2Component c,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint,
 	fmi2Boolean*  enterEventMode,
-	fmi2Boolean*  terminateSimulation) { return fmi2Error; }
+	fmi2Boolean*  terminateSimulation) { NOT_IMPLEMENTED }
 
 /* Providing independent variables and re-initialization of caching */
-fmi2Status fmi2SetTime(fmi2Component c, fmi2Real time) { return fmi2Error; }
-fmi2Status fmi2SetContinuousStates(fmi2Component c, const fmi2Real x[], size_t nx) { return fmi2Error; }
+fmi2Status fmi2SetTime(fmi2Component c, fmi2Real time) { NOT_IMPLEMENTED }
+fmi2Status fmi2SetContinuousStates(fmi2Component c, const fmi2Real x[], size_t nx) { NOT_IMPLEMENTED }
 
 /* Evaluation of the model equations */
-fmi2Status fmi2GetDerivatives(fmi2Component c, fmi2Real derivatives[], size_t nx) { return fmi2Error; }
-fmi2Status fmi2GetEventIndicators(fmi2Component c, fmi2Real eventIndicators[], size_t ni) { return fmi2Error; }
-fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx) { return fmi2Error; }
-fmi2Status fmi2GetNominalsOfContinuousStates(fmi2Component c, fmi2Real x_nominal[], size_t nx) { return fmi2Error; }
+fmi2Status fmi2GetDerivatives(fmi2Component c, fmi2Real derivatives[], size_t nx) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetEventIndicators(fmi2Component c, fmi2Real eventIndicators[], size_t ni) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetContinuousStates(fmi2Component c, fmi2Real x[], size_t nx) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetNominalsOfContinuousStates(fmi2Component c, fmi2Real x_nominal[], size_t nx) { NOT_IMPLEMENTED }
 
 
 /***************************************************
@@ -528,21 +545,20 @@ Types for Functions for FMI2 for Co-Simulation
 fmi2Status fmi2SetRealInputDerivatives(fmi2Component c,
 	const fmi2ValueReference vr[], size_t nvr,
 	const fmi2Integer order[],
-	const fmi2Real value[]) { return fmi2Error; }
+	const fmi2Real value[]) { NOT_IMPLEMENTED }
 
 fmi2Status fmi2GetRealOutputDerivatives(fmi2Component c,
 	const fmi2ValueReference vr[], size_t nvr,
 	const fmi2Integer order[],
-	fmi2Real value[]) { return fmi2Error; }
+	fmi2Real value[]) { NOT_IMPLEMENTED }
 
 fmi2Status fmi2DoStep(fmi2Component c,
 	fmi2Real      currentCommunicationPoint,
 	fmi2Real      communicationStepSize,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
-	ModelInstance *instance = (ModelInstance *)c;
-	RT_MDL_TYPE *S = instance->S;
-	currentInstance = instance;
+	GET_INSTANCE
+		
 	const char *errorStatus;
 
 #ifdef rtmGetT
@@ -566,11 +582,11 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	return fmi2OK;
 }
 
-fmi2Status fmi2CancelStep(fmi2Component c) { return fmi2Error; }
+fmi2Status fmi2CancelStep(fmi2Component c) { NOT_IMPLEMENTED }
 
 /* Inquire slave status */
-fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) { return fmi2Error; }
-fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) { return fmi2Error; }
-fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) { return fmi2Error; }
-fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) { return fmi2Error; }
-fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) { return fmi2Error; }
+fmi2Status fmi2GetStatus(fmi2Component c, const fmi2StatusKind s, fmi2Status*  value) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetRealStatus(fmi2Component c, const fmi2StatusKind s, fmi2Real*    value) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetIntegerStatus(fmi2Component c, const fmi2StatusKind s, fmi2Integer* value) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetBooleanStatus(fmi2Component c, const fmi2StatusKind s, fmi2Boolean* value) { NOT_IMPLEMENTED }
+fmi2Status fmi2GetStringStatus(fmi2Component c, const fmi2StatusKind s, fmi2String*  value) { NOT_IMPLEMENTED }
