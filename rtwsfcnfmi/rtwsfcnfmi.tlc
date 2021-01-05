@@ -32,7 +32,6 @@
 %assign GUID = FEVAL("grtfmi_generate_guid")
 %include "sfcnmei.tlc"
 
-%assign SourceCodeFMU = 0
 %include "rtwsfcnfmilib.tlc"
 %include "rtwsfcnfmixml.tlc"
 
