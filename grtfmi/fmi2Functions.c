@@ -71,6 +71,49 @@ static void setResourcePath(const char *uri) {
 	FMU_RESOURCES_DIR = path;
 }
 
+static void doFixedStep(RT_MDL_TYPE *S) {
+
+#if NUM_TASKS > 1 // multitasking
+
+#ifdef REUSABLE_FUNCTION
+	// step the model for the base sample time
+	MODEL_STEP(S, 0);
+
+	// step the model for any other sample times (subrates)
+	for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+		if (rtmStepTask(S, i)) {
+			MODEL_STEP(S, i);
+		}
+		if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+			rtmTaskCounter(S, i) = 0;
+		}
+	}
+#else
+	// step the model for the base sample time
+	MODEL_STEP(0);
+
+	// step the model for any other sample times (subrates)
+	for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+		if (rtmStepTask(S, i)) {
+			MODEL_STEP(i);
+		}
+		if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+			rtmTaskCounter(S, i) = 0;
+		}
+	}
+#endif
+
+#else // multitasking
+
+#ifdef REUSABLE_FUNCTION
+	MODEL_STEP(S);
+#else
+	MODEL_STEP();
+#endif
+
+#endif // multitasking
+}
+
 /***************************************************
 Types for Common Functions
 ****************************************************/
@@ -167,6 +210,20 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 }
 
 fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
+
+	ModelInstance *instance = (ModelInstance *)c;
+	RT_MDL_TYPE *S = instance->S;
+	currentInstance = instance;
+
+	doFixedStep(S);
+
+	const char *errorStatus = rtmGetErrorStatus(S);
+
+	if (errorStatus) {
+		instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
+		return fmi2Error;
+	}
+
 	return fmi2OK;
 }
 
@@ -492,51 +549,13 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 	double epsilon = (1.0 + fabs(rtmGetT(S))) * 2 * DBL_EPSILON;
 	
-    while (rtmGetT(S) + STEP_SIZE < tNext + epsilon)
+    while (rtmGetT(S) < tNext + epsilon)
 #endif
 	{
-
-#if NUM_TASKS > 1 // multitasking
-
-#ifdef REUSABLE_FUNCTION
-		// step the model for the base sample time
-		MODEL_STEP(S, 0);
-
-		// step the model for any other sample times (subrates)
-		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
-			if (rtmStepTask(S, i)) {
-				MODEL_STEP(S, i);
-			}
-			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
-				rtmTaskCounter(S, i) = 0;
-			}
-		}
-#else
-		// step the model for the base sample time
-		MODEL_STEP(0);
-
-		// step the model for any other sample times (subrates)
-		for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
-			if (rtmStepTask(S, i)) {
-				MODEL_STEP(i);
-			}
-			if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
-				rtmTaskCounter(S, i) = 0;
-			}
-		}
-#endif
-
-#else // multitasking
-
-#ifdef REUSABLE_FUNCTION
-		MODEL_STEP(S);
-#else
-        MODEL_STEP();
-#endif
-
-#endif // multitasking
+		doFixedStep(S);
 
 		errorStatus = rtmGetErrorStatus(S);
+
 		if (errorStatus) {
 			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
 			return fmi2Error;
