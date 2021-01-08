@@ -19,10 +19,12 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.URL;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.*;
 
 
 public class FMUBlockDialog extends JDialog {
@@ -609,7 +611,7 @@ public class FMUBlockDialog extends JDialog {
     }
 
     public String getModelIdentifier() {
-        return getImplemenation().modelIdentifier;
+        return getImplementation().modelIdentifier;
     }
 
     public List<List<ScalarVariable>> getInputPorts() {
@@ -801,39 +803,32 @@ public class FMUBlockDialog extends JDialog {
             }
         }
 
-        boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
         boolean isModelExchange = runAsKind == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
-        if (generic) {
-            params.add("'" + modelDescription.fmiVersion + "'");
-            params.add(Integer.toString(runAsKind));
-            params.add("'" + modelDescription.guid + "'");
-            params.add("'" + getModelIdentifier() + "'");
-        }
+        params.add("'" + modelDescription.fmiVersion + "'");
+        params.add(Integer.toString(runAsKind));
+        params.add("'" + modelDescription.guid + "'");
+        params.add("'" + getModelIdentifier() + "'");
 
         params.add("FMIKit.getUnzipDirectory(gcb)");
 
-        if (generic) {
-            // debug logging
-            params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
+        // debug logging
+        params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
 
-            // log FMI calls
-            params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
-        }
+        // log FMI calls
+        params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
 
         // log level
         params.add(Integer.toString(cmbbxLogLevel.getSelectedIndex()));
 
-        if (generic) {
-            // log file
-            if (chckbxLogToFile.isSelected()) {
-                params.add("'" + txtLogFile.getText() + "'");
-            } else {
-                params.add("''");
-            }
+        // log file
+        if (chckbxLogToFile.isSelected()) {
+            params.add("'" + txtLogFile.getText() + "'");
+        } else {
+            params.add("''");
         }
 
         // relative tolerance
@@ -849,10 +844,8 @@ public class FMUBlockDialog extends JDialog {
         // offset time
         params.add("0");
 
-        if (generic) {
-            params.add(Integer.toString(modelDescription.numberOfContinuousStates));
-            params.add(Integer.toString(modelDescription.numberOfEventIndicators));
-        }
+        params.add(Integer.toString(modelDescription.numberOfContinuousStates));
+        params.add(Integer.toString(modelDescription.numberOfEventIndicators));
 
         // start values
         params.add("[" + Util.join(scalarStartTypes, " ") + "]");
@@ -869,33 +862,30 @@ public class FMUBlockDialog extends JDialog {
             inputPortDirectFeedThroughDouble.add(value ? 1.0 : 0.0);
         }
 
-        if (generic) {
+        // input port widths
+        params.add("[" + Util.join(inputPortWidths, " ") + "]");
 
-            // input port widths
-            params.add("[" + Util.join(inputPortWidths, " ") + "]");
-
-            // input port direct feed through
-            if (isModelExchange) {
-                params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
-            } else {
-                params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
-            }
-
-            // input port types
-            params.add("[" + Util.join(inputPortTypes, " ") + "]");
-
-            // input port variable VRs
-            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
-
-            // output port widths
-            params.add("[" + Util.join(outportWidths, " ") + "]");
-
-            // output port types
-            params.add("[" + Util.join(outportPortTypes, " ") + "]");
-
-            // output port variable VRs
-            params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
+        // input port direct feed through
+        if (isModelExchange) {
+            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+        } else {
+            params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
         }
+
+        // input port types
+        params.add("[" + Util.join(inputPortTypes, " ") + "]");
+
+        // input port variable VRs
+        params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
+
+        // output port widths
+        params.add("[" + Util.join(outportWidths, " ") + "]");
+
+        // output port types
+        params.add("[" + Util.join(outportPortTypes, " ") + "]");
+
+        // output port variable VRs
+        params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
 
         return Util.join(params, " ");
     }
@@ -1341,10 +1331,10 @@ public class FMUBlockDialog extends JDialog {
     }
 
     public boolean canUseSourceCode() {
-        return !getImplemenation().sourceFiles.isEmpty();
+        return !getImplementation().sourceFiles.isEmpty();
     }
 
-    private Implementation getImplemenation() {
+    private Implementation getImplementation() {
         return cmbbxRunAsKind.getSelectedIndex() == MODEL_EXCHANGE ? modelDescription.modelExchange : modelDescription.coSimulation;
     }
 
@@ -1360,92 +1350,24 @@ public class FMUBlockDialog extends JDialog {
         }
     }
 
-    public void generateSourceSFunction() throws FileNotFoundException, UnsupportedEncodingException {
+    public void generateSourceSFunction() throws FileNotFoundException {
 
-        String fmiVersion = modelDescription.fmiVersion.substring(0, 1);
+        Implementation implementation = getImplementation();
 
-        Implementation implemenation = getImplemenation();
-        boolean isModelExchange = implemenation instanceof ModelExchange;
-
-        String modelIdentifier = implemenation.modelIdentifier;
-        String kind = isModelExchange ? "me" : "cs";
-
-        // input ports
-        ArrayList<Integer> inputPortWidths = new ArrayList<Integer>();
-        ArrayList<Integer> inputPortTypes = new ArrayList<Integer>();
-        ArrayList<Integer> inputPortFeedThrough = new ArrayList<Integer>();
-        ArrayList<String> inputVariableVRs = new ArrayList<String>();
-
-        List<List<ScalarVariable>> inputPorts = getInputPorts();
-        List<List<ScalarVariable>> outputPorts = getOutputPorts();
-        List<Boolean> inputPortDirectFeedThrough = getInputPortDirectFeedThrough(inputPorts, outputPorts);
-
-        for (List<ScalarVariable> inputPort : inputPorts) {
-            ScalarVariable first = inputPort.get(0);
-            inputPortWidths.add(inputPort.size());
-            inputPortTypes.add(Util.typeEnumForName(first.type));
-            for (ScalarVariable v : inputPort) {
-                inputVariableVRs.add(v.valueReference);
-            }
-        }
-
-        for (Boolean v : inputPortDirectFeedThrough) {
-            inputPortFeedThrough.add(v && isModelExchange ? 1 : 0);
-        }
-
-        // output ports
-        ArrayList<Integer> outputPortWidths = new ArrayList<Integer>();
-        ArrayList<Integer> outputPortTypes = new ArrayList<Integer>();
-        ArrayList<String> outputPortVariableVRs = new ArrayList<String>();
-
-        for (List<ScalarVariable> outputPort : outputPorts) {
-            ScalarVariable first = outputPort.get(0);
-            outputPortWidths.add(outputPort.size());
-            outputPortTypes.add(Util.typeEnumForName(first.type));
-            for (ScalarVariable v : outputPort) {
-                outputPortVariableVRs.add(v.valueReference);
-            }
-        }
+        String modelIdentifier = implementation.modelIdentifier;
 
         PrintWriter w = new PrintWriter(mdlDirectory + File.separator + "sfun_" + modelIdentifier + ".c");
-
-        w.println("#define MODEL_IDENTIFIER " + modelIdentifier);
-        w.println("#define MODEL_GUID \"" + modelDescription.guid + "\"");
-        w.println();
-
-        w.println("#define NX " + modelDescription.numberOfContinuousStates);
-        w.println("#define NZ " + modelDescription.numberOfEventIndicators);
-        w.println();
-
-        w.println("#define NU " + inputPortWidths.size());
-        w.println("#define N_INPUT_VARIABLES " + inputVariableVRs.size());
-        if (inputPortWidths.size() > 0) {
-            w.println("#define INPUT_PORT_WIDTHS " + Util.join(inputPortWidths, ", "));
-            w.println("#define INPUT_PORT_TYPES " + Util.join(inputPortTypes, ", "));
-            w.println("#define INPUT_PORT_FEED_THROUGH " + Util.join(inputPortFeedThrough, ", "));
-            w.println("#define INPUT_VARIABLE_VRS " + Util.join(inputVariableVRs, ", "));
-        }
-        w.println();
-
-        w.println("#define NY " + outputPortWidths.size());
-        if (outputPortWidths.size() > 0) {
-            w.println("#define OUTPUT_PORT_WIDTHS " + Util.join(outputPortWidths, ", "));
-            w.println("#define OUTPUT_PORT_TYPES " + Util.join(outputPortTypes, ", "));
-            w.println("#define N_OUTPUT_VARIABLES " + outputPortVariableVRs.size());
-            w.println("#define OUTPUT_VARIABLE_VRS " + Util.join(outputPortVariableVRs, ", "));
-        }
-        w.println();
 
         w.println("#define S_FUNCTION_NAME sfun_" + modelIdentifier);
         w.println("#define FMI2_FUNCTION_PREFIX " + modelIdentifier + "_");
         w.println();
-        w.println("#include \"sfun_fmu_fmi" + fmiVersion + "_" + kind + ".c\"");
+        w.println("#include \"sfun_fmurun.c\"");
 
         w.close();
     }
 
     public List<String> getSourceFiles() {
-        return getImplemenation().sourceFiles;
+        return getImplementation().sourceFiles;
     }
 
     public DefaultMutableTreeNode restoreOutportTree() {

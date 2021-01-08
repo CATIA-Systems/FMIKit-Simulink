@@ -141,29 +141,38 @@ jobs:
       python docs/md2html.py
     displayName: Generate HTML documentation
 
+  - script: |
+      python merge_sfun.py
+    displayName: Merge S-function source
+
   - task: Maven@3
     inputs:
       mavenPomFile: Java/pom.xml
       goals: install
 
   - script: |
-      cp -r +FMIKit                dist/+FMIKit
-      cp -r examples               dist/examples
-      cp -r grtfmi                 dist/grtfmi
-      cp -r html                   dist/html
-      cp -r include                dist/include
-      cp -r src                    dist/src
-      cp -r rtwsfcnfmi             dist/rtwsfcnfmi
-      cp FMIKit_blocks_R2012b.slx  dist
-      cp fmikit.jar                dist
-      cp forms_rt.jar              dist
-      cp info.xml                  dist
-      cp LICENSE.txt               dist
-      cp README.md                 dist
-      cp sfun_fmurun.mexa64        dist
-      cp sfun_fmurun.cpp           dist
-      cp slblocks.m                dist
-      cp swingx-1.6.jar            dist
+      cp -r +FMIKit                  dist/+FMIKit
+      cp -r examples                 dist/examples
+      cp -r grtfmi                   dist/grtfmi
+      cp -r html                     dist/html
+      mkdir dist/include
+      cp include/fmi2Functions.h     dist/include
+      cp include/fmi2FunctionTypes.h dist/include
+      cp include/fmi2TypesPlatform.h dist/include
+      cp include/fmi3Functions.h     dist/include
+      cp include/fmi3FunctionTypes.h dist/include
+      cp include/fmi3PlatformTypes.h dist/include
+      cp -r rtwsfcnfmi               dist/rtwsfcnfmi
+      cp FMIKit_blocks_R2012b.slx    dist
+      cp fmikit.jar                  dist
+      cp forms_rt.jar                dist
+      cp info.xml                    dist
+      cp LICENSE.txt                 dist
+      cp README.md                   dist
+      cp sfun_fmurun.mexa64          dist
+      cp sfun_fmurun.c               dist
+      cp slblocks.m                  dist
+      cp swingx-1.6.jar              dist
       cd dist
       zip -r ../FMIKit-Simulink.zip *
     displayName: Create distribution archive

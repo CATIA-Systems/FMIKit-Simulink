@@ -1,5 +1,5 @@
-#ifndef FMI1_H
-#define FMI1_H
+#ifndef FMI1FUNCTIONS_H
+#define FMI1FUNCTIONS_H
 
 /*****************************************************************
  *  Copyright (c) Dassault Systemes. All rights reserved.        *
@@ -26,9 +26,6 @@ typedef const char*  fmi1String;
 /* Undefined value for fmi1ValueReference (largest unsigned int value) */
 #define fmi1UndefinedValueReference (fmi1ValueReference)(-1)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* make sure all compiler use the same alignment policies for structures */
 #if defined _MSC_VER || defined __GNUC__
@@ -126,9 +123,4 @@ typedef fmi1Status		fmi1GetIntegerStatusTYPE(fmi1Component c, const fmi1StatusKi
 typedef fmi1Status		fmi1GetBooleanStatusTYPE(fmi1Component c, const fmi1StatusKind s, fmi1Boolean* value);
 typedef fmi1Status		fmi1GetStringStatusTYPE(fmi1Component c, const fmi1StatusKind s, fmi1String*  value);
 
-
-#ifdef __cplusplus
-}  /* end of extern "C" { */
-#endif
-
-#endif // FMI1_H
+#endif // FMI1FUNCTIONS_H

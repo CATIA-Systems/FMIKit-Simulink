@@ -25,24 +25,18 @@ To build the `fmikit.jar` that contains the block dialog:
 
 ### Compile with MATLAB
 
-In MATLAB change into the `FMIKit` directory and configure the MEX command:
+To compile the generic S-function (`sfun_fmurun.mex*`) change into the `FMIKit` directory.
+
+On Windows run:
 
 ```
-mex -setup C++
-```
-
-If you're on Windows make sure that MEX is configured to use `Microsoft Visual C++ 2012` or later for C++ language compilation.
-
-To compile the generic S-function (`sfun_fmurun.mex*`) on Windows run
-
-```
-mex sfun_fmurun.cpp src/FMU.cpp src/FMU1.cpp src/FMU2.cpp -Iinclude -lshlwapi
+mex sfun_fmurun.c
 ```
 
 On Linux:
 
 ```
-mex sfun_fmurun.cpp src/FMU.cpp src/FMU1.cpp src/FMU2.cpp -Iinclude -v CXXFLAGS='-std=c++11 -fPIC' -ldl
+mex sfun_fmurun.c -ldl
 ```
 
 ## Debugging the generic S-function

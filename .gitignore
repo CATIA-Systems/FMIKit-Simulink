@@ -9,6 +9,9 @@
 *.lib
 *.pdb
 
+# generated S-function source
+sfun_fmurun.c
+
 # help files
 *.html
 html/images/

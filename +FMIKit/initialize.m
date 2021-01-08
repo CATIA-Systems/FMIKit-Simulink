@@ -22,15 +22,6 @@ end
 % add the FMIKit folder to the MATLAB path
 addpath(folder);
 
-% add the src folder to the MATLAB path
-if isempty(which('FMU.cpp'))
-    src_folder = fullfile(folder, 'src');
-    if exist(src_folder, 'dir')
-        addpath(src_folder);
-        msg = true;
-    end
-end
-
 % add the GRTFMI target to the MATLAB path
 if isempty(which('grtfmi.tlc'))
     grtfmi_folder = fullfile(folder, 'grtfmi');
