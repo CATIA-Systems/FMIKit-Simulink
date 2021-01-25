@@ -265,13 +265,10 @@ fmi2Status fmi2Reset(fmi2Component c) {
     }
 
 	instance->S = MODEL();
-	MODEL_INITIALIZE(instance->S);
 #else
     if (instance->S) {
         MODEL_TERMINATE();
     }
-    
-	MODEL_INITIALIZE();
 #endif
 
 	initializeModelVariables(instance->S, instance->modelVariables);
