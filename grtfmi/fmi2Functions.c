@@ -36,6 +36,13 @@ ModelInstance *currentInstance = NULL;
 #define NOT_IMPLEMENTED \
 	return fmi2Error;
 
+#define CHECK_ERROR_STATUS \
+	const char *errorStatus = rtmGetErrorStatus(S); \
+	if (errorStatus) { \
+		instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus); \
+		return fmi2Error; \
+	}
+
 int rtPrintfNoOp(const char *fmt, ...) {
 
 	va_list args;
@@ -221,6 +228,8 @@ fmi2Status fmi2EnterInitializationMode(fmi2Component c) {
 	MODEL_INITIALIZE();
 #endif
 
+	CHECK_ERROR_STATUS
+
 	return fmi2OK;
 }
 
@@ -230,12 +239,7 @@ fmi2Status fmi2ExitInitializationMode(fmi2Component c) {
 
 	doFixedStep(S);
 
-	const char *errorStatus = rtmGetErrorStatus(S);
-
-	if (errorStatus) {
-		instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
-		return fmi2Error;
-	}
+	CHECK_ERROR_STATUS
 
 	return fmi2OK;
 }
@@ -556,8 +560,6 @@ fmi2Status fmi2DoStep(fmi2Component c,
 
 	GET_INSTANCE
 		
-	const char *errorStatus;
-
 #ifdef rtmGetT
 	time_T tNext = currentCommunicationPoint + communicationStepSize;
 	double epsilon = (1.0 + fabs(rtmGetT(S))) * 2 * DBL_EPSILON;
@@ -567,13 +569,7 @@ fmi2Status fmi2DoStep(fmi2Component c,
 	{
 		doFixedStep(S);
 
-		errorStatus = rtmGetErrorStatus(S);
-
-		if (errorStatus) {
-			instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", errorStatus);
-			return fmi2Error;
-		}
-
+		CHECK_ERROR_STATUS
 	}
 
 	return fmi2OK;
