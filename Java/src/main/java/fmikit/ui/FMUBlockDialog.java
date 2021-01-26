@@ -91,7 +91,13 @@ public class FMUBlockDialog extends JDialog {
 
     public FMUBlockDialog() {
 
-        setMinimumSize(new Dimension(850, 650));
+        final int pixelsPerInch = Toolkit.getDefaultToolkit().getScreenResolution();
+
+        if (pixelsPerInch > 120) {
+            setMinimumSize(new Dimension(1200, 900));
+        } else {
+            setMinimumSize(new Dimension(850, 650));
+        }
 
         setContentPane(contentPane);
 
