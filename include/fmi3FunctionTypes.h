@@ -5,7 +5,7 @@
 
 /*
 This header file defines the data and function types of FMI 3.0-alpha.5.
-It must be used when compiling an FMU or an FMI master.
+It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
               2012-2020 Modelica Association Project "FMI"
@@ -82,7 +82,6 @@ typedef void  (*fmi3CallbackLogMessage)     (fmi3InstanceEnvironment instanceEnv
 typedef void (*fmi3CallbackIntermediateUpdate) (
     fmi3InstanceEnvironment instanceEnvironment,
     fmi3Float64 intermediateUpdateTime,
-    fmi3Boolean eventOccurred,
     fmi3Boolean clocksTicked,
     fmi3Boolean intermediateVariableSetRequested,
     fmi3Boolean intermediateVariableGetAllowed,
@@ -132,7 +131,7 @@ typedef fmi3Instance fmi3InstantiateCoSimulationTYPE(
     fmi3String                     resourceLocation,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
-    fmi3Boolean                    eventModeRequired,
+    fmi3Boolean                    eventModeUsed,
     const fmi3ValueReference       requiredIntermediateVariables[],
     size_t                         nRequiredIntermediateVariables,
     fmi3InstanceEnvironment        instanceEnvironment,
@@ -381,21 +380,25 @@ typedef fmi3Status fmi3SetFMUStateTYPE (fmi3Instance instance, fmi3FMUState  FMU
 typedef fmi3Status fmi3FreeFMUStateTYPE(fmi3Instance instance, fmi3FMUState* FMUState);
 /* end::FreeFMUState[] */
 
-/* tag::SerializedFMUState[] */
+/* tag::SerializedFMUStateSize[] */
 typedef fmi3Status fmi3SerializedFMUStateSizeTYPE(fmi3Instance instance,
                                                   fmi3FMUState  FMUState,
                                                   size_t* size);
+/* end::SerializedFMUStateSize[] */
 
+/* tag::SerializeFMUState[] */
 typedef fmi3Status fmi3SerializeFMUStateTYPE     (fmi3Instance instance,
                                                   fmi3FMUState  FMUState,
                                                   fmi3Byte serializedState[],
                                                   size_t size);
+/* end::SerializeFMUState[] */
 
+/* tag::DeSerializeFMUState[] */
 typedef fmi3Status fmi3DeSerializeFMUStateTYPE   (fmi3Instance instance,
                                                   const fmi3Byte serializedState[],
                                                   size_t size,
                                                   fmi3FMUState* FMUState);
-/* end::SerializedFMUState[] */
+/* end::DeSerializeFMUState[] */
 
 /* Getting partial derivatives */
 /* tag::GetDirectionalDerivative[] */
@@ -485,15 +488,15 @@ typedef fmi3Status fmi3SetIntervalFractionTYPE(fmi3Instance instance,
                                                size_t nValues);
 /* end::SetIntervalFraction[] */
 
-/* tag::NewDiscreteStates[] */
-typedef fmi3Status fmi3NewDiscreteStatesTYPE(fmi3Instance instance,
-                                             fmi3Boolean *newDiscreteStatesNeeded,
+/* tag::UpdateDiscreteStates[] */
+typedef fmi3Status fmi3UpdateDiscreteStatesTYPE(fmi3Instance instance,
+                                             fmi3Boolean *discreteStatesNeedUpdate,
                                              fmi3Boolean *terminateSimulation,
                                              fmi3Boolean *nominalsOfContinuousStatesChanged,
                                              fmi3Boolean *valuesOfContinuousStatesChanged,
                                              fmi3Boolean *nextEventTimeDefined,
                                              fmi3Float64 *nextEventTime);
-/* end::NewDiscreteStates[] */
+/* end::UpdateDiscreteStates[] */
 
 /***************************************************
 Types for Functions for Model Exchange
@@ -525,7 +528,7 @@ typedef fmi3Status fmi3SetContinuousStatesTYPE(fmi3Instance instance,
 /* tag::GetDerivatives[] */
 typedef fmi3Status fmi3GetDerivativesTYPE(fmi3Instance instance,
                                           fmi3Float64 derivatives[],
-                                          size_t nCcontinuousStates);
+                                          size_t nContinuousStates);
 /* end::GetDerivatives[] */
 
 /* tag::GetEventIndicators[] */
@@ -560,7 +563,7 @@ typedef fmi3Status fmi3GetNumberOfContinuousStatesTYPE(fmi3Instance instance,
 Types for Functions for Co-Simulation
 ****************************************************/
 
-/* Simulating the slave */
+/* Simulating the FMU */
 
 /* tag::EnterStepMode[] */
 typedef fmi3Status fmi3EnterStepModeTYPE(fmi3Instance instance);
@@ -580,6 +583,8 @@ typedef fmi3Status fmi3DoStepTYPE(fmi3Instance instance,
                                   fmi3Float64 currentCommunicationPoint,
                                   fmi3Float64 communicationStepSize,
                                   fmi3Boolean noSetFMUStatePriorToCurrentPoint,
+                                  fmi3Boolean* eventEncountered,
+                                  fmi3Boolean* clocksAboutToTick,
                                   fmi3Boolean* terminate,
                                   fmi3Boolean* earlyReturn,
                                   fmi3Float64* lastSuccessfulTime);

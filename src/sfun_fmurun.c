@@ -15,6 +15,7 @@ extern const char *FMU_RESOURCES_DIR;
 #include "FMI.c"
 #include "FMI1.c"
 #include "FMI2.c"
+#include "FMI3.c"
 
 #ifndef S_FUNCTION_NAME
 #define S_FUNCTION_NAME sfun_fmurun
@@ -105,6 +106,14 @@ static bool isFMI2(SimStruct *S) {
 	char cstr[4];
 	mxCharToChar(data, cstr, 3);
 	return mxGetN(pa) == 3 && strncmp(cstr, "2.0", 3) == 0;
+}
+
+static bool isFMI3(SimStruct *S) {
+	const mxArray *pa = ssGetSFcnParam(S, fmiVersionParam);
+	const mxChar *data = (const mxChar*)mxGetData(pa);
+	char cstr[4];
+	mxCharToChar(data, cstr, 3);
+	return mxGetN(pa) == 3 && strncmp(cstr, "3.0", 3) == 0;
 }
 
 static bool isME(SimStruct *S) { 
@@ -435,19 +444,36 @@ static void setOutput(SimStruct *S) {
 					break;
 				}
 
-			} else {
+			} else if (isFMI2(S)) {
 
 				switch (type) {
 				case FMIRealType:
 					CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-					break;
+						break;
 				case FMIIntegerType:
 					CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-					break;
+						break;
 				case FMIBooleanType: {
 					fmi2Boolean booleanValue;
 					CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
-					((boolean_T *)y)[j] = booleanValue;
+						((boolean_T *)y)[j] = booleanValue;
+					break;
+				}
+				default:
+					break;
+				}
+
+			} else {
+
+				switch (type) {
+				case FMIRealType:
+					CHECK_STATUS(FMI3GetFloat64(instance, &vr, 1, &((real_T *)y)[j], 1))
+					break;
+				case FMIIntegerType:
+					CHECK_STATUS(FMI3GetInt32(instance, &vr, 1, &((int32_T *)y)[j], 1))
+					break;
+				case FMIBooleanType: {
+					CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j], 1))
 					break;
 				}
 				default:
@@ -485,7 +511,7 @@ static void setStartValues(SimStruct *S) {
 			default: break;
 			}
 
-		} else {
+		} else if (isFMI2(S)) {
 
 			fmi2Integer intValue  = (fmi2Integer)realValue;
 			fmi2Boolean boolValue = (fmi2Boolean)realValue;
@@ -496,6 +522,19 @@ static void setStartValues(SimStruct *S) {
 			case FMIBooleanType: FMI2SetBoolean (instance, &vr, 1, &boolValue); break;
 			default: break;
 			}
+
+		} else {
+
+			fmi3Int32   int32Value   = (fmi3Int32)   realValue;
+			fmi3Boolean booleanValue = (fmi3Boolean) realValue;
+
+			switch (type) {
+			case FMIRealType:    FMI3SetFloat64 (instance, &vr, 1, &realValue,    1); break;
+			case FMIIntegerType: FMI3SetInt32   (instance, &vr, 1, &int32Value,   1); break;
+			case FMIBooleanType: FMI3SetBoolean (instance, &vr, 1, &booleanValue, 1); break;
+			default: break;
+			}
+
 		}
     }
 
@@ -527,8 +566,10 @@ static void setStartValues(SimStruct *S) {
 
 		if (isFMI1(S)) {
 			FMI1SetString(instance, &vr, 1, (const fmi1String *)&value);
-		} else {
+		} else if (isFMI1(S)) {
 			FMI2SetString(instance, &vr, 1, (const fmi2String *)&value);
+		} else {
+			FMI3SetString(instance, &vr, 1, (const fmi3String *)&value, 1);
 		}
 	}
 
@@ -667,8 +708,8 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	logDebug(S, "mdlCheckParameters()");
 
-	if (!mxIsChar(ssGetSFcnParam(S, fmiVersionParam)) || (!isFMI1(S) && !isFMI2(S))) {
-        setErrorStatus(S, "Parameter %d (FMI version) must be one of '1.0' or '2.0'", fmiVersionParam + 1);
+	if (!mxIsChar(ssGetSFcnParam(S, fmiVersionParam)) || !(isFMI1(S) || isFMI2(S) || isFMI3(S))) {
+        setErrorStatus(S, "Parameter %d (FMI version) must be one of '1.0', '2.0' or '3.0'", fmiVersionParam + 1);
         return;
     }
 
@@ -987,20 +1028,6 @@ static void mdlStart(SimStruct *S) {
 	const char_T* instanceName = ssGetPath(S);
 	time_T time = ssGetT(S);
 
-	//FMU::m_messageLogger = logFMUMessage;
-
-	//char libraryFile[1000];
-	//getLibraryPath(S, libraryFile);
-//
-//#ifdef _WIN32
-//	if (!PathFileExists(libraryFile)) {
-//		static char errorMessage[1024];
-//		snprintf(errorMessage, 1024, "Cannot find the FMU's platform binary %s for %s.", libraryFile, instanceName);
-//		ssSetErrorStatus(S, errorMessage);
-//		return;
-//	}
-//#endif
-
 	bool toleranceDefined = relativeTolerance(S) > 0;
 
     bool loggingOn = debugLogging(S);
@@ -1062,11 +1089,11 @@ static void mdlStart(SimStruct *S) {
 	strcat(fmuResourceLocation, unzipdir);
 #endif
 
-	if (isFMI2(S)) {
+	if (!isFMI1(S)) {
 		strcat(fmuResourceLocation, "/resources");
 	}
 
-	time_T stopTime = ssGetTFinal(S);  // can be -1
+	const time_T stopTime = ssGetTFinal(S);  // can be -1
 
 	if (isFMI1(S)) {
 
@@ -1085,14 +1112,9 @@ static void mdlStart(SimStruct *S) {
 			}
 		}
 
-	} else {
+	} else if (isFMI2(S)) {
 
 		CHECK_STATUS(FMI2Instantiate(instance, fmuResourceLocation, isCS(S) ? fmi2CoSimulation : fmi2ModelExchange, guid, fmi2False, loggingOn))
-
-		if (!instance) {
-			ssSetErrorStatus(S, "Failed to instantiate FMU.");
-			return;
-		}
 
 		setStartValues(S);
 
@@ -1102,6 +1124,20 @@ static void mdlStart(SimStruct *S) {
 
 		CHECK_STATUS(FMI2EnterInitializationMode(instance))
 		CHECK_STATUS(FMI2ExitInitializationMode(instance))
+	
+	} else {
+
+		if (isME(S)) {
+			CHECK_STATUS(FMI3InstantiateModelExchange(instance, guid, fmuResourceLocation, fmi3False, loggingOn))
+		} else {
+			CHECK_STATUS(FMI3InstantiateCoSimulation(instance, guid, fmuResourceLocation, fmi3False, loggingOn, fmi3False, NULL, 0, NULL))
+		}
+
+		CHECK_ERROR(setStartValues(S))
+
+		CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
+		CHECK_STATUS(FMI3ExitInitializationMode(instance))
+
 	}
 
 	mxFree((void *)modelIdentifier);
@@ -1300,7 +1336,9 @@ static void mdlTerminate(SimStruct *S) {
 	FMIInstance *instance = (FMIInstance *)p[0];
 
 	if (!ssGetErrorStatus(S)) {
+
 		if (isFMI1(S)) {
+		
 			if (isME(S)) {
 				CHECK_STATUS(FMI1Terminate(instance))
 				FMI1FreeModelInstance(instance);
@@ -1308,9 +1346,17 @@ static void mdlTerminate(SimStruct *S) {
 				CHECK_STATUS(FMI1TerminateSlave(instance))
 				FMI1FreeSlaveInstance(instance);
 			}
-		} else {
+
+		} else if (isFMI2(S)) {
+			
 			CHECK_STATUS(FMI2Terminate(instance))
 			FMI2FreeInstance(instance);
+		
+		} else {
+		
+			CHECK_STATUS(FMI3Terminate(instance))
+			FMI3FreeInstance(instance);
+		
 		}
 	}
 
