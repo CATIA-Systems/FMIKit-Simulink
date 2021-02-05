@@ -36,7 +36,7 @@ public class ModelDescription {
 	
 	public Map<String, SimpleType> typeDefinitions = new HashMap<String, SimpleType>();
 	
-	public ModelStructure modelStructure;
+	public ModelStructure modelStructure = new ModelStructure();
 	
 	public ScalarVariable getScalarVariable(String variableName) {
 		
@@ -50,6 +50,17 @@ public class ModelDescription {
 			}
 		}
 		
+		return null;
+	}
+
+	public ScalarVariable getScalarVariableByValueReference(String valueRefenence) {
+
+		for (ScalarVariable variable : scalarVariables) {
+			if (variable.valueReference.equals(valueRefenence)) {
+				return variable;
+			}
+		}
+
 		return null;
 	}
 

@@ -113,7 +113,9 @@ public class Util {
 	}
 
 	public static int typeEnumForName(String type) {
-		if ("Real".equals(type)) {
+		if ("Float64".equals(type)) {
+			return REAL;
+		} else if ("Real".equals(type)) {
 			return REAL;
 		} else if ("Integer".equals(type) || "Enumeration".equals(type)) {
 			return INTEGER;

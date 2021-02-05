@@ -206,6 +206,8 @@ static fmi3Status loadSymbols3(FMIInstance *instance) {
 	LOAD_SYMBOL(DoStep)
 	LOAD_SYMBOL(ActivateModelPartition)
 
+	instance->state = FMI2StartAndEndState;
+
 	return fmi3OK;
 }
 
@@ -220,6 +222,12 @@ fmi3Status FMI3InstantiateModelExchange(
 	fmi3Status status = loadSymbols3(instance);
 
 	instance->component = instance->fmi3InstantiateModelExchange(instance->name, instantiationToken, resourceLocation, visible, loggingOn, instance, cb_logMessage3);
+	
+	if (!instance->component) {
+		return fmi3Error;
+	}
+	
+	instance->state = FMI2InstantiatedState;
 
 	return status;
 }
@@ -235,22 +243,31 @@ fmi3Status FMI3InstantiateCoSimulation(
 	size_t                         nRequiredIntermediateVariables,
 	fmi3CallbackIntermediateUpdate intermediateUpdate) {
 
-	fmi3Status status = loadSymbols3(instance);
+	if (loadSymbols3(instance) != FMIOK) {
+		return fmi3Error;
+	}
 
 	instance->component = instance->fmi3InstantiateCoSimulation(
-		instance->name, 
+		instance->name,
 		instantiationToken, 
 		resourceLocation, 
 		visible, 
 		loggingOn, 
-		eventModeUsed, 
+		eventModeUsed,
+		fmi3False,
 		requiredIntermediateVariables, 
 		nRequiredIntermediateVariables, 
 		instance, 
 		cb_logMessage3, 
 		intermediateUpdate);
 
-	return status;
+	if (!instance->component) {
+		return fmi3Error;
+	}
+
+	instance->state = FMI2InstantiatedState;
+
+	return fmi3OK;
 }
 
 fmi3Status FMI3InstantiateScheduledExecution(
@@ -265,7 +282,9 @@ fmi3Status FMI3InstantiateScheduledExecution(
 	fmi3CallbackLockPreemption     lockPreemption,
 	fmi3CallbackUnlockPreemption   unlockPreemption) {
 
-	fmi3Status status = loadSymbols3(instance);
+	if (loadSymbols3(instance) != FMIOK) {
+		return fmi3Error;
+	}
 
 	instance->component = instance->fmi3InstantiateScheduledExecution(
 		instance->name,
@@ -281,7 +300,13 @@ fmi3Status FMI3InstantiateScheduledExecution(
 		lockPreemption,
 		unlockPreemption);
 
-	return status;
+	if (!instance->component) {
+		return fmi3Error;
+	}
+
+	instance->state = FMI2InstantiatedState;
+
+	return fmi3OK;
 }
 
 fmi3Status FMI3FreeInstance(FMIInstance *instance) {
@@ -300,30 +325,47 @@ fmi3Status FMI3EnterInitializationMode(FMIInstance *instance,
 	fmi3Float64 startTime,
 	fmi3Boolean stopTimeDefined,
 	fmi3Float64 stopTime) {
+
+	instance->state = FMI2InitializationModeState;
+
 	CALL_ARGS(EnterInitializationMode, 
-		"fmi3EnterInitializationMode(toleranceDefined=%d, tolerance=%g, startTime=%g, stopTimeDefined=%d, stopTime=%gaa)",
+		"fmi3EnterInitializationMode(toleranceDefined=%d, tolerance=%g, startTime=%g, stopTimeDefined=%d, stopTime=%.16g)",
 		toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
 }
 
 fmi3Status FMI3ExitInitializationMode(FMIInstance *instance) {
+
+	instance->state = instance->interfaceType == FMIModelExchange ? FMI2EventModeState : FMI2StepCompleteState;
+
 	CALL(ExitInitializationMode)
 }
 
 fmi3Status FMI3EnterEventMode(FMIInstance *instance,
 	fmi3Boolean stepEvent,
+	fmi3Boolean stateEvent,
 	const fmi3Int32 rootsFound[],
 	size_t nEventIndicators,
 	fmi3Boolean timeEvent) {
-	CALL_ARGS(EnterEventMode, 
-		"fmi3EnterEventMode(stepEvent=%d, rootsFound=%p, nEventIndicators=%zu, timeEvent)",
-		stepEvent, rootsFound, nEventIndicators, timeEvent)
+
+	fmi3Status status = instance->fmi3EnterEventMode(instance->component, stepEvent, stateEvent, rootsFound, nEventIndicators, timeEvent);
+
+	if (instance->logFunctionCall) {
+		FMIValuesToString(instance, nEventIndicators, rootsFound, FMI3Int32Type);
+		instance->logFunctionCall(instance, status, 
+			"fmi3EnterEventMode(stepEvent=%d, stateEvent=%d, rootsFound=%s, nEventIndicators=%zu, timeEvent=%d)", 
+			stepEvent, stateEvent, instance->buf2, nEventIndicators, timeEvent);
+	}
+
+	return status;
 }
 
 fmi3Status FMI3Terminate(FMIInstance *instance) {
+	instance->state = FMI2TerminatedState;
 	CALL(Terminate)
 }
 
 fmi3Status FMI3Reset(FMIInstance *instance) {
+	instance->state = FMI2InstantiatedState;
 	CALL(Reset)
 }
 
@@ -650,69 +692,69 @@ fmi3Status FMI3ExitConfigurationMode(FMIInstance *instance) {
 	CALL(ExitConfigurationMode)
 }
 
-/* Clock related functions */
-fmi3Status FMI3GetClock(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3Clock values[],
-	size_t nValues) {
-	CALL_ARGS(GetClock,
-		"valueReferences=0x%p, nValueReferences=%zu, values=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, values, nValues);
-}
-
-fmi3Status FMI3SetClock(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3Clock values[],
-	const fmi3Boolean subactive[],
-	size_t nValues) {
-	CALL_ARGS(SetClock,
-		"valueReferences=0x%p, nValueReferences=%zu, values=0x%p, subactive=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, values, subactive, nValues);
-}
-
-fmi3Status FMI3GetIntervalDecimal(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3Float64 interval[],
-	size_t nValues) {
-	CALL_ARGS(GetIntervalDecimal,
-		"valueReferences=0x%p, nValueReferences=%zu, interval=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, interval, nValues);
-}
-
-fmi3Status FMI3GetIntervalFraction(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3UInt64 intervalCounter[],
-	fmi3UInt64 resolution[],
-	size_t nValues) {
-	CALL_ARGS(GetIntervalFraction,
-		"valueReferences=0x%p, nValueReferences=%zu, intervalCounter=0x%p, resolution=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, intervalCounter, resolution, nValues);
-}
-
-fmi3Status FMI3SetIntervalDecimal(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3Float64 interval[],
-	size_t nValues) {
-	CALL_ARGS(SetIntervalDecimal,
-		"valueReferences=0x%p, nValueReferences=%zu, interval=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, interval, nValues);
-}
-
-fmi3Status FMI3SetIntervalFraction(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3UInt64 intervalCounter[],
-	const fmi3UInt64 resolution[],
-	size_t nValues) {
-	CALL_ARGS(SetIntervalFraction,
-		"valueReferences=0x%p, nValueReferences=%zu, intervalCounter=0x%p, resolution=0x%p, nValues=%zu",
-		valueReferences, nValueReferences, intervalCounter, resolution, nValues);
-}
+///* Clock related functions */
+//fmi3Status FMI3GetClock(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3Clock values[],
+//	size_t nValues) {
+//	CALL_ARGS(GetClock,
+//		"valueReferences=0x%p, nValueReferences=%zu, values=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, values, nValues);
+//}
+//
+//fmi3Status FMI3SetClock(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3Clock values[],
+//	const fmi3Boolean subactive[],
+//	size_t nValues) {
+//	CALL_ARGS(SetClock,
+//		"valueReferences=0x%p, nValueReferences=%zu, values=0x%p, subactive=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, values, subactive, nValues);
+//}
+//
+//fmi3Status FMI3GetIntervalDecimal(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3Float64 interval[],
+//	size_t nValues) {
+//	CALL_ARGS(GetIntervalDecimal,
+//		"valueReferences=0x%p, nValueReferences=%zu, interval=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, interval, nValues);
+//}
+//
+//fmi3Status FMI3GetIntervalFraction(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3UInt64 intervalCounter[],
+//	fmi3UInt64 resolution[],
+//	size_t nValues) {
+//	CALL_ARGS(GetIntervalFraction,
+//		"valueReferences=0x%p, nValueReferences=%zu, intervalCounter=0x%p, resolution=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, intervalCounter, resolution, nValues);
+//}
+//
+//fmi3Status FMI3SetIntervalDecimal(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3Float64 interval[],
+//	size_t nValues) {
+//	CALL_ARGS(SetIntervalDecimal,
+//		"valueReferences=0x%p, nValueReferences=%zu, interval=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, interval, nValues);
+//}
+//
+//fmi3Status FMI3SetIntervalFraction(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3UInt64 intervalCounter[],
+//	const fmi3UInt64 resolution[],
+//	size_t nValues) {
+//	CALL_ARGS(SetIntervalFraction,
+//		"valueReferences=0x%p, nValueReferences=%zu, intervalCounter=0x%p, resolution=0x%p, nValues=%zu",
+//		valueReferences, nValueReferences, intervalCounter, resolution, nValues);
+//}
 
 fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
 	fmi3Boolean *discreteStatesNeedUpdate,
@@ -721,9 +763,16 @@ fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
 	fmi3Boolean *valuesOfContinuousStatesChanged,
 	fmi3Boolean *nextEventTimeDefined,
 	fmi3Float64 *nextEventTime) {
-	CALL_ARGS(UpdateDiscreteStates,
-		"discreteStatesNeedUpdate=0x%p, terminateSimulation=0x%p, nominalsOfContinuousStatesChanged=0x%p, valuesOfContinuousStatesChanged=0x%p, nextEventTimeDefined=0x%p, nextEventTime=0x%p",
-		discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime);
+
+	fmi3Status status = instance->fmi3UpdateDiscreteStates(instance->component, discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime);
+
+	if (instance->logFunctionCall) {
+		instance->logFunctionCall(instance, status,
+			"fmi3UpdateDiscreteStates(discreteStatesNeedUpdate=%d, terminateSimulation=%d, nominalsOfContinuousStatesChanged=%d, valuesOfContinuousStatesChanged=%d, nextEventTimeDefined=%d, nextEventTime=%.16g)",
+			*discreteStatesNeedUpdate, *terminateSimulation, *nominalsOfContinuousStatesChanged, *valuesOfContinuousStatesChanged, *nextEventTimeDefined, *nextEventTime);
+	}
+
+	return status;
 }
 
 /***************************************************
@@ -731,16 +780,24 @@ Types for Functions for Model Exchange
 ****************************************************/
 
 fmi3Status FMI3EnterContinuousTimeMode(FMIInstance *instance) {
-	CALL(Reset)
+	instance->state = FMI2ContinuousTimeModeState;
+	CALL(EnterContinuousTimeMode)
 }
 
 fmi3Status FMI3CompletedIntegratorStep(FMIInstance *instance,
 	fmi3Boolean noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean* enterEventMode,
 	fmi3Boolean* terminateSimulation) {
-	CALL_ARGS(CompletedIntegratorStep,
-		"noSetFMUStatePriorToCurrentPoint=%d, enterEventMode=0x%p, terminateSimulation=0x%p",
-		noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
+
+	fmi3Status status = instance->fmi3CompletedIntegratorStep(instance->component, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation);
+
+	if (instance->logFunctionCall) {
+		instance->logFunctionCall(instance, status,
+			"fmi3CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=%d, enterEventMode=%d, terminateSimulation=%d)",
+			noSetFMUStatePriorToCurrentPoint, *enterEventMode, *terminateSimulation);
+	}
+
+	return status;
 }
 
 /* Providing independent variables and re-initialization of caching */
@@ -751,26 +808,66 @@ fmi3Status FMI3SetTime(FMIInstance *instance, fmi3Float64 time) {
 fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
 	const fmi3Float64 continuousStates[],
 	size_t nContinuousStates) {
-	CALL_ARGS(SetContinuousStates, "continuousStates=0x%p, nContinuousStates=%zu", continuousStates, nContinuousStates);
+
+	fmi3Status status = instance->fmi3SetContinuousStates(instance->component, continuousStates, nContinuousStates);
+
+	if (instance->logFunctionCall) {
+		FMIValuesToString(instance, nContinuousStates, continuousStates, FMI3Float64Type);
+		instance->logFunctionCall(instance, status,
+			"fmi3SetContinuousStates(continuousStates=%s, nContinuousStates=%zu)",
+			instance->buf2, nContinuousStates);
+	}
+
+	return status;
 }
 
 /* Evaluation of the model equations */
 fmi3Status FMI3GetDerivatives(FMIInstance *instance,
 	fmi3Float64 derivatives[],
 	size_t nContinuousStates) {
-	CALL_ARGS(GetDerivatives, "derivatives=0x%p, nContinuousStates=%zu", derivatives, nContinuousStates);
+
+	fmi3Status status = instance->fmi3GetDerivatives(instance->component, derivatives, nContinuousStates);
+
+	if (instance->logFunctionCall) {
+		FMIValuesToString(instance, nContinuousStates, derivatives, FMI3Float64Type);
+		instance->logFunctionCall(instance, status,
+			"fmi3GetDerivatives(derivatives=%s, nContinuousStates=%zu)",
+			instance->buf2, nContinuousStates);
+	}
+
+	return status;
 }
 
 fmi3Status FMI3GetEventIndicators(FMIInstance *instance,
 	fmi3Float64 eventIndicators[],
 	size_t nEventIndicators) {
-	CALL_ARGS(GetEventIndicators, "eventIndicators=0x%p, nEventIndicators=%zu", eventIndicators, nEventIndicators);
+
+	fmi3Status status = instance->fmi3GetEventIndicators(instance->component, eventIndicators, nEventIndicators);
+
+	if (instance->logFunctionCall) {
+		FMIValuesToString(instance, nEventIndicators, eventIndicators, FMI3Float64Type);
+		instance->logFunctionCall(instance, status,
+			"fmi3GetEventIndicators(eventIndicators=%s, nEventIndicators=%zu)",
+			instance->buf2, nEventIndicators);
+	}
+
+	return status;
 }
 
 fmi3Status FMI3GetContinuousStates(FMIInstance *instance,
 	fmi3Float64 continuousStates[],
 	size_t nContinuousStates) {
-	CALL_ARGS(GetContinuousStates, "continuousStates=0x%p, nContinuousStates=%zu", continuousStates, nContinuousStates);
+
+	fmi3Status status = instance->fmi3GetContinuousStates(instance->component, continuousStates, nContinuousStates);
+
+	if (instance->logFunctionCall) {
+		FMIValuesToString(instance, nContinuousStates, continuousStates, FMI3Float64Type);
+		instance->logFunctionCall(instance, status,
+			"fmi3GetContinuousStates(continuousStates=%s, nContinuousStates=%zu)",
+			instance->buf2, nContinuousStates);
+	}
+
+	return status;
 }
 
 fmi3Status FMI3GetNominalsOfContinuousStates(FMIInstance *instance,
@@ -820,7 +917,6 @@ fmi3Status FMI3DoStep(FMIInstance *instance,
 	fmi3Boolean* terminate,
 	fmi3Boolean* earlyReturn,
 	fmi3Float64* lastSuccessfulTime) {
-
 
 	fmi3Status status = instance->fmi3DoStep(instance->component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, eventEncountered, clocksAboutToTick, terminate, earlyReturn, lastSuccessfulTime);
 

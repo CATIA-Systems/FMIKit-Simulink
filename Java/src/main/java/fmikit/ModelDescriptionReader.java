@@ -10,17 +10,25 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -86,6 +94,8 @@ public class ModelDescriptionReader {
 		} else if ("2.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi2/fmi2ModelDescription.xsd");
 			handler = new FMI2ModelDescriptionHandler();
+		} else if ("3.0-alpha.5".equals(fmiVersionHandler.fmiVersion)) {
+			return readModelDescription3(filename);
 		} else {
 			throw new Exception("Unsupported FMI version");
 		}
@@ -235,6 +245,143 @@ public class ModelDescriptionReader {
 			implementation.platforms.add("win64");
 		}
 		
+	}
+
+	ModelDescription readModelDescription3(final String xmlfile) throws Exception {
+
+		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+
+		Schema schema = factory.newSchema(new File("E:\\Development\\FMIKit-Simulink\\Java\\src\\main\\resources\\schema\\fmi3\\fmi3ModelDescription.xsd"));
+
+		File file = new File(xmlfile);
+
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+		dbf.setNamespaceAware(true);
+
+		DocumentBuilder db = dbf.newDocumentBuilder();
+
+		Document doc = db.parse(file);
+
+		Validator validator = schema.newValidator();
+
+		validator.validate(new DOMSource(doc));
+
+		doc.getDocumentElement().normalize();
+
+		ModelDescription modelDescription = new ModelDescription();
+
+		Element documentElement = doc.getDocumentElement();
+
+		modelDescription.fmiVersion = documentElement.getAttribute("fmiVersion");
+		modelDescription.modelName = documentElement.getAttribute("modelName");
+		modelDescription.guid = documentElement.getAttribute("instantiationToken");
+		modelDescription.description = documentElement.getAttribute("description");
+		modelDescription.author = documentElement.getAttribute("author");
+		modelDescription.version = documentElement.getAttribute("version");
+		modelDescription.generationTool = documentElement.getAttribute("generationTool");
+		modelDescription.generationDateAndTime = documentElement.getAttribute("generationDateAndTime");
+
+		// Model Exchange
+		Element modelExchange = XmlUtil.getChildElement(documentElement, "ModelExchange");
+
+		if (modelExchange != null) {
+			modelDescription.modelExchange = new ModelExchange();
+			modelDescription.modelExchange.modelIdentifier = modelExchange.getAttribute("modelIdentifier");
+		}
+
+		// Co-Simulation
+		Element coSimulation = XmlUtil.getChildElement(documentElement, "CoSimulation");
+
+		if (coSimulation != null) {
+			modelDescription.coSimulation = new CoSimulation();
+			modelDescription.coSimulation.modelIdentifier = coSimulation.getAttribute("modelIdentifier");
+		}
+
+		// DefaultExperiment
+		Element item = XmlUtil.getChildElement(documentElement, "DefaultExperiment");
+
+		if (item != null) {
+			DefaultExperiment experiment = new DefaultExperiment();
+
+			experiment.startTime = item.getAttribute("startTime");
+			experiment.stopTime = item.getAttribute("stopTime");
+			experiment.tolerance = item.getAttribute("tolerance");
+
+			modelDescription.defaultExperiment = experiment;
+		}
+
+		// type definitions
+		Element typeDefinitions = XmlUtil.getChildElement(documentElement, "TypeDefinitions");
+
+		if (typeDefinitions != null) {
+
+			for (Element element : XmlUtil.asElementList(typeDefinitions.getChildNodes())) {
+
+				SimpleType simpleType = new SimpleType();
+
+				simpleType.name = element.getAttribute("name");
+				simpleType.description = element.getAttribute("description");
+				simpleType.quantity = element.getAttribute("quantity");
+				simpleType.unit = element.getAttribute("unit");
+				simpleType.displayUnit = element.getAttribute("displayUnit");
+				simpleType.relativeQuantity = element.getAttribute("relativeQuantity");
+				simpleType.min = element.getAttribute("min");
+				simpleType.max = element.getAttribute("max");
+				simpleType.nominal = element.getAttribute("nominal");
+
+				modelDescription.typeDefinitions.put(simpleType.name, simpleType);
+			}
+		}
+
+		// Model Variables
+		Element modelVariablesElement = XmlUtil.getChildElement(documentElement, "ModelVariables");
+
+		for (Element element : XmlUtil.asElementList(modelVariablesElement.getChildNodes())) {
+
+			ScalarVariable scalarVariable = new ScalarVariable();
+			scalarVariable.name = element.getAttribute("name");
+			scalarVariable.type = element.getTagName();
+			scalarVariable.valueReference = element.getAttribute("valueReference");
+			scalarVariable.startValue = element.getAttribute("start");
+			scalarVariable.description = element.getAttribute("description");
+			scalarVariable.causality = element.getAttribute("causality");
+			scalarVariable.unit = element.getAttribute("unit");
+
+			if (element.hasAttribute("declaredType")) {
+				String declaredType = element.getAttribute("declaredType");
+				scalarVariable.declaredType = modelDescription.typeDefinitions.get(declaredType);
+			}
+
+			modelDescription.scalarVariables.add(scalarVariable);
+		}
+
+		// model structure
+		Element modelStructureElement = XmlUtil.getChildElement(documentElement, "ModelStructure");
+
+		for (Element element : XmlUtil.asElementList(modelStructureElement.getChildNodes())) {
+
+			String valueReference = element.getAttribute("valueReference");
+			ScalarVariable variable = modelDescription.getScalarVariableByValueReference(valueReference);
+
+			String tagName = element.getTagName();
+
+			List<Dependency> dependencies = Collections.<Dependency>emptyList();
+
+			if ("Output".equals(tagName)) {
+				modelDescription.modelStructure.outputs.put(variable, dependencies);
+			} else if ("Derivative".equals(tagName)) {
+				modelDescription.modelStructure.derivatives.put(variable, dependencies);
+				modelDescription.numberOfContinuousStates++;
+			} else if ("InitialUnknown".equals(tagName)) {
+				modelDescription.modelStructure.initialUnknowns.put(variable, dependencies);
+			} else if ("EventIndicator".equals(tagName)) {
+				modelDescription.numberOfEventIndicators++;
+			}
+
+		}
+
+		return modelDescription;
 	}
 
 }

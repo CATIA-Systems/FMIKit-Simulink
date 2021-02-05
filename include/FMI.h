@@ -219,6 +219,13 @@ struct FMIInstance_ {
 	Common Functions for FMI 3.0
 	****************************************************/
 
+	fmi3Boolean discreteStatesNeedUpdate;
+	fmi3Boolean terminateSimulation;
+	fmi3Boolean nominalsOfContinuousStatesChanged;
+	fmi3Boolean valuesOfContinuousStatesChanged;
+	fmi3Boolean nextEventTimeDefined;
+	fmi3Float64 nextEventTime;
+
 	/* Inquire version numbers and set debug logging */
 	fmi3GetVersionTYPE      *fmi3GetVersion;
 	fmi3SetDebugLoggingTYPE *fmi3SetDebugLogging;

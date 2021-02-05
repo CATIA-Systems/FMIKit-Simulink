@@ -9,12 +9,6 @@
 
 #include "FMI.h"
 
-//enum {
-//	FMI3Float64Type,
-//	FMI3Int32Type,
-//	FMI3BooleanType,
-//	FMI3StringType
-//} FMI3VariableType;
 
 /***************************************************
 Types for Common Functions
@@ -73,6 +67,7 @@ fmi3Status FMI3ExitInitializationMode(FMIInstance *instance);
 
 fmi3Status FMI3EnterEventMode(FMIInstance *instance,
 	fmi3Boolean stepEvent,
+	fmi3Boolean stateEvent,
 	const fmi3Int32 rootsFound[],
 	size_t nEventIndicators,
 	fmi3Boolean timeEvent);
@@ -300,45 +295,45 @@ fmi3Status FMI3EnterConfigurationMode(FMIInstance *instance);
 
 fmi3Status FMI3ExitConfigurationMode(FMIInstance *instance);
 
-/* Clock related functions */
-fmi3Status FMI3GetClock(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3Clock values[],
-	size_t nValues);
-
-fmi3Status FMI3SetClock(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3Clock values[],
-	const fmi3Boolean subactive[],
-	size_t nValues);
-
-fmi3Status FMI3GetIntervalDecimal(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3Float64 interval[],
-	size_t nValues);
-
-fmi3Status FMI3GetIntervalFraction(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	fmi3UInt64 intervalCounter[],
-	fmi3UInt64 resolution[],
-	size_t nValues);
-
-fmi3Status FMI3SetIntervalDecimal(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3Float64 interval[],
-	size_t nValues);
-
-fmi3Status FMI3SetIntervalFraction(FMIInstance *instance,
-	const fmi3ValueReference valueReferences[],
-	size_t nValueReferences,
-	const fmi3UInt64 intervalCounter[],
-	const fmi3UInt64 resolution[],
-	size_t nValues);
+///* Clock related functions */
+//fmi3Status FMI3GetClock(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3Clock values[],
+//	size_t nValues);
+//
+//fmi3Status FMI3SetClock(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3Clock values[],
+//	const fmi3Boolean subactive[],
+//	size_t nValues);
+//
+//fmi3Status FMI3GetIntervalDecimal(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3Float64 interval[],
+//	size_t nValues);
+//
+//fmi3Status FMI3GetIntervalFraction(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	fmi3UInt64 intervalCounter[],
+//	fmi3UInt64 resolution[],
+//	size_t nValues);
+//
+//fmi3Status FMI3SetIntervalDecimal(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3Float64 interval[],
+//	size_t nValues);
+//
+//fmi3Status FMI3SetIntervalFraction(FMIInstance *instance,
+//	const fmi3ValueReference valueReferences[],
+//	size_t nValueReferences,
+//	const fmi3UInt64 intervalCounter[],
+//	const fmi3UInt64 resolution[],
+//	size_t nValues);
 
 fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
 	fmi3Boolean *discreteStatesNeedUpdate,
