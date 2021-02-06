@@ -311,8 +311,21 @@ static void cb_logFunctionCall(FMIInstance *instance, FMIStatus status, const ch
 	logCall(S, buf);
 }
 
-
+#ifdef _WIN32
+#define CHECK_STATUS(s) \
+	__try { \
+		if (s > fmi2Warning) { \
+			ssSetErrorStatus(S, "The FMU reported an error."); \
+			return; \
+		} \
+	} __except (EXCEPTION_EXECUTE_HANDLER) { \
+		ssSetErrorStatus(S, "The FMU crashed."); \
+		return; \
+	}
+#else
 #define CHECK_STATUS(s) if (s > fmi2Warning) { ssSetErrorStatus(S, "The FMU encountered an error."); return; }
+#endif
+
 
 #define CHECK_ERROR(f) f; if (ssGetErrorStatus(S)) return;
 
