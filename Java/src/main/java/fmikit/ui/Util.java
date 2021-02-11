@@ -122,7 +122,7 @@ public class Util {
 		} else if ("UInt16".equals(type)) {
 			return 5;
 		} else if ("Int32".equals(type) || "Integer".equals(type) || "Enumeration".equals(type)) {
-			return 5;
+			return 6;
 		} else if ("UInt32".equals(type)) {
 			return 7;
 		} else if ("Int64".equals(type)) {

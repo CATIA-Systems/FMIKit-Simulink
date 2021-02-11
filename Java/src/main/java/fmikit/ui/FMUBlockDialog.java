@@ -843,11 +843,19 @@ public class FMUBlockDialog extends JDialog {
 
         ArrayList<String> params = new ArrayList<String>();
 
-        params.add("'" + modelDescription.fmiVersion + "'");
+        // FMI version
+        params.add(modelDescription.fmiVersion.substring(0, 3));
+
+        // interface type
         params.add(Integer.toString(runAsKind));
+
+        // GUID
         params.add("'" + modelDescription.guid + "'");
+
+        // model identifier
         params.add("'" + getModelIdentifier() + "'");
 
+        // unzip directory
         params.add("FMIKit.getUnzipDirectory(gcb)");
 
         // debug logging

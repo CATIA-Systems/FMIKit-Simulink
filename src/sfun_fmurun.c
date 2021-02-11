@@ -98,35 +98,23 @@ static char* getStringParam(SimStruct *S, int index) {
 }
 
 static bool isFMI1(SimStruct *S) {
-	const mxArray *pa = ssGetSFcnParam(S, fmiVersionParam);
-	const mxChar *data = (const mxChar*)mxGetData(pa);
-	char cstr[4];
-	mxCharToChar(data, cstr, 3);
-	return mxGetN(pa) == 3 && strncmp(cstr, "1.0", 3) == 0;
+	return mxGetScalar(ssGetSFcnParam(S, fmiVersionParam)) == 1.0;
 }
 
 static bool isFMI2(SimStruct *S) {
-	const mxArray *pa = ssGetSFcnParam(S, fmiVersionParam);
-	const mxChar *data = (const mxChar*)mxGetData(pa);
-	char cstr[4];
-	mxCharToChar(data, cstr, 3);
-	return mxGetN(pa) == 3 && strncmp(cstr, "2.0", 3) == 0;
+	return mxGetScalar(ssGetSFcnParam(S, fmiVersionParam)) == 2.0;
 }
 
 static bool isFMI3(SimStruct *S) {
-	const mxArray *pa = ssGetSFcnParam(S, fmiVersionParam);
-	const mxChar *data = (const mxChar*)mxGetData(pa);
-	char cstr[4];
-	mxCharToChar(data, cstr, 3);
-	return mxGetN(pa) >= 3 && strncmp(cstr, "3.0", 3) == 0;
+	return mxGetScalar(ssGetSFcnParam(S, fmiVersionParam)) == 3.0;
 }
 
 static bool isME(SimStruct *S) { 
-	return mxGetScalar(ssGetSFcnParam(S, runAsKindParam)) == fmi2ModelExchange;
+	return mxGetScalar(ssGetSFcnParam(S, runAsKindParam)) == FMIModelExchange;
 }
 
 static bool isCS(SimStruct *S) {
-	return mxGetScalar(ssGetSFcnParam(S, runAsKindParam)) == fmi2CoSimulation;
+	return mxGetScalar(ssGetSFcnParam(S, runAsKindParam)) == FMICoSimulation;
 }
 
 static bool debugLogging(SimStruct *S) {
@@ -1016,80 +1004,85 @@ static void update(SimStruct *S) {
 	}
 }
 
+static bool isScalar(SimStruct *S, Parameter param) {
+	const mxArray *array = ssGetSFcnParam(S, param);
+	return mxIsNumeric(array) && mxGetNumberOfElements(array) == 1;
+}
+
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
 static void mdlCheckParameters(SimStruct *S) {
 
 	logDebug(S, "mdlCheckParameters()");
 
-	if (!mxIsChar(ssGetSFcnParam(S, fmiVersionParam)) || !(isFMI1(S) || isFMI2(S) || isFMI3(S))) {
-        setErrorStatus(S, "Parameter %d (FMI version) must be one of '1.0', '2.0' or '3.0'", fmiVersionParam + 1);
-        return;
-    }
+	if (!isScalar(S, fmiVersionParam) || !(isFMI1(S) || isFMI2(S) || isFMI3(S))) {
+		setErrorStatus(S, "Parameter %d (FMI version) must be one of 1.0, 2.0 or 3.0.", fmiVersionParam + 1);
+		return;
+	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, runAsKindParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, runAsKindParam)) != 1 || (!isME(S) && !isCS(S))) {
-        setErrorStatus(S, "Parameter %d (run as kind) must be one of 0 (= MODEL_EXCHANGE) or 1 (= CO_SIMULATION)", runAsKindParam + 1);
+	if (!isScalar(S, runAsKindParam) || (!isME(S) && !isCS(S))) {
+        setErrorStatus(S, "Parameter %d (run as kind) must be one of 0 (= Model Exchange) or 1 (= Co-Simulation).", runAsKindParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, guidParam))) {
-        setErrorStatus(S, "Parameter %d (GUID) must be a string", guidParam + 1);
+        setErrorStatus(S, "Parameter %d (GUID) must be a string.", guidParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, modelIdentifierParam))) {
-        setErrorStatus(S, "Parameter %d (model identifier) must be a string", modelIdentifierParam + 1);
+        setErrorStatus(S, "Parameter %d (model identifier) must be a string.", modelIdentifierParam + 1);
         return;
     }
 
 	if (!mxIsChar(ssGetSFcnParam(S, unzipDirectoryParam))) {
-		setErrorStatus(S, "Parameter %d (unzip directory) must be a string", unzipDirectoryParam + 1);
+		setErrorStatus(S, "Parameter %d (unzip directory) must be a string.", unzipDirectoryParam + 1);
 		return;
 	}
 
-    if (!mxIsNumeric(ssGetSFcnParam(S, debugLoggingParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, debugLoggingParam)) != 1) {
-        setErrorStatus(S, "Parameter %d (debug logging) must be a scalar", debugLoggingParam + 1);
+    if (!isScalar(S, debugLoggingParam)) {
+        setErrorStatus(S, "Parameter %d (debug logging) must be a scalar.", debugLoggingParam + 1);
         return;
     }
 	
-	if (!mxIsNumeric(ssGetSFcnParam(S, logFMICallsParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, logFMICallsParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (log FMI calls) must be a scalar", logFMICallsParam + 1);
+	if (!isScalar(S, logFMICallsParam)) {
+		setErrorStatus(S, "Parameter %d (log FMI calls) must be a scalar.", logFMICallsParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, logLevelParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, logLevelParam)) != 1 ||
+	if (!isScalar(S, logLevelParam) ||
 		(logLevel(S) != 0 && logLevel(S) != 1 && logLevel(S) != 2 && logLevel(S) != 3 && logLevel(S) != 4 && logLevel(S) != 5)) {
-		setErrorStatus(S, "Parameter %d (log level) must be one of 0 (= info), 1 (= warning), 2 (= discard), 3 (= error), 4 (= fatal) or 5 (= none)", logLevelParam + 1);
+		setErrorStatus(S, "Parameter %d (log level) must be one of 0 (= info), 1 (= warning), 2 (= discard), 3 (= error), 4 (= fatal) or 5 (= none).", logLevelParam + 1);
 		return;
 	}
 
 	if (!mxIsChar(ssGetSFcnParam(S, logFileParam))) {
-		setErrorStatus(S, "Parameter %d (log file) must be a string", logFileParam + 1);
+		setErrorStatus(S, "Parameter %d (log file) must be a string.", logFileParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, relativeToleranceParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, relativeToleranceParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (relative tolerance) must be numeric", relativeToleranceParam + 1);
+	if (!isScalar(S, relativeToleranceParam)) {
+		setErrorStatus(S, "Parameter %d (relative tolerance) must be a scalar.", relativeToleranceParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, sampleTimeParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, sampleTimeParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (sample time) must be numeric", sampleTimeParam + 1);
+	if (!isScalar(S, sampleTimeParam)) {
+		setErrorStatus(S, "Parameter %d (sample time) must be a scalar.", sampleTimeParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, offsetTimeParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, offsetTimeParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (offset time) must be numeric", offsetTimeParam + 1);
+	if (!isScalar(S, offsetTimeParam)) {
+		setErrorStatus(S, "Parameter %d (offset time) must be a scalar.", offsetTimeParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, nxParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, nxParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (number of continuous states) must be a scalar", nxParam + 1);
+	if (!isScalar(S, nxParam)) {
+		setErrorStatus(S, "Parameter %d (number of continuous states) must be a scalar.", nxParam + 1);
 		return;
 	}
 
-	if (!mxIsNumeric(ssGetSFcnParam(S, nzParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, nzParam)) != 1) {
-		setErrorStatus(S, "Parameter %d (number of event indicators) must be a scalar", nzParam + 1);
+	if (!isScalar(S, nzParam)) {
+		setErrorStatus(S, "Parameter %d (number of event indicators) must be a scalar.", nzParam + 1);
 		return;
 	}
 
