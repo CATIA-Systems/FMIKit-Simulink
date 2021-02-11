@@ -32,24 +32,25 @@ typedef enum {
 
 typedef enum {
 
-	FMIRealType,
-	FMIIntegerType,
+	// FMI 3.0 variable types
+	FMIFloat32Type,
+	FMIFloat64Type,
+	FMIInt8Type,
+	FMIUInt8Type,
+	FMIInt16Type,
+	FMIUInt16Type,
+	FMIInt32Type,
+	FMIUInt32Type,
+	FMIInt64Type,
+	FMIUInt64Type,
 	FMIBooleanType,
 	FMIStringType,
+	FMIBinaryType,
+	FMIClockType,
 
-	FMI3Float32Type,
-	FMI3Float64Type,
-	FMI3Int8Type,
-	FMI3UInt8Type,
-	FMI3Int16Type,
-	FMI3UInt16Type,
-	FMI3Int32Type,
-	FMI3UInt32Type,
-	FMI3Int64Type,
-	FMI3UInt64Type,
-	FMI3BooleanType,
-	FMI3StringType,
-	FMI3BinaryType,
+	// Aliases for FMI 1.0 and 2.0
+	FMIRealType = FMIFloat64Type,
+	FMIIntegerType = FMIInt32Type,
 
 } FMIVariableType;
 

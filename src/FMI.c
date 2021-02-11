@@ -113,12 +113,10 @@ const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *val
 		for (size_t i = 0; i < nvr; i++) {
 
 			switch (variableType) {
-			case FMIRealType:
-			case FMI3Float64Type:
+			case FMIFloat64Type:
 				pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%.16g, " : "%.16g", ((fmi2Real *)value)[i]);
 				break;
-			case FMI3Int32Type:
-			case FMIIntegerType:
+			case FMIInt32Type:
 				pos += snprintf(&instance->buf2[pos], instance->bufsize2 - pos, i < nvr - 1 ? "%d, " : "%d", ((fmi2Integer *)value)[i]);
 				break;
 			case FMIBooleanType:

@@ -97,7 +97,8 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 					renderer.setIcon(stringIcon);
 				}
 			} else {
-				System.out.println(sv.name);
+				// TODO
+				// System.out.println(sv.name);
 			}
 
 		} /*else if (userObject instanceof String) {

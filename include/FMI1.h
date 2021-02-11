@@ -13,14 +13,6 @@
 
 #include "FMI2.h"
 
-typedef enum {
-
-    FMI1RealType,
-    FMI1IntegerType,
-    FMI1BooleanType,
-    FMI1StringType
-  
-} FMI1VariableType;
 
 /***************************************************
  Common Functions for FMI 1.0

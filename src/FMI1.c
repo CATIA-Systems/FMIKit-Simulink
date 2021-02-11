@@ -73,7 +73,7 @@ static void *loadSymbol(FMIInstance *instance, const char *prefix, const char *n
 	fmi1Status status = instance->fmi1 ## s ## t(instance->component, vr, nvr, value); \
 	if (instance->logFunctionCall) { \
 		FMIValueReferencesToString(instance, vr, nvr); \
-		FMIValuesToString(instance, nvr, value, FMI1 ## t ## Type); \
+		FMIValuesToString(instance, nvr, value, FMI ## t ## Type); \
 		instance->logFunctionCall(instance, status, "fmi" #s #t "(vr=%s, nvr=%zu, value=%s)", instance->buf1, nvr, instance->buf2); \
 	} \
 	return status;
@@ -217,7 +217,7 @@ fmi1Status    FMI1SetContinuousStates(FMIInstance *instance, const fmi1Real x[],
 	currentInstance = instance;
 	fmi1Status status = instance->fmi1SetContinuousStates(instance->component, x, nx);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nx, x, FMI1RealType);
+		FMIValuesToString(instance, nx, x, FMIRealType);
 		instance->logFunctionCall(instance, status, "fmi1SetContinuousStates(x=%s, nx=%zu)", instance->buf2, nx);
 	}
 	return status;
@@ -250,7 +250,7 @@ fmi1Status    FMI1GetDerivatives(FMIInstance *instance, fmi1Real derivatives[], 
 	currentInstance = instance;
 	fmi1Status status = instance->fmi1GetDerivatives(instance->component, derivatives, nx);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nx, derivatives, FMI1RealType);
+		FMIValuesToString(instance, nx, derivatives, FMIRealType);
 		instance->logFunctionCall(instance, status, "fmi1GetDerivatives(derivatives=%s, nx=%zu)", instance->buf2, nx);
 	}
 	return status;
@@ -260,7 +260,7 @@ fmi1Status    FMI1GetEventIndicators(FMIInstance *instance, fmi1Real eventIndica
 	currentInstance = instance;
 	fmi1Status status = instance->fmi1GetEventIndicators(instance->component, eventIndicators, ni);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, ni, eventIndicators, FMI1RealType);
+		FMIValuesToString(instance, ni, eventIndicators, FMIRealType);
 		instance->logFunctionCall(instance, status, "fmi1GetEventIndicators(eventIndicators=%s, ni=%zu)", instance->buf2, ni);
 	}
 	return status;
@@ -282,7 +282,7 @@ fmi1Status    FMI1GetContinuousStates(FMIInstance *instance, fmi1Real states[], 
 	currentInstance = instance;
 	fmi1Status status = instance->fmi1GetContinuousStates(instance->component, states, nx);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nx, states, FMI1RealType);
+		FMIValuesToString(instance, nx, states, FMIRealType);
 		instance->logFunctionCall(instance, status, "fmi2GetContinuousStates(x=%s, nx=%zu)", instance->buf2, nx);
 	}
 	return status;
@@ -292,7 +292,7 @@ fmi1Status    FMI1GetNominalContinuousStates(FMIInstance *instance, fmi1Real x_n
 	currentInstance = instance;
 	fmi1Status status = instance->fmi1GetNominalContinuousStates(instance->component, x_nominal, nx);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nx, x_nominal, FMI1RealType);
+		FMIValuesToString(instance, nx, x_nominal, FMIRealType);
 		instance->logFunctionCall(instance, status, "fmi1GetNominalContinuousStates(x_nominal=%s, nx=%zu)", instance->buf2, nx);
 	}
 	return status;

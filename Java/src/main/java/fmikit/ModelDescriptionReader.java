@@ -9,10 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -251,7 +248,9 @@ public class ModelDescriptionReader {
 
 		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 
-		Schema schema = factory.newSchema(new File("E:\\Development\\FMIKit-Simulink\\Java\\src\\main\\resources\\schema\\fmi3\\fmi3ModelDescription.xsd"));
+		URL schemaUrl = ModelDescription.class.getResource("/schema/fmi3/fmi3ModelDescription.xsd");
+
+		Schema schema = factory.newSchema(schemaUrl);
 
 		File file = new File(xmlfile);
 
@@ -337,6 +336,8 @@ public class ModelDescriptionReader {
 		// Model Variables
 		Element modelVariablesElement = XmlUtil.getChildElement(documentElement, "ModelVariables");
 
+		HashMap<String, ScalarVariable> variables = new HashMap<String, ScalarVariable>();
+
 		for (Element element : XmlUtil.asElementList(modelVariablesElement.getChildNodes())) {
 
 			ScalarVariable scalarVariable = new ScalarVariable();
@@ -354,6 +355,28 @@ public class ModelDescriptionReader {
 			}
 
 			modelDescription.scalarVariables.add(scalarVariable);
+
+			for (Element dimensionElement : XmlUtil.asElementList(element.getChildNodes())) {
+				if (dimensionElement.hasAttribute("start")) {
+					String start = dimensionElement.getAttribute("start");
+					scalarVariable.dimensions.add(new Integer(start));
+				} else {
+					scalarVariable.dimensions.add(dimensionElement.getAttribute("valueReference"));
+				}
+			}
+
+			variables.put(scalarVariable.valueReference, scalarVariable);
+		}
+
+		// Dimensions
+		for (ScalarVariable variable : variables.values()) {
+			for (int i = 0; i < variable.dimensions.size(); i++) {
+				Object value = variable.dimensions.get(i);
+				if (value instanceof String) {
+					ScalarVariable v = variables.get(value);
+					variable.dimensions.set(i, v);
+				}
+			}
 		}
 
 		// model structure

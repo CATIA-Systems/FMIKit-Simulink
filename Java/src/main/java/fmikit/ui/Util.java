@@ -14,12 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Util {
-	
-	public static final int REAL = 0;
-	public static final int INTEGER = 1;
-	public static final int BOOLEAN = 2;
-	public static final int STRING = 3;
-	
+
 	public static String getRelativePath(String path, String reference) {
 		
 		if (reference != null && path.startsWith(reference)) {
@@ -113,18 +108,37 @@ public class Util {
 	}
 
 	public static int typeEnumForName(String type) {
-		if ("Float64".equals(type)) {
-			return REAL;
-		} else if ("Real".equals(type)) {
-			return REAL;
-		} else if ("Integer".equals(type) || "Enumeration".equals(type)) {
-			return INTEGER;
+
+		if ("Float32".equals(type)) {
+			return 0;
+		} else if ("Float64".equals(type) || "Real".equals(type)) {
+			return 1;
+		} else if ("Int8".equals(type)) {
+			return 2;
+		} else if ("UInt8".equals(type)) {
+			return 3;
+		} else if ("Int16".equals(type)) {
+			return 4;
+		} else if ("UInt16".equals(type)) {
+			return 5;
+		} else if ("Int32".equals(type) || "Integer".equals(type) || "Enumeration".equals(type)) {
+			return 5;
+		} else if ("UInt32".equals(type)) {
+			return 7;
+		} else if ("Int64".equals(type)) {
+			return 8;
+		} else if ("UInt64".equals(type)) {
+			return 9;
 		} else if ("Boolean".equals(type)) {
-			return BOOLEAN;
+			return 10;
 		} else if ("String".equals(type)) {
-			return STRING;
+			return 11;
+		} else if ("Binary".equals(type)) {
+			return 12;
+		} else if ("Clock".equals(type)) {
+			return 13;
 		} else {
-			throw new RuntimeException("Unknown FMI type: " + type);
+			throw new RuntimeException("Unknown variable type: " + type);
 		}		
 	}
 

@@ -64,7 +64,7 @@ static void cb_logMessage3(fmi3InstanceEnvironment instanceEnvironment,
 	fmi3Status status = instance->fmi3 ## s ## t(instance->component, valueReferences, nValueReferences, values, nValues); \
 	if (instance->logFunctionCall) { \
 		FMIValueReferencesToString(instance, valueReferences, nValueReferences); \
-		FMIValuesToString(instance, nValues, values, FMI3 ## t ## Type); \
+		FMIValuesToString(instance, nValues, values, FMI ## t ## Type); \
 		instance->logFunctionCall(instance, status, "fmi3" #s #t "(valueReferences=%s, nValueReferences=%zu, values=%s, nValues=%zu)", instance->buf1, nValueReferences, instance->buf2, nValues); \
 	} \
 	return status;
@@ -87,7 +87,7 @@ fmi3Status FMI3SetDebugLogging(FMIInstance *instance,
 	const fmi3String categories[]) {
 	fmi3Status status = instance->fmi3SetDebugLogging(instance->component, loggingOn, nCategories, categories);
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nCategories, categories, FMI3StringType);
+		FMIValuesToString(instance, nCategories, categories, FMIStringType);
 		instance->logFunctionCall(instance, status, "fmi3SetDebugLogging(loggingOn=%d, nCategories=%zu, categories=%s)",
 			loggingOn, nCategories, instance->buf2);
 	}
@@ -350,7 +350,7 @@ fmi3Status FMI3EnterEventMode(FMIInstance *instance,
 	fmi3Status status = instance->fmi3EnterEventMode(instance->component, stepEvent, stateEvent, rootsFound, nEventIndicators, timeEvent);
 
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nEventIndicators, rootsFound, FMI3Int32Type);
+		FMIValuesToString(instance, nEventIndicators, rootsFound, FMIInt32Type);
 		instance->logFunctionCall(instance, status, 
 			"fmi3EnterEventMode(stepEvent=%d, stateEvent=%d, rootsFound=%s, nEventIndicators=%zu, timeEvent=%d)", 
 			stepEvent, stateEvent, instance->buf2, nEventIndicators, timeEvent);
@@ -477,7 +477,7 @@ fmi3Status FMI3GetBinary(FMIInstance *instance,
 
 	if (instance->logFunctionCall) { 
 		FMIValueReferencesToString(instance, valueReferences, nValueReferences); 
-		FMIValuesToString(instance, nValues, values, FMI3BinaryType); 
+		FMIValuesToString(instance, nValues, values, FMIBinaryType); 
 		instance->logFunctionCall(instance, status, "fmi3GetBinary(valueReferences=%s, nValueReferences=%zu, sizes=%p, values=%s, nValues=%zu)", instance->buf1, nValueReferences, sizes, instance->buf2, nValues); 
 	} 
 
@@ -591,7 +591,7 @@ fmi3Status FMI3SetBinary(FMIInstance *instance,
 
 	if (instance->logFunctionCall) {
 		FMIValueReferencesToString(instance, valueReferences, nValueReferences);
-		FMIValuesToString(instance, nValues, values, FMI3BinaryType);
+		FMIValuesToString(instance, nValues, values, FMIBinaryType);
 		instance->logFunctionCall(instance, status, "fmi3SetBinary(valueReferences=%s, nValueReferences=%zu, sizes=0x%p, values=%s, nValues=%zu", instance->buf1, nValueReferences, sizes, instance->buf2, nValues);
 	}
 
@@ -812,7 +812,7 @@ fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
 	fmi3Status status = instance->fmi3SetContinuousStates(instance->component, continuousStates, nContinuousStates);
 
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nContinuousStates, continuousStates, FMI3Float64Type);
+		FMIValuesToString(instance, nContinuousStates, continuousStates, FMIFloat64Type);
 		instance->logFunctionCall(instance, status,
 			"fmi3SetContinuousStates(continuousStates=%s, nContinuousStates=%zu)",
 			instance->buf2, nContinuousStates);
@@ -829,7 +829,7 @@ fmi3Status FMI3GetDerivatives(FMIInstance *instance,
 	fmi3Status status = instance->fmi3GetDerivatives(instance->component, derivatives, nContinuousStates);
 
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nContinuousStates, derivatives, FMI3Float64Type);
+		FMIValuesToString(instance, nContinuousStates, derivatives, FMIFloat64Type);
 		instance->logFunctionCall(instance, status,
 			"fmi3GetDerivatives(derivatives=%s, nContinuousStates=%zu)",
 			instance->buf2, nContinuousStates);
@@ -845,7 +845,7 @@ fmi3Status FMI3GetEventIndicators(FMIInstance *instance,
 	fmi3Status status = instance->fmi3GetEventIndicators(instance->component, eventIndicators, nEventIndicators);
 
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nEventIndicators, eventIndicators, FMI3Float64Type);
+		FMIValuesToString(instance, nEventIndicators, eventIndicators, FMIFloat64Type);
 		instance->logFunctionCall(instance, status,
 			"fmi3GetEventIndicators(eventIndicators=%s, nEventIndicators=%zu)",
 			instance->buf2, nEventIndicators);
@@ -861,7 +861,7 @@ fmi3Status FMI3GetContinuousStates(FMIInstance *instance,
 	fmi3Status status = instance->fmi3GetContinuousStates(instance->component, continuousStates, nContinuousStates);
 
 	if (instance->logFunctionCall) {
-		FMIValuesToString(instance, nContinuousStates, continuousStates, FMI3Float64Type);
+		FMIValuesToString(instance, nContinuousStates, continuousStates, FMIFloat64Type);
 		instance->logFunctionCall(instance, status,
 			"fmi3GetContinuousStates(continuousStates=%s, nContinuousStates=%zu)",
 			instance->buf2, nContinuousStates);

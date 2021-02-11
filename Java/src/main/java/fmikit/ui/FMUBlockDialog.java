@@ -739,39 +739,49 @@ public class FMUBlockDialog extends JDialog {
 
     public String getSFunctionParameters() {
 
-        // start values
+        final boolean isFMI1 = "1.0".equals(modelDescription.fmiVersion);
+        final boolean isFMI2 = "2.0".equals(modelDescription.fmiVersion);
+        final boolean isFMI3 = !(isFMI1 || isFMI2);
+
+        // structural parameters
+        ArrayList<Integer> structuralParameterTypes = new ArrayList<Integer>();
+        ArrayList<String> structuralParameterVRs = new ArrayList<String>();
+        ArrayList<String> structuralParameterValues = new ArrayList<String>();
+
+        // scalar start values
+        ArrayList<Integer> scalarStartSizes = new ArrayList<Integer>();
         ArrayList<Integer> scalarStartTypes = new ArrayList<Integer>();
         ArrayList<String> scalarStartVRs = new ArrayList<String>();
         ArrayList<String> scalarStartValues = new ArrayList<String>();
 
+        // string start values
+        ArrayList<Integer> stringStartSizes = new ArrayList<Integer>();
         ArrayList<String> stringStartVRs = new ArrayList<String>();
         ArrayList<String> stringStartValues = new ArrayList<String>();
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
-            String startValue = variable.startValue;
-
-            if (startValues.containsKey(variable.name)) {
-                startValue = startValues.get(variable.name);
-            } else {
+            if (!startValues.containsKey(variable.name)) {
                 continue;
             }
 
-            String valueReference = variable.valueReference;
-            int type = Util.typeEnumForName(variable.type);
+            int variableSize = getVariableSize(variable);
+            String startValue = startValues.get(variable.name);
 
-            // start values
-            if (startValue != null) {
-                if ("String".equals(variable.type)) {
-                    stringStartVRs.add(valueReference);
-                    stringStartValues.add("'" + startValue + "'");
-                } else {
-                    scalarStartTypes.add(type);
-                    scalarStartVRs.add(valueReference);
-                    scalarStartValues.add(startValue);
-                }
+            if ("structuralParameter".equals(variable.causality)) {
+                structuralParameterTypes.add(Util.typeEnumForName(variable.type));
+                structuralParameterVRs.add(variable.valueReference);
+                structuralParameterValues.add(startValue);
+            } else if ("String".equals(variable.type)) {
+                stringStartSizes.add(variableSize);
+                stringStartVRs.add(variable.valueReference);
+                stringStartValues.add("'" + startValue + "'");
+            } else {
+                scalarStartSizes.add(variableSize);
+                scalarStartTypes.add(Util.typeEnumForName(variable.type));
+                scalarStartVRs.add(variable.valueReference);
+                scalarStartValues.add(startValue);
             }
-
         }
 
         // input ports
@@ -783,9 +793,19 @@ public class FMUBlockDialog extends JDialog {
 
         for (List<ScalarVariable> inputPort : inputPorts) {
 
-            inputPortWidths.add(inputPort.size());
+            ScalarVariable firstVariable = inputPort.get(0);
 
-            inputPortTypes.add(Util.typeEnumForName(inputPort.get(0).type));
+            int inputPortWidth;
+
+            if (isFMI1 || isFMI2) {
+                inputPortWidth = inputPort.size();
+            } else {
+                inputPortWidth = getVariableSize(firstVariable);
+            }
+
+            inputPortWidths.add(inputPortWidth);
+
+            inputPortTypes.add(Util.typeEnumForName(firstVariable.type));
 
             for (ScalarVariable variable : inputPort) {
                 inputPortVariableVRs.add(variable.valueReference);
@@ -800,9 +820,18 @@ public class FMUBlockDialog extends JDialog {
 
         for (List<ScalarVariable> outputPort : outputPorts) {
 
-            outportWidths.add(outputPort.size());
+            ScalarVariable firstVariable = outputPort.get(0);
+            int portWidth;
 
-            outportPortTypes.add(Util.typeEnumForName(outputPort.get(0).type));
+            if (isFMI1 || isFMI2) {
+                portWidth = outputPort.size();
+            } else {
+                portWidth = getVariableSize(firstVariable);
+            }
+
+            outportWidths.add(portWidth);
+
+            outportPortTypes.add(Util.typeEnumForName(firstVariable.type));
 
             for (ScalarVariable variable : outputPort) {
                 outputPortVariableVRs.add(variable.valueReference);
@@ -853,11 +882,19 @@ public class FMUBlockDialog extends JDialog {
         params.add(Integer.toString(modelDescription.numberOfContinuousStates));
         params.add(Integer.toString(modelDescription.numberOfEventIndicators));
 
-        // start values
+        // structural parameters
+        params.add("[" + Util.join(structuralParameterTypes, " ") + "]");
+        params.add("[" + Util.join(structuralParameterVRs, " ") + "]");
+        params.add("[" + Util.join(structuralParameterValues, " ") + "]");
+
+        // scalar start values
+        params.add("[" + Util.join(scalarStartSizes, " ") + "]");
         params.add("[" + Util.join(scalarStartTypes, " ") + "]");
         params.add("[" + Util.join(scalarStartVRs, " ") + "]");
         params.add("[" + Util.join(scalarStartValues, " ") + "]");
 
+        // string start values
+        params.add("[" + Util.join(stringStartSizes, " ") + "]");
         params.add("[" + Util.join(stringStartVRs, " ") + "]");
         params.add("char({" + Util.join(stringStartValues, " ") + "})");
 
@@ -894,6 +931,29 @@ public class FMUBlockDialog extends JDialog {
         params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
 
         return Util.join(params, " ");
+    }
+
+    /** Calculate the variable size for an array variable in FMI 3.0 */
+    private int getVariableSize(ScalarVariable variable) {
+
+        int size = 1;
+
+        for (Object object : variable.dimensions) {
+            int dimension;
+            if (object instanceof Integer) {
+                dimension = (Integer) object;
+            } else {
+                ScalarVariable dimensionVariable = (ScalarVariable) object;
+                if (startValues.containsKey(dimensionVariable.name)) {
+                    dimension = Integer.parseInt(startValues.get(dimensionVariable.name));
+                } else {
+                    dimension = Integer.parseInt(dimensionVariable.startValue);
+                }
+            }
+            size *= dimension;
+        }
+
+        return size;
     }
 
     /**

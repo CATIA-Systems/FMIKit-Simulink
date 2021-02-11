@@ -51,9 +51,14 @@ typedef enum {
 	offsetTimeParam,
 	nxParam,
 	nzParam,
+	structuralParameterTypesParam,
+	structuralParameterVRsParam,
+	structuralParameterValuesParam,
+	scalarStartSizesParam,
 	scalarStartTypesParam,
 	scalarStartVRsParam,
 	scalarStartValuesParam,
+	stringStartSizesParam,
 	stringStartVRsParam,
 	stringStartValuesParam,
 	inputPortWidthsParam,
@@ -182,6 +187,11 @@ static int nuv(SimStruct *S) {
 	return (int)mxGetNumberOfElements(ssGetSFcnParam(S, inputPortVariableVRsParam));
 }
 
+static int startValueSize(SimStruct *S, Parameter parameter, int index) {
+	const real_T *sizes = (const real_T *)mxGetData(ssGetSFcnParam(S, parameter));
+	return (int)sizes[index];
+}
+
 static FMIValueReference valueReference(SimStruct *S, Parameter parameter, int index) {
 	const mxArray *param = ssGetSFcnParam(S, parameter);
 	const real_T realValue = ((const real_T *)mxGetData(param))[index];
@@ -201,10 +211,16 @@ static DTypeId simulinkVariableType(SimStruct *S, Parameter parameter, size_t in
 	const int intValue = (int)realValue;
 	FMIVariableType type = (FMIVariableType)intValue;
 	switch (type) {
-	case FMIRealType:    return SS_DOUBLE;
-	case FMIIntegerType: return SS_INT32;
-	case FMIBooleanType: return SS_BOOLEAN;
-	default:      return -1; // error
+	case FMIFloat32Type:  return SS_SINGLE;
+	case FMIFloat64Type:  return SS_DOUBLE;
+	case FMIInt8Type:     return SS_INT8;
+	case FMIUInt8Type:    return SS_UINT8;
+	case FMIInt16Type:    return SS_INT16;
+	case FMIUInt16Type:   return SS_UINT16;
+	case FMIInt32Type:    return SS_INT32;
+	case FMIUInt32Type:   return SS_UINT32;
+	case FMIBooleanType:  return SS_BOOLEAN;
+	default:              return -1; // error
 	}
 }
 
@@ -312,14 +328,77 @@ static void cb_logFunctionCall(FMIInstance *instance, FMIStatus status, const ch
 }
 
 #ifdef _WIN32
+const char * exceptionCodeToString(DWORD exceptionCode) {
+	switch (exceptionCode) {
+	case STATUS_WAIT_0:						return "WAIT_0";
+	case STATUS_ABANDONED_WAIT_0:			return "ABANDONED_WAIT_0";
+	case STATUS_USER_APC:					return "USER_APC";
+	case STATUS_TIMEOUT:					return "TIMEOUT";
+	case STATUS_PENDING:					return "PENDING";
+	case DBG_EXCEPTION_HANDLED:				return "EXCEPTION_HANDLED";
+	case DBG_CONTINUE:						return "CONTINUE";
+	case STATUS_SEGMENT_NOTIFICATION:		return "SEGMENT_NOTIFICATION";
+	case STATUS_FATAL_APP_EXIT:				return "FATAL_APP_EXIT";
+	case DBG_TERMINATE_THREAD:				return "TERMINATE_THREAD";
+	case DBG_TERMINATE_PROCESS:				return "TERMINATE_PROCESS";
+	case DBG_CONTROL_C:						return "CONTROL_C";
+	case DBG_PRINTEXCEPTION_C:				return "PRINTEXCEPTION_C";
+	case DBG_RIPEXCEPTION:					return "RIPEXCEPTION";
+	case DBG_CONTROL_BREAK:					return "CONTROL_BREAK";
+	case DBG_COMMAND_EXCEPTION:				return "COMMAND_EXCEPTION";
+	case STATUS_GUARD_PAGE_VIOLATION:		return "GUARD_PAGE_VIOLATION";
+	case STATUS_DATATYPE_MISALIGNMENT:		return "DATATYPE_MISALIGNMENT";
+	case STATUS_BREAKPOINT:					return "BREAKPOINT";
+	case STATUS_SINGLE_STEP:				return "SINGLE_STEP";
+	case STATUS_LONGJUMP:					return "LONGJUMP";
+	case STATUS_UNWIND_CONSOLIDATE:			return "UNWIND_CONSOLIDATE";
+	case DBG_EXCEPTION_NOT_HANDLED:			return "EXCEPTION_NOT_HANDLED";
+	case STATUS_ACCESS_VIOLATION:			return "ACCESS_VIOLATION";
+	case STATUS_IN_PAGE_ERROR:				return "IN_PAGE_ERROR";
+	case STATUS_INVALID_HANDLE:				return "INVALID_HANDLE";
+	case STATUS_INVALID_PARAMETER:			return "INVALID_PARAMETER";
+	case STATUS_NO_MEMORY:					return "NO_MEMORY";
+	case STATUS_ILLEGAL_INSTRUCTION:		return "ILLEGAL_INSTRUCTION";
+	case STATUS_NONCONTINUABLE_EXCEPTION:	return "NONCONTINUABLE_EXCEPTION";
+	case STATUS_INVALID_DISPOSITION:		return "INVALID_DISPOSITION";
+	case STATUS_ARRAY_BOUNDS_EXCEEDED:		return "ARRAY_BOUNDS_EXCEEDED";
+	case STATUS_FLOAT_DENORMAL_OPERAND:		return "FLOAT_DENORMAL_OPERAND";
+	case STATUS_FLOAT_DIVIDE_BY_ZERO:		return "FLOAT_DIVIDE_BY_ZERO";
+	case STATUS_FLOAT_INEXACT_RESULT:		return "FLOAT_INEXACT_RESULT";
+	case STATUS_FLOAT_INVALID_OPERATION:	return "FLOAT_INVALID_OPERATION";
+	case STATUS_FLOAT_OVERFLOW:				return "FLOAT_OVERFLOW";
+	case STATUS_FLOAT_STACK_CHECK:			return "FLOAT_STACK_CHECK";
+	case STATUS_FLOAT_UNDERFLOW:			return "FLOAT_UNDERFLOW";
+	case STATUS_INTEGER_DIVIDE_BY_ZERO:		return "INTEGER_DIVIDE_BY_ZERO";
+	case STATUS_INTEGER_OVERFLOW:			return "INTEGER_OVERFLOW";
+	case STATUS_PRIVILEGED_INSTRUCTION:		return "PRIVILEGED_INSTRUCTION";
+	case STATUS_STACK_OVERFLOW:				return "STACK_OVERFLOW";
+	case STATUS_DLL_NOT_FOUND:				return "DLL_NOT_FOUND";
+	case STATUS_ORDINAL_NOT_FOUND:			return "ORDINAL_NOT_FOUND";
+	case STATUS_ENTRYPOINT_NOT_FOUND:		return "ENTRYPOINT_NOT_FOUND";
+	case STATUS_CONTROL_C_EXIT:				return "CONTROL_C_EXIT";
+	case STATUS_DLL_INIT_FAILED:			return "DLL_INIT_FAILED";
+	case STATUS_FLOAT_MULTIPLE_FAULTS:		return "FLOAT_MULTIPLE_FAULTS";
+	case STATUS_FLOAT_MULTIPLE_TRAPS:		return "FLOAT_MULTIPLE_TRAPS";
+	case STATUS_REG_NAT_CONSUMPTION:		return "REG_NAT_CONSUMPTION";
+	//case STATUS_HEAP_CORRUPTION:			return "HEAP_CORRUPTION";
+	case STATUS_STACK_BUFFER_OVERRUN:		return "STACK_BUFFER_OVERRUN";
+	case STATUS_INVALID_CRUNTIME_PARAMETER: return "INVALID_CRUNTIME_PARAMETER";
+	case STATUS_ASSERTION_FAILURE:			return "ASSERTION_FAILURE";
+	case STATUS_SXS_EARLY_DEACTIVATION:		return "SXS_EARLY_DEACTIVATION";
+	case STATUS_SXS_INVALID_DEACTIVATION:	return "SXS_INVALID_DEACTIVATION";
+	default:								return "UNKOWN_EXEPTION_CODE";
+	}
+}
+
 #define CHECK_STATUS(s) \
 	__try { \
 		if (s > fmi2Warning) { \
-			ssSetErrorStatus(S, "The FMU reported an error."); \
+			setErrorStatus(S, "The FMU reported an error."); \
 			return; \
 		} \
 	} __except (EXCEPTION_EXECUTE_HANDLER) { \
-		ssSetErrorStatus(S, "The FMU crashed."); \
+		setErrorStatus(S, "The FMU crashed (exception code 0x%lx (%s)).", GetExceptionCode(), exceptionCodeToString(GetExceptionCode())); \
 		return; \
 	}
 #else
@@ -378,44 +457,87 @@ static void setInput(SimStruct *S, bool direct) {
 
 		const void *y = ssGetInputPortSignal(S, i);
 
-		for (int j = 0; j < w; j++) {
+		if (isFMI1(S) || isFMI2(S)) {
 
-			const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, iu);
+			for (int j = 0; j < w; j++) {
 
-			// set the input
-			if (isFMI1(S)) {
+				const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, iu);
 
-				switch (type) {
-				case FMIRealType:
-					CHECK_STATUS(FMI1SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
-					break;
-				case FMIIntegerType:
-					CHECK_STATUS(FMI1SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
-					break;
-				case FMIBooleanType:
-					CHECK_STATUS(FMI1SetBoolean(instance, &vr, 1, &((const boolean_T *)y)[j]))
-					break;
-				default:
-					break;
+				// set the input
+				if (isFMI1(S)) {
+
+					switch (type) {
+					case FMIRealType:
+						CHECK_STATUS(FMI1SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
+							break;
+					case FMIIntegerType:
+						CHECK_STATUS(FMI1SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
+							break;
+					case FMIBooleanType:
+						CHECK_STATUS(FMI1SetBoolean(instance, &vr, 1, &((const boolean_T *)y)[j]))
+							break;
+					default:
+						break;
+					}
+
+				} else {
+
+					switch (type) {
+					case FMIRealType:
+						CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
+							break;
+					case FMIIntegerType:
+						CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
+							break;
+					case FMIBooleanType: {
+						const fmi2Boolean booleanValue = ((const boolean_T *)y)[j];
+						CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
+							break;
+					}
+					default:
+						break;
+					}
 				}
 
-			} else {
-				
-				switch (type) {
-				case FMIRealType:
-					CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
-					break;
-				case FMIIntegerType:
-					CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
-					break;
-				case FMIBooleanType: {
-					const fmi2Boolean booleanValue = ((const boolean_T *)y)[j];
-					CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
-					break;
-				}
-				default:
-					break;
-				}
+				iu++;
+			}
+
+		} else {
+
+			size_t nValues = inputPortWidth(S, i);
+			const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, i);
+
+			switch (type) {
+			case FMIFloat32Type:
+				CHECK_STATUS(FMI3SetFloat32(instance, &vr, 1, (const real32_T *)y, nValues))
+				break;
+			case FMIFloat64Type:
+				CHECK_STATUS(FMI3SetFloat64(instance, &vr, 1, (const real_T *)y, nValues))
+				break;
+			case FMIInt8Type:
+				CHECK_STATUS(FMI3SetInt8(instance, &vr, 1, (const int8_T *)y, nValues))
+				break;
+			case FMIUInt8Type:
+				CHECK_STATUS(FMI3SetUInt8(instance, &vr, 1, (const uint8_T *)y, nValues))
+				break;
+			case FMIInt16Type:
+				CHECK_STATUS(FMI3SetInt16(instance, &vr, 1, (const int16_T *)y, nValues))
+				break;
+			case FMIUInt16Type:
+				CHECK_STATUS(FMI3SetUInt16(instance, &vr, 1, (const uint16_T *)y, nValues))
+				break;
+			case FMIInt32Type:
+				CHECK_STATUS(FMI3SetInt32(instance, &vr, 1, (const int32_T *)y, nValues))
+				break;
+			case FMIUInt32Type:
+				CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, (const uint32_T *)y, nValues))
+				break;
+			case FMIBooleanType:
+				CHECK_STATUS(FMI3SetBoolean(instance, &vr, 1, (const boolean_T *)y, nValues))
+				break;
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
+				return;
 			}
 
 			iu++;
@@ -437,77 +559,176 @@ static void setOutput(SimStruct *S) {
 
 		void *y = ssGetOutputPortSignal(S, i);
 
-		for (int j = 0; j < outputPortWidth(S, i); j++) {
+		if (isFMI1(S) || isFMI2(S)) {
+			
+			for (int j = 0; j < outputPortWidth(S, i); j++) {
 
-			FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, iy);
+				FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, iy);
 
-			if (isFMI1(S)) {
+				if (isFMI1(S)) {
 
-				switch (type) {
-				case FMIRealType:
-					CHECK_STATUS(FMI1GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-					break;
-				case FMIIntegerType:
-					CHECK_STATUS(FMI1GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-					break;
-				case FMIBooleanType:
-					CHECK_STATUS(FMI1GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j]))
-					break;
-				default:
-					break;
-				}
-
-			} else if (isFMI2(S)) {
-
-				switch (type) {
-				case FMIRealType:
-					CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
+					switch (type) {
+					case FMIRealType:
+						CHECK_STATUS(FMI1GetReal(instance, &vr, 1, &((real_T *)y)[j]))
+							break;
+					case FMIIntegerType:
+						CHECK_STATUS(FMI1GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
+							break;
+					case FMIBooleanType:
+						CHECK_STATUS(FMI1GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j]))
+							break;
+					default:
 						break;
-				case FMIIntegerType:
-					CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
+					}
+
+				} else if (isFMI2(S)) {
+
+					switch (type) {
+					case FMIRealType:
+						CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
+							break;
+					case FMIIntegerType:
+						CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
+							break;
+					case FMIBooleanType: {
+						fmi2Boolean booleanValue;
+						CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
+							((boolean_T *)y)[j] = booleanValue;
 						break;
-				case FMIBooleanType: {
-					fmi2Boolean booleanValue;
-					CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
-						((boolean_T *)y)[j] = booleanValue;
-					break;
+					}
+					default:
+						break;
+					}
 				}
-				default:
-					break;
-				}
-
-			} else {
-
-				switch (type) {
-				case FMIRealType:
-					CHECK_STATUS(FMI3GetFloat64(instance, &vr, 1, &((real_T *)y)[j], 1))
-					break;
-				case FMIIntegerType:
-					CHECK_STATUS(FMI3GetInt32(instance, &vr, 1, &((int32_T *)y)[j], 1))
-					break;
-				case FMIBooleanType: {
-					CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j], 1))
-					break;
-				}
-				default:
-					break;
-				}
-
 			}
 
 			iy++;
+
+		} else {
+
+			size_t nValues = outputPortWidth(S, i);
+			FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, i);
+
+			switch (type) {
+			case FMIFloat32Type:
+				CHECK_STATUS(FMI3GetFloat32(instance, &vr, 1, (real32_T *)y, nValues))
+				break;
+			case FMIFloat64Type:
+				CHECK_STATUS(FMI3GetFloat64(instance, &vr, 1, (real_T *)y, nValues))
+				break;
+			case FMIInt8Type:
+				CHECK_STATUS(FMI3GetInt8(instance, &vr, 1, (int8_T *)y, nValues))
+				break;
+			case FMIUInt8Type:
+				CHECK_STATUS(FMI3GetUInt8(instance, &vr, 1, (uint8_T *)y, nValues))
+				break;
+			case FMIInt16Type:
+				CHECK_STATUS(FMI3GetInt16(instance, &vr, 1, (int16_T *)y, nValues))
+				break;
+			case FMIUInt16Type:
+				CHECK_STATUS(FMI3GetUInt16(instance, &vr, 1, (uint16_T *)y, nValues))
+				break;
+			case FMIInt32Type:
+				CHECK_STATUS(FMI3GetInt32(instance, &vr, 1, (int32_T *)y, nValues))
+				break;
+			case FMIUInt32Type:
+				CHECK_STATUS(FMI3GetUInt32(instance, &vr, 1, (uint32_T *)y, nValues))
+				break;
+			case FMIBooleanType:
+				CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, (boolean_T *)y, nValues))
+				break;
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
+				return;
+			}
 		}
 	}
 }
+
+static void setStructualParameters(SimStruct *S) {
+
+	void **p = ssGetPWork(S);
+
+	FMIInstance *instance = (FMIInstance *)p[0];
+
+	const int nStructuralParameters = (int)mxGetNumberOfElements(ssGetSFcnParam(S, structuralParameterTypesParam));
+
+	// scalar start values
+	for (int i = 0; i < nStructuralParameters; i++) {
+
+		const FMIValueReference vr = valueReference(S, structuralParameterVRsParam, i);
+		const FMIVariableType type = variableType(S, structuralParameterTypesParam, i);
+		const real_T realValue = scalarValue(S, structuralParameterValuesParam, i);
+
+		switch (type) {
+		case FMIInt8Type: {
+			const fmi3Int8 value = (fmi3Int8)realValue;
+			CHECK_STATUS(FMI3SetInt8(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIUInt8Type: {
+			const fmi3UInt8 value = (fmi3UInt8)realValue;
+			CHECK_STATUS(FMI3SetUInt8(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIInt16Type: {
+			const fmi3Int16 value = (fmi3Int16)realValue;
+			CHECK_STATUS(FMI3SetInt16(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIUInt16Type: {
+			const fmi3UInt16 value = (fmi3UInt16)realValue;
+			CHECK_STATUS(FMI3SetUInt16(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIInt32Type: {
+			const fmi3Int32 value = (fmi3Int32)realValue;
+			CHECK_STATUS(FMI3SetInt32(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIUInt32Type: {
+			const fmi3UInt32 value = (fmi3UInt32)realValue;
+			CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIInt64Type: {
+			const fmi3Int64 value = (fmi3Int64)realValue;
+			CHECK_STATUS(FMI3SetInt64(instance, &vr, 1, &value, 1));
+			break;
+		}
+		case FMIUInt64Type: {
+			const fmi3UInt64 value = (fmi3UInt64)realValue;
+			CHECK_STATUS(FMI3SetUInt64(instance, &vr, 1, &value, 1));
+			break;
+		}
+		default:
+			setErrorStatus(S, "Unsupported type id for structural parameters: %d", type);
+			return;
+		}
+	}
+}
+
+#define SET_VALUES(t) \
+	{ \
+		fmi3 ## t *values = calloc(s, sizeof(fmi3 ## t)); \
+		for (int j = 0; j < nValues; j++) { \
+			values[j] = (fmi3 ## t)realValues[iv + j]; \
+		} \
+		CHECK_STATUS(FMI3Set ## t(instance, &vr, 1, values, nValues)); \
+		free(values); \
+	}
+
 
 static void setStartValues(SimStruct *S) {
 
 	void **p = ssGetPWork(S);
 
 	FMIInstance *instance = (FMIInstance *)p[0];
+	size_t iv = 0;
 
     // scalar start values
 	for (int i = 0; i < nScalarStartValues(S); i++) {
+
 		FMIValueReference vr = valueReference(S, scalarStartVRsParam, i);
 		FMIVariableType type = variableType(S, scalarStartTypesParam, i);
 		real_T realValue = scalarValue(S, scalarStartValuesParam, i);
@@ -521,7 +742,9 @@ static void setStartValues(SimStruct *S) {
 			case FMIRealType:    CHECK_STATUS(FMI1SetReal    (instance, &vr, 1, &realValue)); break;
 			case FMIIntegerType: CHECK_STATUS(FMI1SetInteger (instance, &vr, 1, &intValue));  break;
 			case FMIBooleanType: CHECK_STATUS(FMI1SetBoolean (instance, &vr, 1, &boolValue)); break;
-			default: break;
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 1.0: %d", type);
+				return;
 			}
 
 		} else if (isFMI2(S)) {
@@ -533,21 +756,52 @@ static void setStartValues(SimStruct *S) {
 			case FMIRealType:    CHECK_STATUS(FMI2SetReal    (instance, &vr, 1, &realValue)); break;
 			case FMIIntegerType: CHECK_STATUS(FMI2SetInteger (instance, &vr, 1, &intValue));  break;
 			case FMIBooleanType: CHECK_STATUS(FMI2SetBoolean (instance, &vr, 1, &boolValue)); break;
-			default: break;
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+				return;
 			}
 
 		} else {
 
-			fmi3Int32   int32Value   = (fmi3Int32)   realValue;
-			fmi3Boolean booleanValue = (fmi3Boolean) realValue;
+			const size_t nValues = startValueSize(S, scalarStartSizesParam, i);
+			const size_t s = mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam));
+			const mxArray *param = ssGetSFcnParam(S, scalarStartValuesParam);
+			const real_T *realValues = (real_T *)mxGetData(param);
 
 			switch (type) {
-			case FMIRealType:    CHECK_STATUS(FMI3SetFloat64 (instance, &vr, 1, &realValue,    1)); break;
-			case FMIIntegerType: CHECK_STATUS(FMI3SetInt32   (instance, &vr, 1, &int32Value,   1)); break;
-			case FMIBooleanType: CHECK_STATUS(FMI3SetBoolean (instance, &vr, 1, &booleanValue, 1)); break;
-			default: break;
+			case FMIFloat32Type:
+				SET_VALUES(Float32)
+				break;
+			case FMIFloat64Type:
+				SET_VALUES(Float64)
+				break;
+			case FMIInt8Type:
+				SET_VALUES(Int8)
+				break;
+			case FMIUInt8Type:
+				SET_VALUES(UInt8)
+				break;
+			case FMIInt16Type:
+				SET_VALUES(Int16)
+				break;
+			case FMIUInt16Type:
+				SET_VALUES(UInt16)
+				break;
+			case FMIInt32Type:
+				SET_VALUES(Int32)
+				break;
+			case FMIUInt32Type:
+				SET_VALUES(UInt32)
+				break;
+			case FMIBooleanType:
+				SET_VALUES(Boolean)
+				break;
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
+				return;
 			}
 
+			iv += nValues;
 		}
     }
 
@@ -849,9 +1103,13 @@ static void mdlCheckParameters(SimStruct *S) {
 		return;
 	}
 
-	if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
-		setErrorStatus(S, "The number of elements in parameter %d (scalar start value references) and parameter %d (scalar start value types) must be equal", scalarStartVRsParam + 1, scalarStartTypesParam + 1);
-		return;
+	if (isFMI1(S) || isFMI2(S)) {
+		if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
+			setErrorStatus(S, "The number of elements in parameter %d (scalar start value references) and parameter %d (scalar start value types) must be equal", scalarStartVRsParam + 1, scalarStartTypesParam + 1);
+			return;
+		}
+	} else {
+		// TODO
 	}
 
 	// TODO: check VRS values!
@@ -861,9 +1119,13 @@ static void mdlCheckParameters(SimStruct *S) {
 		return;
 	}
 
-	if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
-		setErrorStatus(S, "The number of elements in parameter %d (scalar start values) and parameter %d (scalar start value types) must be equal", scalarStartValuesParam + 1, scalarStartTypesParam + 1);
-		return;
+	if (isFMI1(S) || isFMI2(S)) {
+		if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
+			setErrorStatus(S, "The number of elements in parameter %d (scalar start values) and parameter %d (scalar start value types) must be equal", scalarStartValuesParam + 1, scalarStartTypesParam + 1);
+			return;
+		}
+	} else {
+		// TODO
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, stringStartVRsParam))) {
@@ -900,12 +1162,16 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	int nu = 0; // number of input variables
 
-	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)); i++) {
-		if (inputPortWidth(S, i) < 1) {
-			setErrorStatus(S, "Elements in parameter %d (input port widths) must be >= 1", inputPortWidthsParam + 1);
-			return;
+	if (isFMI1(S) || isFMI2(S)) {
+		for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)); i++) {
+			if (inputPortWidth(S, i) < 1) {
+				setErrorStatus(S, "Elements in parameter %d (input port widths) must be >= 1", inputPortWidthsParam + 1);
+				return;
+			}
+			nu += inputPortWidth(S, i);
 		}
-		nu += inputPortWidth(S, i);
+	} else {
+		nu = (int)mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam));
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) || mxGetNumberOfElements(ssGetSFcnParam(S, inputPortDirectFeedThroughParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam))) {
@@ -955,12 +1221,16 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	int ny = 0; // number of output variables
 
-	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam)); i++) {
-		if (outputPortWidth(S, i) < 1) {
-			setErrorStatus(S, "Elements in parameter %d (output port widths) must be >= 1", outputPortWidthsParam + 1);
-			return;
+	if (isFMI1(S) || isFMI2(S)) {
+		for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam)); i++) {
+			if (outputPortWidth(S, i) < 1) {
+				setErrorStatus(S, "Elements in parameter %d (output port widths) must be >= 1", outputPortWidthsParam + 1);
+				return;
+			}
+			ny += outputPortWidth(S, i);
 		}
-		ny += outputPortWidth(S, i);
+	} else {
+		ny = (int)mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam));
 	}
 
 	if (!mxIsDouble(ssGetSFcnParam(S, outputPortTypesParam))) {
@@ -1173,11 +1443,11 @@ static void mdlStart(SimStruct *S) {
 
 		if (isCS(S)) {
 			CHECK_STATUS(FMI1InstantiateSlave(instance, modelIdentifier, guid, fmuResourceLocation, "application/x-fmu-sharedlibrary", 0, fmi1False, fmi1False, loggingOn))
-			setStartValues(S);
+			CHECK_ERROR(setStartValues(S))
 			CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
 		} else {
 			CHECK_STATUS(FMI1InstantiateModel(instance, modelIdentifier, guid, loggingOn))
-			setStartValues(S);
+			CHECK_ERROR(setStartValues(S))
 			CHECK_STATUS(FMI1SetTime(instance, time))
 			CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
 			if (instance->eventInfo1.terminateSimulation) {
@@ -1189,13 +1459,8 @@ static void mdlStart(SimStruct *S) {
 	} else if (isFMI2(S)) {
 
 		CHECK_STATUS(FMI2Instantiate(instance, fmuResourceLocation, isCS(S) ? fmi2CoSimulation : fmi2ModelExchange, guid, fmi2False, loggingOn))
-
-		setStartValues(S);
-
-		if (ssGetErrorStatus(S)) return;
-
+		CHECK_ERROR(setStartValues(S))
 		CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-
 		CHECK_STATUS(FMI2EnterInitializationMode(instance))
 		CHECK_STATUS(FMI2ExitInitializationMode(instance))
 	
@@ -1205,6 +1470,12 @@ static void mdlStart(SimStruct *S) {
 			CHECK_STATUS(FMI3InstantiateModelExchange(instance, guid, fmuResourceLocation, fmi3False, loggingOn))
 		} else {
 			CHECK_STATUS(FMI3InstantiateCoSimulation(instance, guid, fmuResourceLocation, fmi3False, loggingOn, fmi3False, NULL, 0, NULL))
+		}
+
+		if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
+			CHECK_STATUS(FMI3EnterConfigurationMode(instance))
+			CHECK_ERROR(setStructualParameters(S))
+			CHECK_STATUS(FMI3ExitConfigurationMode(instance))
 		}
 
 		CHECK_ERROR(setStartValues(S))
@@ -1279,13 +1550,16 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
 	if (isME(S)) {
 
-		real_T *x = ssGetContStates(S);
+		const real_T *x = ssGetContStates(S);
 
 		if (isFMI1(S)) {
 
 			CHECK_STATUS(FMI1SetTime(instance, ssGetT(S)))
-			CHECK_STATUS(FMI1SetContinuousStates(instance, x, nx(S)))
-		
+
+			if (nx(S) > 0) {
+				CHECK_STATUS(FMI1SetContinuousStates(instance, x, nx(S)))
+			}
+
 		} else if (isFMI2(S)) {
 
 			if (instance->state == FMI2EventModeState) {
@@ -1308,7 +1582,10 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 			}
 
 			CHECK_STATUS(FMI2SetTime(instance, ssGetT(S)))
-			CHECK_STATUS(FMI2SetContinuousStates(instance, x, nx(S)))
+
+			if (nx(S) > 0) {
+				CHECK_STATUS(FMI2SetContinuousStates(instance, x, nx(S)))
+			}
 
 		} else {
 			
@@ -1339,8 +1616,10 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 			}
 
 			CHECK_STATUS(FMI3SetTime(instance, ssGetT(S)))
-			CHECK_STATUS(FMI3SetContinuousStates(instance, x, nx(S)))
-		
+
+			if (nx(S) > 0) {
+				CHECK_STATUS(FMI3SetContinuousStates(instance, x, nx(S)))
+			}
 		}
 			   		
 		CHECK_ERROR(setInput(S, true))
@@ -1403,14 +1682,19 @@ static void mdlZeroCrossings(SimStruct *S) {
 		if (nz(S) > 0) {
 			if (isFMI1(S)) {
 				CHECK_STATUS(FMI1GetEventIndicators(instance, z, nz(S)))
-				nextEventTime = instance->eventInfo1.nextEventTime;
 			} else if (isFMI2(S)) {
 				CHECK_STATUS(FMI2GetEventIndicators(instance, z, nz(S)))
-				nextEventTime = instance->eventInfo2.nextEventTime;
 			} else {
 				CHECK_STATUS(FMI3GetEventIndicators(instance, z, nz(S)))
-				nextEventTime = instance->nextEventTime;
 			}
+		}
+
+		if (isFMI1(S)) {
+			nextEventTime = instance->eventInfo1.nextEventTime;
+		} else if (isFMI2(S)) {
+			nextEventTime = instance->eventInfo2.nextEventTime;
+		} else {
+			nextEventTime = instance->nextEventTime;
 		}
 
 		z[nz(S)] = nextEventTime - ssGetT(S);

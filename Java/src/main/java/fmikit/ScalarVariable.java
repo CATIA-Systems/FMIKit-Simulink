@@ -5,6 +5,9 @@
 
 package fmikit;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ScalarVariable {
 
 	public String name;
@@ -15,6 +18,9 @@ public class ScalarVariable {
 	public String causality;
 	public String unit;
 	public SimpleType declaredType;
+
+	/** List of fixed dimensions (Integer) or variables (ScalarVariable) that hold the dimensions */
+	public List<Object> dimensions = new ArrayList<Object>();
 
 	@Override
 	public String toString() {
