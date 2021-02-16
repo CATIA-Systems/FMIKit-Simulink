@@ -14,6 +14,7 @@ import org.jdesktop.swingx.JXTreeTable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -941,7 +942,9 @@ public class FMUBlockDialog extends JDialog {
         return Util.join(params, " ");
     }
 
-    /** Calculate the variable size for an array variable in FMI 3.0 */
+    /**
+     * Calculate the variable size for an array variable in FMI 3.0
+     */
     private int getVariableSize(ScalarVariable variable) {
 
         int size = 1;
@@ -1644,7 +1647,7 @@ public class FMUBlockDialog extends JDialog {
         panel7.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel7.setOpaque(false);
         panel4.add(panel7, new GridConstraints(1, 2, 9, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(280, 280), new Dimension(280, 280), new Dimension(280, 280), 0, false));
-        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null));
+        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         lblModelImage = new JLabel();
         lblModelImage.setEnabled(false);
         lblModelImage.setText("no image available");
@@ -1684,7 +1687,7 @@ public class FMUBlockDialog extends JDialog {
         panel9.add(panel10, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         addOutputButton = new JButton();
         addOutputButton.setHorizontalAlignment(2);
-        addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
+        addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addOutputButton.setText("Vector");
         panel10.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer3 = new Spacer();
@@ -1693,7 +1696,7 @@ public class FMUBlockDialog extends JDialog {
         panel10.add(spacer4, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         addScalarOutputPortButton = new JButton();
         addScalarOutputPortButton.setHorizontalAlignment(2);
-        addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
+        addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addScalarOutputPortButton.setText("Scalar");
         panel10.add(addScalarOutputPortButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JScrollPane scrollPane3 = new JScrollPane();
@@ -1717,15 +1720,15 @@ public class FMUBlockDialog extends JDialog {
         btnMoveDown.setText("");
         panel11.add(btnMoveDown, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         button3 = new JButton();
-        button3.setIcon(new ImageIcon(getClass().getResource("/icons/pencil.png")));
+        button3.setIcon(new ImageIcon(getClass().getResource("/icons/edit.png")));
         button3.setText("");
         panel11.add(button3, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         removeOutputPortButton = new JButton();
-        removeOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/minus.png")));
+        removeOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/remove.png")));
         removeOutputPortButton.setText("");
         panel11.add(removeOutputPortButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         btnResetOutputs = new JButton();
-        btnResetOutputs.setIcon(new ImageIcon(getClass().getResource("/icons/repeat.png")));
+        btnResetOutputs.setIcon(new ImageIcon(getClass().getResource("/icons/reload.png")));
         btnResetOutputs.setText("");
         panel11.add(btnResetOutputs, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         final JPanel panel12 = new JPanel();

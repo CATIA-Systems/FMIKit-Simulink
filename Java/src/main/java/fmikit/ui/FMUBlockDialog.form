@@ -466,7 +466,7 @@
                         </constraints>
                         <properties>
                           <horizontalAlignment value="2"/>
-                          <icon value="icons/plus.png"/>
+                          <icon value="icons/add.png"/>
                           <text value="Vector"/>
                         </properties>
                       </component>
@@ -486,7 +486,7 @@
                         </constraints>
                         <properties>
                           <horizontalAlignment value="2"/>
-                          <icon value="icons/plus.png"/>
+                          <icon value="icons/add.png"/>
                           <text value="Scalar"/>
                         </properties>
                       </component>
@@ -558,7 +558,7 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/pencil.png"/>
+                          <icon value="icons/edit.png"/>
                           <text value=""/>
                         </properties>
                       </component>
@@ -571,7 +571,7 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/minus.png"/>
+                          <icon value="icons/remove.png"/>
                           <text value=""/>
                         </properties>
                       </component>
@@ -584,7 +584,7 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/repeat.png"/>
+                          <icon value="icons/reload.png"/>
                           <text value=""/>
                         </properties>
                       </component>

@@ -19,28 +19,25 @@ import fmikit.ui.FMUBlockDialog;
 public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 
 	ImageIcon subsystemIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/subsystem.png"));
-	ImageIcon busOutputPortIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/bus-output-port-16x16.png"));
-	ImageIcon vectorOutputPortIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/vector-output-port-16x16.png"));
 
-	ImageIcon realIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/real.png"));
-	ImageIcon realInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/real_input.png"));
-	ImageIcon realOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/real_output.png"));
+	ImageIcon realIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float.png"));
+	ImageIcon realParameterIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-parameter.png"));
+	ImageIcon realInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-input.png"));
+	ImageIcon realOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-output.png"));
 
 	ImageIcon integerIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer.png"));
-	ImageIcon integerInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer_input.png"));
-	ImageIcon integerOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer_output.png"));
+	ImageIcon integerInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer-input.png"));
+	ImageIcon integerOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer.png"));
 
 	ImageIcon enumerationIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration.png"));
-	ImageIcon enumerationInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration_input.png"));
-	ImageIcon enumerationOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration_output.png"));
+	ImageIcon enumerationInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration-input.png"));
+	ImageIcon enumerationOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration.png"));
 
 	ImageIcon booleanIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean.png"));
-	ImageIcon booleanInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean_input.png"));
-	ImageIcon booleanOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean_output.png"));
+	ImageIcon booleanInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean-input.png"));
+	ImageIcon booleanOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean.png"));
 
 	ImageIcon stringIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/string.png"));
-	ImageIcon stringInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/string_input.png"));
-	ImageIcon stringOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/string_output.png"));
 
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
@@ -59,8 +56,10 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 			if ("Real".equals(sv.type)) {
 				if ("input".equals(sv.causality)) {
 					renderer.setIcon(realInputIcon);
-				} else if ("output".equals(sv.causality)) {
-					renderer.setIcon(realOutputIcon);
+				} else if ("input".equals(sv.causality)) {
+					renderer.setIcon(realInputIcon);
+				} else if ("parameter".equals(sv.causality)) {
+					renderer.setIcon(realParameterIcon);
 				} else {
 					renderer.setIcon(realIcon);
 				}
@@ -89,13 +88,7 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 					renderer.setIcon(booleanIcon);
 				}
 			} else if ("String".equals(sv.type)) {
-				if ("input".equals(sv.causality)) {
-					renderer.setIcon(stringInputIcon);
-				} else if ("output".equals(sv.causality)) {
-					renderer.setIcon(stringOutputIcon);
-				} else {
-					renderer.setIcon(stringIcon);
-				}
+				renderer.setIcon(stringIcon);
 			} else {
 				// TODO
 				// System.out.println(sv.name);
