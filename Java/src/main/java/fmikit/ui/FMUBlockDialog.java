@@ -14,7 +14,6 @@ import org.jdesktop.swingx.JXTreeTable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -48,11 +47,11 @@ public class FMUBlockDialog extends JDialog {
     private JLabel lblEventIndicators;
     private JLabel lblVariables;
     public JButton btnApply;
-    private JButton btnMoveUp;
-    private JButton btnMoveDown;
-    private JButton button3;
+    private JButton moveUpButton;
+    private JButton moveDownButton;
+    private JButton editButton;
     private JButton removeOutputPortButton;
-    private JButton btnResetOutputs;
+    private JButton resetOutputsButton;
     private JButton addOutputButton;
     private JTree variablesTree;
     private JTree outportsTree;
@@ -72,6 +71,10 @@ public class FMUBlockDialog extends JDialog {
     public JButton btnHelp;
     public JLabel lblDocumentation;
     private JLabel lblModelImage;
+    private JButton treeTableExpandAllButton;
+    private JButton treeTableCollapseAllButton;
+    private JButton variablesTreeExpandAllButton;
+    private JButton variablesTreeCollapseAllButton;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.7";
@@ -87,15 +90,29 @@ public class FMUBlockDialog extends JDialog {
     public double blockHandle;
     public File htmlFile;
 
-    private ImageIcon outportIcon = new ImageIcon(getClass().getResource("/icons/outport.png"));
+    private ImageIcon outportIcon = Util.getIcon("outport");
 
 
     public FMUBlockDialog() {
 
-        final int pixelsPerInch = Toolkit.getDefaultToolkit().getScreenResolution();
-
-        if (pixelsPerInch > 120) {
+        if (Util.isHiDPI()) {
             setMinimumSize(new Dimension(1200, 900));
+            treeTable.setRowHeight(34);
+            variablesTree.setRowHeight(34);
+            outportsTree.setRowHeight(34);
+
+            Util.resizeButton(treeTableExpandAllButton);
+            Util.resizeButton(treeTableCollapseAllButton);
+
+            Util.resizeButton(variablesTreeExpandAllButton);
+            Util.resizeButton(variablesTreeCollapseAllButton);
+
+            Util.resizeButton(moveUpButton);
+            Util.resizeButton(moveDownButton);
+            Util.resizeButton(editButton);
+            Util.resizeButton(removeOutputPortButton);
+            Util.resizeButton(resetOutputsButton);
+
         } else {
             setMinimumSize(new Dimension(850, 650));
         }
@@ -164,7 +181,7 @@ public class FMUBlockDialog extends JDialog {
             }
         });
 
-        button3.addActionListener(new ActionListener() {
+        editButton.addActionListener(new ActionListener() {
 
             //@Override
             public void actionPerformed(ActionEvent e) {
@@ -192,6 +209,36 @@ public class FMUBlockDialog extends JDialog {
                 txtLogFile.setEnabled(chckbxLogToFile.isSelected());
             }
         });
+
+        treeTableExpandAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                treeTable.expandAll();
+            }
+        });
+
+        treeTableCollapseAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                treeTable.collapseAll();
+            }
+        });
+
+
+        variablesTreeExpandAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Util.setTreeExpandedState(variablesTree, true);
+            }
+        });
+
+        variablesTreeCollapseAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Util.setTreeExpandedState(variablesTree, false);
+            }
+        });
+
     }
 
     public void showAsync() {
@@ -286,6 +333,8 @@ public class FMUBlockDialog extends JDialog {
         dialog.setVisible(true);
         dialog.btnApply.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                // Util.setTreeExpandedState(dialog.treeTable.ex, true);
+                dialog.treeTable.expandAll();
                 System.out.println(dialog.getSFunctionParameters());
             }
         });
@@ -385,7 +434,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnMoveUp.addActionListener(new ActionListener() {
+        moveUpButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
                 TreePath selectionPath = outportsTree.getSelectionPath();
@@ -405,7 +454,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnMoveDown.addActionListener(new ActionListener() {
+        moveDownButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
 
@@ -426,7 +475,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnResetOutputs.addActionListener(new ActionListener() {
+        resetOutputsButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent event) {
                 if (modelDescription == null) return;
@@ -1311,10 +1360,18 @@ public class FMUBlockDialog extends JDialog {
         treeTable.setTreeTableModel(myTreeTableModel);
 
         treeTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(200);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(50);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(50);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(473);
+
+        if (Util.isHiDPI()) {
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(280);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(70);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(70);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(600);
+        } else {
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(200);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(50);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(50);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(473);
+        }
 
         treeTable.setTreeCellRenderer(new NameTreeCellRenderer());
         treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setCellRenderer(new StartTableCellRenderer(startValues));
@@ -1647,7 +1704,7 @@ public class FMUBlockDialog extends JDialog {
         panel7.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel7.setOpaque(false);
         panel4.add(panel7, new GridConstraints(1, 2, 9, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(280, 280), new Dimension(280, 280), new Dimension(280, 280), 0, false));
-        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null));
         lblModelImage = new JLabel();
         lblModelImage.setEnabled(false);
         lblModelImage.setText("no image available");
@@ -1663,99 +1720,127 @@ public class FMUBlockDialog extends JDialog {
         lblGenerationDate = new JLabel();
         panel4.add(lblGenerationDate, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel8 = new JPanel();
-        panel8.setLayout(new GridLayoutManager(1, 1, new Insets(10, 10, 10, 10), -1, -1));
+        panel8.setLayout(new GridLayoutManager(2, 1, new Insets(10, 10, 10, 10), -1, -1));
         panel8.setOpaque(false);
         tabbedPane.addTab("Variables", panel8);
         final JScrollPane scrollPane1 = new JScrollPane();
-        panel8.add(scrollPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel8.add(scrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         treeTable = new JXTreeTable();
         treeTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         scrollPane1.setViewportView(treeTable);
         final JPanel panel9 = new JPanel();
-        panel9.setLayout(new GridLayoutManager(2, 3, new Insets(10, 10, 10, 10), -1, -1));
+        panel9.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
         panel9.setOpaque(false);
-        tabbedPane.addTab("Outputs", panel9);
+        panel8.add(panel9, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        treeTableExpandAllButton = new JButton();
+        treeTableExpandAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/expand.png")));
+        treeTableExpandAllButton.setToolTipText("Expand all");
+        panel9.add(treeTableExpandAllButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final Spacer spacer3 = new Spacer();
+        panel9.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        treeTableCollapseAllButton = new JButton();
+        treeTableCollapseAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/collapse.png")));
+        treeTableCollapseAllButton.setToolTipText("Collapse all");
+        panel9.add(treeTableCollapseAllButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel10 = new JPanel();
+        panel10.setLayout(new GridLayoutManager(2, 3, new Insets(10, 10, 10, 10), -1, -1));
+        panel10.setOpaque(false);
+        tabbedPane.addTab("Outputs", panel10);
         final JScrollPane scrollPane2 = new JScrollPane();
-        panel9.add(scrollPane2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel10.add(scrollPane2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         variablesTree = new JTree();
         variablesTree.setRootVisible(false);
         variablesTree.setShowsRootHandles(true);
         scrollPane2.setViewportView(variablesTree);
-        final JPanel panel10 = new JPanel();
-        panel10.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
-        panel10.setOpaque(false);
-        panel9.add(panel10, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JPanel panel11 = new JPanel();
+        panel11.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+        panel11.setOpaque(false);
+        panel10.add(panel11, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         addOutputButton = new JButton();
         addOutputButton.setHorizontalAlignment(2);
         addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addOutputButton.setText("Vector");
-        panel10.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer3 = new Spacer();
-        panel10.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel11.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer4 = new Spacer();
-        panel10.add(spacer4, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel11.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        final Spacer spacer5 = new Spacer();
+        panel11.add(spacer5, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         addScalarOutputPortButton = new JButton();
         addScalarOutputPortButton.setHorizontalAlignment(2);
         addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addScalarOutputPortButton.setText("Scalar");
-        panel10.add(addScalarOutputPortButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel11.add(addScalarOutputPortButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JScrollPane scrollPane3 = new JScrollPane();
-        panel9.add(scrollPane3, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel10.add(scrollPane3, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         outportsTree = new JTree();
         outportsTree.setRootVisible(false);
         outportsTree.setShowsRootHandles(true);
         scrollPane3.setViewportView(outportsTree);
-        final JPanel panel11 = new JPanel();
-        panel11.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), 5, -1));
-        panel11.setOpaque(false);
-        panel9.add(panel11, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        final Spacer spacer5 = new Spacer();
-        panel11.add(spacer5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-        btnMoveUp = new JButton();
-        btnMoveUp.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-up.png")));
-        btnMoveUp.setText("");
-        panel11.add(btnMoveUp, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        btnMoveDown = new JButton();
-        btnMoveDown.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-down.png")));
-        btnMoveDown.setText("");
-        panel11.add(btnMoveDown, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        button3 = new JButton();
-        button3.setIcon(new ImageIcon(getClass().getResource("/icons/edit.png")));
-        button3.setText("");
-        panel11.add(button3, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel12 = new JPanel();
+        panel12.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), 5, -1));
+        panel12.setOpaque(false);
+        panel10.add(panel12, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final Spacer spacer6 = new Spacer();
+        panel12.add(spacer6, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        moveUpButton = new JButton();
+        moveUpButton.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-up.png")));
+        moveUpButton.setText("");
+        panel12.add(moveUpButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        moveDownButton = new JButton();
+        moveDownButton.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-down.png")));
+        moveDownButton.setText("");
+        panel12.add(moveDownButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        editButton = new JButton();
+        editButton.setIcon(new ImageIcon(getClass().getResource("/icons/edit.png")));
+        editButton.setText("");
+        panel12.add(editButton, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         removeOutputPortButton = new JButton();
         removeOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/remove.png")));
         removeOutputPortButton.setText("");
-        panel11.add(removeOutputPortButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        btnResetOutputs = new JButton();
-        btnResetOutputs.setIcon(new ImageIcon(getClass().getResource("/icons/reload.png")));
-        btnResetOutputs.setText("");
-        panel11.add(btnResetOutputs, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        final JPanel panel12 = new JPanel();
-        panel12.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
-        panel12.setOpaque(false);
-        tabbedPane.addTab("Advanced", panel12);
+        panel12.add(removeOutputPortButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        resetOutputsButton = new JButton();
+        resetOutputsButton.setIcon(new ImageIcon(getClass().getResource("/icons/reload.png")));
+        resetOutputsButton.setText("");
+        panel12.add(resetOutputsButton, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel13 = new JPanel();
+        panel13.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel13.setOpaque(false);
+        panel10.add(panel13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        variablesTreeExpandAllButton = new JButton();
+        variablesTreeExpandAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/expand.png")));
+        variablesTreeExpandAllButton.setToolTipText("Expand all");
+        panel13.add(variablesTreeExpandAllButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final Spacer spacer7 = new Spacer();
+        panel13.add(spacer7, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        variablesTreeCollapseAllButton = new JButton();
+        variablesTreeCollapseAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/collapse.png")));
+        variablesTreeCollapseAllButton.setToolTipText("Collapse all");
+        panel13.add(variablesTreeCollapseAllButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel14 = new JPanel();
+        panel14.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel14.setOpaque(false);
+        tabbedPane.addTab("Advanced", panel14);
         txtUnzipDirectory = new JTextField();
-        panel12.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        final Spacer spacer6 = new Spacer();
-        panel12.add(spacer6, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel14.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final Spacer spacer8 = new Spacer();
+        panel14.add(spacer8, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label13 = new JLabel();
         label13.setText("Unzip directory:");
-        panel12.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label14 = new JLabel();
         label14.setText("Sample time:");
-        panel12.add(label14, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label14, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         txtSampleTime = new JTextField();
         txtSampleTime.setText("-1");
-        panel12.add(txtSampleTime, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
+        panel14.add(txtSampleTime, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
         chckbxUseSourceCode = new JCheckBox();
         chckbxUseSourceCode.setOpaque(false);
         chckbxUseSourceCode.setText("Use source code");
-        panel12.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JPanel panel13 = new JPanel();
-        panel13.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-        panel13.setOpaque(false);
-        panel12.add(panel13, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        panel14.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JPanel panel15 = new JPanel();
+        panel15.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel15.setOpaque(false);
+        panel14.add(panel15, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         cmbbxLogLevel = new JComboBox();
         final DefaultComboBoxModel defaultComboBoxModel2 = new DefaultComboBoxModel();
         defaultComboBoxModel2.addElement("Info");
@@ -1765,37 +1850,37 @@ public class FMUBlockDialog extends JDialog {
         defaultComboBoxModel2.addElement("Fatal");
         defaultComboBoxModel2.addElement("None");
         cmbbxLogLevel.setModel(defaultComboBoxModel2);
-        panel13.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer7 = new Spacer();
-        panel13.add(spacer7, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        panel15.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer9 = new Spacer();
+        panel15.add(spacer9, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         chckbxDebugLogging = new JCheckBox();
         chckbxDebugLogging.setOpaque(false);
         chckbxDebugLogging.setText("Enable debug logging");
-        panel12.add(chckbxDebugLogging, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxDebugLogging, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label15 = new JLabel();
         label15.setText("Log level:");
-        panel12.add(label15, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label15, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label16 = new JLabel();
         label16.setText("Relative tolerance:");
-        panel12.add(label16, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label16, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         txtRelativeTolerance = new JTextField();
         txtRelativeTolerance.setText("0");
-        panel12.add(txtRelativeTolerance, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
+        panel14.add(txtRelativeTolerance, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
         txtLogFile = new JTextField();
         txtLogFile.setEnabled(false);
         txtLogFile.setText("");
-        panel12.add(txtLogFile, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        panel14.add(txtLogFile, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final JLabel label17 = new JLabel();
         label17.setText("Log file:");
-        panel12.add(label17, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label17, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         chckbxLogToFile = new JCheckBox();
         chckbxLogToFile.setOpaque(false);
         chckbxLogToFile.setText("Log to file");
-        panel12.add(chckbxLogToFile, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxLogToFile, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         chckbxLogFMICalls = new JCheckBox();
         chckbxLogFMICalls.setOpaque(false);
         chckbxLogFMICalls.setText("Log FMI calls");
-        panel12.add(chckbxLogFMICalls, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxLogFMICalls, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

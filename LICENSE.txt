@@ -42,5 +42,6 @@ License 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 
 --------------------------------------------------------------------------------
 
-Some icons in the FMU Block Dialog are based on the Glyphicons, licensed under
-the Glyphicons license (https://www.glyphicons.com/license/).
+Some icons in the FMU Block Dialog are based on Font Awesome SVG icons
+(https://fontawesome.com/), licensed under the CC BY 4.0 license
+(https://creativecommons.org/licenses/by/4.0/).

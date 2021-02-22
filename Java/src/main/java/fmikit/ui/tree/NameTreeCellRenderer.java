@@ -14,30 +14,34 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 
 import fmikit.ScalarVariable;
 import fmikit.ui.FMUBlockDialog;
+import fmikit.ui.Util;
 
 @SuppressWarnings("serial")
 public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 
-	ImageIcon subsystemIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/subsystem.png"));
+	ImageIcon subsystemIcon = Util.getIcon("subsystem");
 
-	ImageIcon realIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float.png"));
-	ImageIcon realParameterIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-parameter.png"));
-	ImageIcon realInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-input.png"));
-	ImageIcon realOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/float-output.png"));
+	ImageIcon floatIcon = Util.getIcon("float");
+	ImageIcon realParameterIcon = Util.getIcon("float-parameter");
+	ImageIcon floatInputIcon = Util.getIcon("float-input");
+	ImageIcon floatOutputIcon = Util.getIcon("float-output");
 
-	ImageIcon integerIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer.png"));
-	ImageIcon integerInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer-input.png"));
-	ImageIcon integerOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/integer.png"));
+	ImageIcon integerIcon = Util.getIcon("integer");
+	ImageIcon integerParameterIcon = Util.getIcon("integer-parameter");
+	ImageIcon integerInputIcon = Util.getIcon("integer-input");
+	ImageIcon integerOutputIcon = Util.getIcon("integer-output");
 
-	ImageIcon enumerationIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration.png"));
-	ImageIcon enumerationInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration-input.png"));
-	ImageIcon enumerationOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/enumeration.png"));
+	ImageIcon enumerationIcon = Util.getIcon("enumeration");
+	ImageIcon enumerationParameterIcon = Util.getIcon("enumeration-parameter");
+	ImageIcon enumerationInputIcon = Util.getIcon("enumeration-input");
+	ImageIcon enumerationOutputIcon = Util.getIcon("enumeration");
 
-	ImageIcon booleanIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean.png"));
-	ImageIcon booleanInputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean-input.png"));
-	ImageIcon booleanOutputIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/boolean.png"));
+	ImageIcon booleanIcon = Util.getIcon("boolean");
+	ImageIcon booleanParameterIcon = Util.getIcon("boolean-parameter");
+	ImageIcon booleanInputIcon = Util.getIcon("boolean-input");
+	ImageIcon booleanOutputIcon = Util.getIcon("boolean");
 
-	ImageIcon stringIcon = new ImageIcon(FMUBlockDialog.class.getResource("/icons/string.png"));
+	ImageIcon stringParameterIcon = Util.getIcon("string-parameter");
 
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
@@ -53,22 +57,24 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 
 			renderer.setText(getDisplayName(sv));
 
-			if ("Real".equals(sv.type)) {
+			if ("Real".equals(sv.type) || sv.type.startsWith("Float")) {
 				if ("input".equals(sv.causality)) {
-					renderer.setIcon(realInputIcon);
-				} else if ("input".equals(sv.causality)) {
-					renderer.setIcon(realInputIcon);
-				} else if ("parameter".equals(sv.causality)) {
+					renderer.setIcon(floatInputIcon);
+				} else if ("output".equals(sv.causality)) {
+					renderer.setIcon(floatOutputIcon);
+				} else if ("parameter".equals(sv.causality) || "structuralParameter".equals(sv.causality)) {
 					renderer.setIcon(realParameterIcon);
 				} else {
-					renderer.setIcon(realIcon);
+					renderer.setIcon(floatIcon);
 				}
-			} else if ("Integer".equals(sv.type)) {
+			} else if (sv.type.startsWith("Int")) {
 				if ("input".equals(sv.causality)) {
 					renderer.setIcon(integerInputIcon);
 				} else if ("output".equals(sv.causality)) {
 					renderer.setIcon(integerOutputIcon);
-				} else {
+				} else if ("parameter".equals(sv.causality) || "structuralParameter".equals(sv.causality)) {
+					renderer.setIcon(integerParameterIcon);
+				}  else {
 					renderer.setIcon(integerIcon);
 				}
 			} else if ("Enumeration".equals(sv.type)) {
@@ -76,6 +82,8 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 					renderer.setIcon(enumerationInputIcon);
 				} else if ("output".equals(sv.causality)) {
 					renderer.setIcon(enumerationOutputIcon);
+				} else if ("parameter".equals(sv.causality) || "structuralParameter".equals(sv.causality)) {
+					renderer.setIcon(enumerationParameterIcon);
 				} else {
 					renderer.setIcon(enumerationIcon);
 				}
@@ -84,11 +92,13 @@ public class NameTreeCellRenderer extends DefaultTreeCellRenderer {
 					renderer.setIcon(booleanInputIcon);
 				} else if ("output".equals(sv.causality)) {
 					renderer.setIcon(booleanOutputIcon);
+				} else if ("parameter".equals(sv.causality) || "structuralParameter".equals(sv.causality)) {
+					renderer.setIcon(booleanParameterIcon);
 				} else {
 					renderer.setIcon(booleanIcon);
 				}
 			} else if ("String".equals(sv.type)) {
-				renderer.setIcon(stringIcon);
+				renderer.setIcon(stringParameterIcon);
 			} else {
 				// TODO
 				// System.out.println(sv.name);

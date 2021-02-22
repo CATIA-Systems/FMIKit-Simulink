@@ -5,15 +5,80 @@
 
 package fmikit.ui;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Util {
+
+
+	public static void resizeButton(JButton button) {
+
+		JPanel parent = (JPanel) button.getParent();
+
+		GridLayoutManager layout = (GridLayoutManager) parent.getLayout();
+
+		GridConstraints constraints = layout.getConstraintsForComponent(button);
+
+		parent.remove(button);
+
+		ImageIcon icon = (ImageIcon) button.getIcon();
+
+		String s = icon.toString();
+
+		String name = s.substring(s.lastIndexOf('/') + 1, s.length() - 4);
+
+		button.setIcon(Util.getIcon(name));
+
+		Dimension size = new Dimension(36, 36);
+		parent.add(button, new GridConstraints(constraints.getRow(), constraints.getColumn(), constraints.getRowSpan(), constraints.getColSpan(), constraints.getAnchor(), constraints.getFill(), constraints.getHSizePolicy(), constraints.getVSizePolicy(), size, size, size, constraints.getIndent(), constraints.isUseParentLayout()));
+
+	}
+
+	public static void setTreeExpandedState(JTree tree, boolean expanded) {
+		DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getModel().getRoot();
+		setNodeExpandedState(tree, node, expanded);
+	}
+
+	public static void setNodeExpandedState(JTree tree, DefaultMutableTreeNode node, boolean expanded) {
+		ArrayList<DefaultMutableTreeNode> list = Collections.list(node.children());
+		for (DefaultMutableTreeNode treeNode : list) {
+			setNodeExpandedState(tree, treeNode, expanded);
+		}
+		if (!expanded && node.isRoot()) {
+			return;
+		}
+		TreePath path = new TreePath(node.getPath());
+		if (expanded) {
+			tree.expandPath(path);
+		} else {
+			tree.collapsePath(path);
+		}
+	}
+
+
+	public static boolean isHiDPI() {
+		final int pixelsPerInch = Toolkit.getDefaultToolkit().getScreenResolution();
+		return pixelsPerInch > 120;
+	}
+
+	public static ImageIcon getIcon(String name) {
+		final String suffix = isHiDPI() ? "@2x.png" : ".png";
+		return new ImageIcon(Util.class.getResource("/icons/" + name + suffix));
+	}
 
 	public static String getRelativePath(String path, String reference) {
 		
