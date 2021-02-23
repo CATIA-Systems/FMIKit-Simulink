@@ -1023,6 +1023,28 @@ static bool isScalar(SimStruct *S, Parameter param) {
 	return mxIsNumeric(array) && mxGetNumberOfElements(array) == 1;
 }
 
+static bool isValidVariableType(FMIVariableType type) {
+	switch (type) {
+	case FMIFloat32Type:
+	case FMIFloat64Type:
+	case FMIInt8Type:
+	case FMIUInt8Type:
+	case FMIInt16Type:
+	case FMIUInt16Type:
+	case FMIInt32Type:
+	case FMIUInt32Type:
+	case FMIInt64Type:
+	case FMIUInt64Type:
+	case FMIBooleanType:
+	case FMIStringType:
+	// case FMIBinaryType:
+	// case FMIClockType:
+		return true;
+	default:
+		return false;
+	}
+}
+
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
 static void mdlCheckParameters(SimStruct *S) {
@@ -1198,8 +1220,8 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, inputPortTypesParam)); i++) {
 		FMIVariableType t = variableType(S, inputPortTypesParam, i);
-		if (t != FMIRealType && t != FMIIntegerType && t != FMIBooleanType) {
-			setErrorStatus(S, "Elements in parameter %d (input port types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)", inputPortTypesParam + 1);
+		if (!isValidVariableType(t)) {
+			setErrorStatus(S, "Elements in parameter %d (input port types) must be valid variable types", inputPortTypesParam + 1);
 			return;
 		}
 	}
@@ -1252,8 +1274,8 @@ static void mdlCheckParameters(SimStruct *S) {
 
 	for (int i = 0; i < mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam)); i++) {
 		FMIVariableType t = variableType(S, outputPortTypesParam, i);
-		if (t != FMIRealType && t != FMIIntegerType && t != FMIBooleanType) {
-			setErrorStatus(S, "Elements in parameter %d (output port types) must be one of 0 (= Real), 1 (= Integer) or 2 (= Boolean)", outputPortTypesParam + 1);
+		if (!isValidVariableType(t)) {
+			setErrorStatus(S, "Elements in parameter %d (output port types) must be valid variable types", outputPortTypesParam + 1);
 			return;
 		}
 	}
