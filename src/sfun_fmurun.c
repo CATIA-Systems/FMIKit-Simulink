@@ -457,15 +457,16 @@ static void setInput(SimStruct *S, bool direct) {
 					switch (type) {
 					case FMIRealType:
 						CHECK_STATUS(FMI1SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
-							break;
+						break;
 					case FMIIntegerType:
 						CHECK_STATUS(FMI1SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
-							break;
+						break;
 					case FMIBooleanType:
 						CHECK_STATUS(FMI1SetBoolean(instance, &vr, 1, &((const boolean_T *)y)[j]))
-							break;
-					default:
 						break;
+					default:
+						setErrorStatus(S, "Unsupported type id for FMI 1.0: %d", type);
+						return;
 					}
 
 				} else {
@@ -473,17 +474,18 @@ static void setInput(SimStruct *S, bool direct) {
 					switch (type) {
 					case FMIRealType:
 						CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
-							break;
+						break;
 					case FMIIntegerType:
 						CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
-							break;
+						break;
 					case FMIBooleanType: {
 						const fmi2Boolean booleanValue = ((const boolean_T *)y)[j];
 						CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
-							break;
+						break;
 					}
 					default:
-						break;
+						setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+						return;
 					}
 				}
 
@@ -520,9 +522,15 @@ static void setInput(SimStruct *S, bool direct) {
 			case FMIUInt32Type:
 				CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, (const uint32_T *)y, nValues))
 				break;
-			case FMIBooleanType:
-				CHECK_STATUS(FMI3SetBoolean(instance, &vr, 1, (const boolean_T *)y, nValues))
+			case FMIBooleanType: {
+				fmi3Boolean *values = (fmi3Boolean *)calloc(nValues, sizeof(fmi3Boolean));
+				for (int j = 0; j < nValues; j++) {
+					 values[j] = ((const boolean_T*)y)[j];
+				}
+				CHECK_STATUS(FMI3SetBoolean(instance, &vr, 1, values, nValues))
+				free(values);
 				break;
+			}
 			default:
 				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
 				return;
@@ -558,13 +566,13 @@ static void setOutput(SimStruct *S) {
 					switch (type) {
 					case FMIRealType:
 						CHECK_STATUS(FMI1GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-							break;
+						break;
 					case FMIIntegerType:
 						CHECK_STATUS(FMI1GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-							break;
+						break;
 					case FMIBooleanType:
 						CHECK_STATUS(FMI1GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j]))
-							break;
+						break;
 					default:
 						break;
 					}
@@ -574,14 +582,14 @@ static void setOutput(SimStruct *S) {
 					switch (type) {
 					case FMIRealType:
 						CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-							break;
+						break;
 					case FMIIntegerType:
 						CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-							break;
+						break;
 					case FMIBooleanType: {
 						fmi2Boolean booleanValue;
 						CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
-							((boolean_T *)y)[j] = booleanValue;
+						((boolean_T *)y)[j] = booleanValue;
 						break;
 					}
 					default:
@@ -622,9 +630,15 @@ static void setOutput(SimStruct *S) {
 			case FMIUInt32Type:
 				CHECK_STATUS(FMI3GetUInt32(instance, &vr, 1, (uint32_T *)y, nValues))
 				break;
-			case FMIBooleanType:
-				CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, (boolean_T *)y, nValues))
+			case FMIBooleanType: {
+				fmi3Boolean *values = (fmi3Boolean *)calloc(nValues, sizeof(fmi3Boolean));
+				CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, values, nValues))
+				for (int j = 0; j < nValues; j++) {
+					((boolean_T*)y)[j] = values[j];
+				}
+				free(values);
 				break;
+			}
 			default:
 				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
 				return;
