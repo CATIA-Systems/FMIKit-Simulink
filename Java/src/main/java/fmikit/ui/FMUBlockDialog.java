@@ -677,6 +677,8 @@ public class FMUBlockDialog extends JDialog {
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) continue;
+
             if ("input".equals(variable.causality)) {
 
                 if (belongsToSameArray(variable, previousVariable)) {
@@ -1068,6 +1070,9 @@ public class FMUBlockDialog extends JDialog {
         DefaultMutableTreeNode lastOutport = null;
 
         for (ScalarVariable sv : scalarVariables) {
+
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) continue;
+
             if ("output".equals(sv.causality)) {
                 if (sv.name.endsWith("]")) {
                     String name = sv.name.substring(0, sv.name.lastIndexOf("["));
