@@ -1,8 +1,10 @@
 import fmikit.ModelDescription;
 import fmikit.ModelDescriptionReader;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
+@Ignore
 public class DummyUnitTest {
 
     @Test
