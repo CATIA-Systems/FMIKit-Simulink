@@ -1069,22 +1069,22 @@ public class FMUBlockDialog extends JDialog {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
         DefaultMutableTreeNode lastOutport = null;
 
-        for (ScalarVariable sv : scalarVariables) {
+        for (ScalarVariable variable : scalarVariables) {
 
             if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) continue;
 
-            if ("output".equals(sv.causality)) {
-                if (sv.name.endsWith("]")) {
-                    String name = sv.name.substring(0, sv.name.lastIndexOf("["));
+            if ("output".equals(variable.causality)) {
+                if (variable.name.endsWith("]")) {
+                    String name = variable.name.substring(0, variable.name.lastIndexOf("["));
                     if (lastOutport == null || !name.equals(lastOutport.getUserObject())) {
                         lastOutport = new DefaultMutableTreeNode(name);
                         root.add(lastOutport);
                     }
-                    lastOutport.add(new DefaultMutableTreeNode(sv));
+                    lastOutport.add(new DefaultMutableTreeNode(variable));
                 } else {
-                    DefaultMutableTreeNode outputPortNode = new DefaultMutableTreeNode(sv.name);
+                    DefaultMutableTreeNode outputPortNode = new DefaultMutableTreeNode(variable.name);
                     root.add(outputPortNode);
-                    outputPortNode.add(new DefaultMutableTreeNode(sv));
+                    outputPortNode.add(new DefaultMutableTreeNode(variable));
                 }
             }
         }
