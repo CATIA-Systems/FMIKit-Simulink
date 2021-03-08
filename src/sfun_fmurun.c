@@ -72,29 +72,33 @@ typedef enum {
 
 } Parameter;
 
-static char *mxCharToChar(const mxChar *src, char *dst, size_t len) {
-	for (size_t i = 0; i < len; i++) {
-		dst[i] = (char)src[i];
-	}
-	dst[len] = '\0';
-	return dst;
-}
+static char* getStringParam(SimStruct *S, Parameter parameter, int index) {
 
-static char* getStringParam(SimStruct *S, int index) {
+	const mxArray *array = ssGetSFcnParam(S, parameter);
 
-	const mxArray *pa = ssGetSFcnParam(S, index);
-
-	size_t n = mxGetN(pa);
-
-	if (n < 1) return "";
-
-	const mxChar *data = (const mxChar *)mxGetData(pa);
-
-	if (!data) return "";
+	const size_t m = mxGetM(array);  // number of strings
+	const size_t n = mxGetN(array);  // max length
+	const mxChar *data = (mxChar *)mxGetData(array);
 
 	char *cstr = (char *)mxMalloc(n + 1);
+	memset(cstr, '\0', n + 1);
 
-	return mxCharToChar(data, cstr, n);
+	if (index >= m || n < 1 || !data) {
+		return cstr;
+	}
+
+	// copy the row
+	for (int j = 0; j < n; j++) {
+		cstr[j] = (char)data[j * m + index];
+	}
+
+	// remove the trailing blanks
+	for (int j = n - 1; j >= 0; j--) {
+		if (cstr[j] != ' ') break;
+		cstr[j] = '\0';
+	}
+	
+	return cstr; // must be mxFree()'d
 }
 
 static bool isFMI1(SimStruct *S) {
@@ -809,41 +813,23 @@ static void setStartValues(SimStruct *S) {
 
 	// string start values
 	const mxArray *pa = ssGetSFcnParam(S, stringStartValuesParam);
-	const int size    = (int)mxGetNumberOfElements(pa) + 1;
 	const int m       = (int)mxGetM(pa);
-	const int n       = (int)mxGetN(pa);
-	char *buffer      = (char *)calloc(size, sizeof(char));
-	char *value       = (char *)calloc(n + 1, sizeof(char));
-
-	//if (mxGetString(pa, buffer, size) != 0) {
-	//	ssSetErrorStatus(S, "Failed to convert string parameters");
-	//	return;
-	//}
 
 	for (int i = 0; i < m; i++) {
 
-		// copy the row
-		for (int j = 0; j < n; j++) value[j] = buffer[j * m + i];
-
-		// remove the trailing blanks
-		for (int j = n - 1; j >= 0; j--) {
-			if (value[j] != ' ') break;
-			value[j] = '\0';
-		}
-
 		FMIValueReference vr = valueReference(S, stringStartVRsParam, i);
+		char *value = getStringParam(S, stringStartValuesParam, i);
 
 		if (isFMI1(S)) {
 			CHECK_STATUS(FMI1SetString(instance, &vr, 1, (const fmi1String *)&value));
-		} else if (isFMI1(S)) {
+		} else if (isFMI2(S)) {
 			CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String *)&value));
 		} else {
 			CHECK_STATUS(FMI3SetString(instance, &vr, 1, (const fmi3String *)&value, 1));
 		}
-	}
 
-	free(buffer);
-	free(value);
+		mxFree(value);
+	}
 }
 
 static void update(SimStruct *S) {
@@ -1376,7 +1362,7 @@ static void mdlStart(SimStruct *S) {
         p[1] = NULL;
     }
 
-	const char *logFile = getStringParam(S, logFileParam);
+	const char *logFile = getStringParam(S, logFileParam, 0);
 
 	if (strlen(logFile) > 0) {
 	    p[1] = fopen(logFile, "w");
@@ -1397,15 +1383,15 @@ static void mdlStart(SimStruct *S) {
 
     bool loggingOn = debugLogging(S);
 
-	const char *modelIdentifier = getStringParam(S, modelIdentifierParam);
+	const char *modelIdentifier = getStringParam(S, modelIdentifierParam, 0);
 
 #ifdef GRTFMI
-	char *unzipdir = calloc(MAX_PATH, sizeof(char));
+	char *unzipdir = (char *)mxMalloc(MAX_PATH);
 	strncpy(unzipdir, FMU_RESOURCES_DIR, MAX_PATH);
 	strncat(unzipdir, "/", MAX_PATH);
 	strncat(unzipdir, modelIdentifier, MAX_PATH);
 #else
-	char *unzipdir = getStringParam(S, unzipDirectoryParam);
+	char *unzipdir = getStringParam(S, unzipDirectoryParam, 0);
 #endif
 
 #ifdef _WIN32
@@ -1447,7 +1433,7 @@ static void mdlStart(SimStruct *S) {
 
 	p[0] = instance;
 
-	const char *guid = getStringParam(S, guidParam);
+	const char *guid = getStringParam(S, guidParam, 0);
 
 	char fmuResourceLocation[INTERNET_MAX_URL_LENGTH];
 
@@ -1514,7 +1500,9 @@ static void mdlStart(SimStruct *S) {
 
 	}
 
+	mxFree((void *)logFile);
 	mxFree((void *)modelIdentifier);
+	mxFree((void *)unzipdir);
 	mxFree((void *)guid);
 }
 #endif /* MDL_START */
