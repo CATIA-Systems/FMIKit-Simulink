@@ -17,6 +17,19 @@ extern const char *FMU_RESOURCES_DIR;
 #include "FMI2.c"
 #include "FMI3.c"
 
+#ifdef _WIN32
+
+#include "shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
+
+#else
+
+#ifndef PATH_MAX
+PATH_MAX 4096
+#endif
+
+#endif
+
 #ifndef S_FUNCTION_NAME
 #define S_FUNCTION_NAME sfun_fmurun
 #endif
@@ -24,15 +37,6 @@ extern const char *FMU_RESOURCES_DIR;
 #define S_FUNCTION_LEVEL 2
 
 #include "simstruc.h"
-
-#ifdef _WIN32
-#include "shlwapi.h"
-#pragma comment(lib, "shlwapi.lib")
-#elif defined(__APPLE__)
-#else
-#include <linux/limits.h>
-#endif
-
 
 
 typedef enum {
