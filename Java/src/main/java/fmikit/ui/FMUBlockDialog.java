@@ -1497,8 +1497,19 @@ public class FMUBlockDialog extends JDialog {
 
         PrintWriter w = new PrintWriter(mdlDirectory + File.separator + "sfun_" + modelIdentifier + ".c");
 
+        final String fmiMajorVersion = modelDescription.fmiVersion.substring(0, 1);
+
+        w.println("#define FMI_VERSION " + fmiMajorVersion);
+
+        if (cmbbxRunAsKind.getSelectedIndex() == MODEL_EXCHANGE) {
+            w.println("#define MODEL_EXCHANGE");
+        } else {
+            w.println("#define CO_SIMULATION");
+        }
+
+        w.println("#define FMI" + fmiMajorVersion + "_FUNCTION_PREFIX " + modelIdentifier + "_");
+
         w.println("#define S_FUNCTION_NAME sfun_" + modelIdentifier);
-        w.println("#define FMI2_FUNCTION_PREFIX " + modelIdentifier + "_");
         w.println();
         w.println("#include \"sfun_fmurun.c\"");
 

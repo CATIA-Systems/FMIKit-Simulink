@@ -81,23 +81,4 @@ add_custom_command(TARGET sfun_fmurun POST_BUILD COMMAND ${CMAKE_COMMAND} -E cop
   "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-# add_executable(BouncingBall
-#   include/fmi2Functions.h
-#   include/fmi2FunctionTypes.h
-#   include/fmi2TypesPlatform.h
-#   include/FMI2.h
-#   src/BouncingBall.c
-#   src/FMI2.c
-# )
-#
-# target_include_directories(BouncingBall PUBLIC
-#   include
-# )
-#
-# if (MSVC)
-#   add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-# endif ()
-#
-# if (UNIX)
-#   target_link_libraries(BouncingBall ${CMAKE_DL_LIBS})
-# endif (UNIX)
+# add_custom_command(TARGET sfun_fmurun POST_BUILD COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/merge_sfun.py)

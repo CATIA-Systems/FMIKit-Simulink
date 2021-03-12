@@ -117,6 +117,8 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 
 	instance->state = FMI2StartAndEndState;
 
+#if !defined(FMI_VERSION) || FMI_VERSION == 2
+
 	/***************************************************
 	Common Functions
 	****************************************************/
@@ -151,7 +153,7 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 	LOAD_SYMBOL(GetDirectionalDerivative)
 
 	if (fmuType == fmi2ModelExchange) {
-
+#ifndef CO_SIMULATION
 		/***************************************************
 		Model Exchange
 		****************************************************/
@@ -166,10 +168,10 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 		LOAD_SYMBOL(GetEventIndicators)
 		LOAD_SYMBOL(GetContinuousStates)
 		LOAD_SYMBOL(GetNominalsOfContinuousStates)
-
+#endif
 	} else {
-
-		/***************************************************
+#ifndef MODEL_EXCHANGE
+        /***************************************************
 		Co-Simulation
 		****************************************************/
 
@@ -182,7 +184,11 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 		LOAD_SYMBOL(GetIntegerStatus)
 		LOAD_SYMBOL(GetBooleanStatus)
 		LOAD_SYMBOL(GetStringStatus)
-	}
+#endif
+    }
+
+
+#endif
 
 	instance->functions2.logger = cb_logMessage2;
 	instance->functions2.allocateMemory = calloc;

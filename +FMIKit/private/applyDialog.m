@@ -28,7 +28,7 @@ if userData.useSourceCode
     % mex_args{end+1} = '-g';
     
     % custom inlcude directories
-    include_dirs = get_param(gcs, 'SimUserIncludeDirs');
+    include_dirs = get_param(bdroot, 'SimUserIncludeDirs');
     include_dirs = split_paths(include_dirs);
     for i = 1:numel(include_dirs)
         mex_args{end+1} = ['-I"' include_dirs{i} '"'];
@@ -40,7 +40,7 @@ if userData.useSourceCode
     end
 
     % custom libraries
-    libraries = get_param(gcs, 'SimUserLibraries');
+    libraries = get_param(bdroot, 'SimUserLibraries');
     libraries = split_paths(libraries);
     for i = 1:numel(libraries)
         [library_path, library_name, ~] = fileparts(libraries{i});

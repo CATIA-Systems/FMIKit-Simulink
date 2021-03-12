@@ -96,6 +96,8 @@ fmi3Status FMI3SetDebugLogging(FMIInstance *instance,
 }
 
 static fmi3Status loadSymbols3(FMIInstance *instance) {
+
+#if !defined(FMI_VERSION) || FMI_VERSION == 3
 	
 	instance->fmiVersion = FMIVersion3;
 
@@ -209,6 +211,12 @@ static fmi3Status loadSymbols3(FMIInstance *instance) {
 	instance->state = FMI2StartAndEndState;
 
 	return fmi3OK;
+
+#else
+    
+    return fmi3Error;
+
+#endif
 }
 
 /* Creation and destruction of FMU instances and setting debug status */
