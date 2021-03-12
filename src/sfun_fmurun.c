@@ -25,7 +25,7 @@ extern const char *FMU_RESOURCES_DIR;
 #else
 
 #ifndef PATH_MAX
-PATH_MAX 4096
+#define PATH_MAX 4096
 #endif
 
 #endif
