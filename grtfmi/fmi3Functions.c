@@ -31,7 +31,9 @@ const char* fmi3GetVersion() {
 fmi3Status  fmi3SetDebugLogging(fmi3Instance c,
 	fmi3Boolean loggingOn,
 	size_t nCategories,
-	const fmi3String categories[]) { return fmi3Error; }
+	const fmi3String categories[]) {
+    NOT_IMPLEMENTED
+}
 
 /* Creation and destruction of FMU instances and setting debug status */
 fmi3Instance fmi3InstantiateModelExchange(
@@ -47,17 +49,18 @@ fmi3Instance fmi3InstantiateModelExchange(
 }
 
 fmi3Instance fmi3InstantiateCoSimulation(
-	fmi3String                     instanceName,
-	fmi3String                     instantiationToken,
-	fmi3String                     resourceLocation,
-	fmi3Boolean                    visible,
-	fmi3Boolean                    loggingOn,
-	fmi3Boolean                    eventModeRequired,
-	const fmi3ValueReference       requiredIntermediateVariables[],
-	size_t                         nRequiredIntermediateVariables,
-	fmi3InstanceEnvironment        instanceEnvironment,
-	fmi3CallbackLogMessage         logMessage,
-	fmi3CallbackIntermediateUpdate intermediateUpdate) {
+    fmi3String                     instanceName,
+    fmi3String                     instantiationToken,
+    fmi3String                     resourceLocation,
+    fmi3Boolean                    visible,
+    fmi3Boolean                    loggingOn,
+    fmi3Boolean                    eventModeUsed,
+    fmi3Boolean                    earlyReturnAllowed,
+    const fmi3ValueReference       requiredIntermediateVariables[],
+    size_t                         nRequiredIntermediateVariables,
+    fmi3InstanceEnvironment        instanceEnvironment,
+    fmi3CallbackLogMessage         logMessage,
+    fmi3CallbackIntermediateUpdate intermediateUpdate) {
 
 	/* check GUID */
 	if (strcmp(instantiationToken, MODEL_GUID) != 0) {
@@ -123,10 +126,11 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance c) {
 }
 
 fmi3Status fmi3EnterEventMode(fmi3Instance instance,
-							  fmi3Boolean stepEvent,
-							  const fmi3Int32 rootsFound[],
-							  size_t nEventIndicators,
-							  fmi3Boolean timeEvent) {
+                              fmi3Boolean stepEvent,
+                              fmi3Boolean stateEvent,
+                              const fmi3Int32 rootsFound[],
+                              size_t nEventIndicators,
+                              fmi3Boolean timeEvent) {
 
 	return fmi3Error; // not supported
 }
@@ -278,13 +282,27 @@ fmi3Status fmi3GetBoolean(fmi3Instance c,
 	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_BOOLEAN, sizeof(BOOLEAN_T));
 }
 
+fmi3Status fmi3GetString(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3String values[],
+    size_t nValues) { 
+    NOT_IMPLEMENTED 
+}
+
 fmi3Status fmi3GetBinary(fmi3Instance c,
 	const fmi3ValueReference vr[], size_t nvr,
 	size_t size[], fmi3Binary value[], size_t nValues) {
 	NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetString(fmi3Instance c, const fmi3ValueReference vr[], size_t nvr, fmi3String  value[], size_t nValues) { NOT_IMPLEMENTED }
+fmi3Status fmi3GetClock(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3Clock values[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 static fmi3Status setVariables(ModelInstance *instance,
 	const fmi3ValueReference vr[], size_t nvr,
@@ -396,90 +414,249 @@ fmi3Status fmi3SetBoolean(fmi3Instance c,
 
 fmi3Status fmi3SetString(fmi3Instance c,
 	const fmi3ValueReference vr[], size_t nvr,
-	const fmi3String value[], size_t nValues) { NOT_IMPLEMENTED }
+	const fmi3String value[], size_t nValues) { 
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3SetBinary(fmi3Instance c,
 	const fmi3ValueReference vr[], size_t nvr,
-	const size_t size[], const fmi3Binary value[], size_t nValues) { NOT_IMPLEMENTED }
-
-/* Getting and setting the internal FMU state */
-fmi3Status fmi3GetFMUstate(fmi3Instance c, fmi3FMUState* FMUState) { NOT_IMPLEMENTED }
-fmi3Status fmi3SetFMUstate(fmi3Instance c, fmi3FMUState  FMUState) { NOT_IMPLEMENTED }
-fmi3Status fmi3FreeFMUstate(fmi3Instance c, fmi3FMUState* FMUState) { NOT_IMPLEMENTED }
-fmi3Status fmi3SerializedFMUstateSize(fmi3Instance c, fmi3FMUState  FMUstate, size_t* size) { NOT_IMPLEMENTED }
-fmi3Status fmi3SerializeFMUstate(fmi3Instance c, fmi3FMUState  FMUstate, fmi3Byte serializedState[], size_t size) { NOT_IMPLEMENTED }
-fmi3Status fmi3DeSerializeFMUstate(fmi3Instance c, const fmi3Byte serializedState[], size_t size, fmi3FMUState* FMUState) { NOT_IMPLEMENTED }
-
-/* Getting partial derivatives */
-fmi3Status fmi3GetDirectionalDerivative(fmi3Instance c,
-                                        const fmi3ValueReference vrUnknown[],
-                                        size_t nUnknown,
-                                        const fmi3ValueReference vrKnown[],
-                                        size_t nKnown,
-                                        const fmi3Float64 dvKnown[],
-                                        size_t nDvKnown,
-                                        fmi3Float64 dvUnknown[],
-                                        size_t nDvUnknown) { NOT_IMPLEMENTED }
-
-/***************************************************
-Types for Functions for FMI3 for Model Exchange
-****************************************************/
-
-/* Enter and exit the different modes */
-fmi3Status fmi3NewDiscreteStates(fmi3Instance instance,
-								 fmi3Boolean *newDiscreteStatesNeeded,
-								 fmi3Boolean *terminateSimulation,
-								 fmi3Boolean *nominalsOfContinuousStatesChanged,
-								 fmi3Boolean *valuesOfContinuousStatesChanged,
-								 fmi3Boolean *nextEventTimeDefined,
-								 fmi3Float64 *nextEventTime) { 
-	NOT_IMPLEMENTED
+	const size_t size[], const fmi3Binary value[], size_t nValues) {
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance c) { NOT_IMPLEMENTED }
+fmi3Status fmi3SetClock(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    const fmi3Clock values[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+/* Getting Variable Dependency Information */
+fmi3Status fmi3GetNumberOfVariableDependencies(fmi3Instance instance,
+    fmi3ValueReference valueReference,
+    size_t* nDependencies) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetVariableDependencies(fmi3Instance instance,
+    fmi3ValueReference dependent,
+    size_t elementIndicesOfDependent[],
+    fmi3ValueReference independents[],
+    size_t elementIndicesOfIndependents[],
+    fmi3DependencyKind dependencyKinds[],
+    size_t nDependencies) {
+    NOT_IMPLEMENTED
+}
+
+/* Getting and setting the internal FMU state */
+fmi3Status fmi3GetFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetFMUState(fmi3Instance instance, fmi3FMUState  FMUState) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3FreeFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SerializedFMUStateSize(fmi3Instance instance,
+    fmi3FMUState  FMUState,
+    size_t* size) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SerializeFMUState(fmi3Instance instance,
+    fmi3FMUState  FMUState,
+    fmi3Byte serializedState[],
+    size_t size) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3DeSerializeFMUState(fmi3Instance instance,
+    const fmi3Byte serializedState[],
+    size_t size,
+    fmi3FMUState* FMUState) {
+    NOT_IMPLEMENTED
+}
+
+/* Getting partial derivatives */
+fmi3Status fmi3GetDirectionalDerivative(fmi3Instance instance,
+    const fmi3ValueReference unknowns[],
+    size_t nUnknowns,
+    const fmi3ValueReference knowns[],
+    size_t nKnowns,
+    const fmi3Float64 seed[],
+    size_t nSeed,
+    fmi3Float64 sensitivity[],
+    size_t nSensitivity) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetAdjointDerivative(fmi3Instance instance,
+    const fmi3ValueReference unknowns[],
+    size_t nUnknowns,
+    const fmi3ValueReference knowns[],
+    size_t nKnowns,
+    const fmi3Float64 seed[],
+    size_t nSeed,
+    fmi3Float64 sensitivity[],
+    size_t nSensitivity) {
+    NOT_IMPLEMENTED
+}
+
+/* Entering and exiting the Configuration or Reconfiguration Mode */
+fmi3Status fmi3EnterConfigurationMode(fmi3Instance instance) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3Float64 interval[],
+    fmi3IntervalQualifier qualifier[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetIntervalFraction(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3UInt64 intervalCounter[],
+    fmi3UInt64 resolution[],
+    fmi3IntervalQualifier qualifier[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetShiftDecimal(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3Float64 shift[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetShiftFraction(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    fmi3UInt64 shiftCounter[],
+    fmi3UInt64 resolution[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetIntervalDecimal(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    const fmi3Float64 interval[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetIntervalFraction(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    const fmi3UInt64 intervalCounter[],
+    const fmi3UInt64 resolution[],
+    size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3UpdateDiscreteStates(fmi3Instance instance,
+    fmi3Boolean* discreteStatesNeedUpdate,
+    fmi3Boolean* terminateSimulation,
+    fmi3Boolean* nominalsOfContinuousStatesChanged,
+    fmi3Boolean* valuesOfContinuousStatesChanged,
+    fmi3Boolean* nextEventTimeDefined,
+    fmi3Float64* nextEventTime) {
+    NOT_IMPLEMENTED
+}
+
+/***************************************************
+Types for Functions for Model Exchange
+****************************************************/
+
+fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance c) { 
+    NOT_IMPLEMENTED 
+}
 
 fmi3Status fmi3CompletedIntegratorStep(fmi3Instance c,
 	fmi3Boolean   noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean*  enterEventMode,
-	fmi3Boolean*  terminateSimulation) { NOT_IMPLEMENTED }
+	fmi3Boolean*  terminateSimulation) { 
+    NOT_IMPLEMENTED 
+}
 
 /* Providing independent variables and re-initialization of caching */
-fmi3Status fmi3SetTime(fmi3Instance c, fmi3Float64 time) { NOT_IMPLEMENTED }
-fmi3Status fmi3SetContinuousStates(fmi3Instance c, const fmi3Float64 x[], size_t nx) { NOT_IMPLEMENTED }
+fmi3Status fmi3SetTime(fmi3Instance c, fmi3Float64 time) { 
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetContinuousStates(fmi3Instance c, const fmi3Float64 x[], size_t nx) { 
+    NOT_IMPLEMENTED 
+}
 
 /* Evaluation of the model equations */
-fmi3Status fmi3GetDerivatives(fmi3Instance c, fmi3Float64 derivatives[], size_t nx) { NOT_IMPLEMENTED }
-fmi3Status fmi3GetEventIndicators(fmi3Instance c, fmi3Float64 eventIndicators[], size_t ni) { NOT_IMPLEMENTED }
-fmi3Status fmi3GetContinuousStates(fmi3Instance c, fmi3Float64 x[], size_t nx) { NOT_IMPLEMENTED }
-fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance c, fmi3Float64 x_nominal[], size_t nx) { NOT_IMPLEMENTED }
+fmi3Status fmi3GetDerivatives(fmi3Instance c, fmi3Float64 derivatives[], size_t nx) { 
+    NOT_IMPLEMENTED
+}
 
+fmi3Status fmi3GetEventIndicators(fmi3Instance c, fmi3Float64 eventIndicators[], size_t ni) {
+    NOT_IMPLEMENTED 
+}
+
+fmi3Status fmi3GetContinuousStates(fmi3Instance c, fmi3Float64 x[], size_t nx) { 
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance c, fmi3Float64 x_nominal[], size_t nx) { 
+    NOT_IMPLEMENTED 
+}
+
+fmi3Status fmi3GetNumberOfEventIndicators(fmi3Instance instance,
+    size_t* nEventIndicators) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3GetNumberOfContinuousStates(fmi3Instance instance,
+    size_t* nContinuousStates) {
+    NOT_IMPLEMENTED
+}
 
 /***************************************************
-Types for Functions for FMI3 for Co-Simulation
+Types for Functions for Co-Simulation
 ****************************************************/
 
-/* Simulating the slave */
-fmi3Status fmi3SetInputDerivatives(fmi3Instance c,
-	const fmi3ValueReference vr[],
-	size_t nvr,
-	const fmi3Int32 order[],
-	const fmi3Float64 value[],
-	size_t nValues) { NOT_IMPLEMENTED }
+/* Simulating the FMU */
+
+fmi3Status fmi3EnterStepMode(fmi3Instance instance) { 
+    NOT_IMPLEMENTED 
+}
 
 fmi3Status fmi3GetOutputDerivatives(fmi3Instance c,
 	const fmi3ValueReference vr[],
 	size_t nvr,
 	const fmi3Int32 order[],
 	fmi3Float64 value[],
-	size_t nValues) { NOT_IMPLEMENTED }
+	size_t nValues) { 
+    NOT_IMPLEMENTED 
+}
 
 fmi3Status fmi3DoStep(fmi3Instance c,
-				  	  fmi3Float64 currentCommunicationPoint,
-				      fmi3Float64 communicationStepSize,
-					  fmi3Boolean noSetFMUStatePriorToCurrentPoint,
-					  fmi3Boolean* terminate,
-					  fmi3Boolean* earlyReturn,
-					  fmi3Float64* lastSuccessfulTime) {
+                      fmi3Float64 currentCommunicationPoint,
+                      fmi3Float64 communicationStepSize,
+                      fmi3Boolean noSetFMUStatePriorToCurrentPoint,
+                      fmi3Boolean* eventEncountered,
+                      fmi3Boolean* terminateSimulation,
+                      fmi3Boolean* earlyReturn,
+                      fmi3Float64* lastSuccessfulTime) {
 
 	ModelInstance *instance = (ModelInstance *)c;
 
@@ -506,12 +683,9 @@ fmi3Status fmi3DoStep(fmi3Instance c,
 	return fmi3OK;
 }
 
-fmi3Status fmi3CancelStep(fmi3Instance c) { NOT_IMPLEMENTED }
-
-fmi3Status fmi3GetDoStepPendingStatus(fmi3Instance c,
-	fmi3Status* status,
-	fmi3String* message) { NOT_IMPLEMENTED }
-
-fmi3Status fmi3GetDoStepDiscardedStatus(fmi3Instance c,
-		fmi3Boolean* terminate,
-		fmi3Float64* lastSuccessfulTime) { NOT_IMPLEMENTED }
+fmi3Status fmi3ActivateModelPartition(fmi3Instance instance,
+    fmi3ValueReference clockReference,
+    size_t clockElementIndex,
+    fmi3Float64 activationTime) { 
+    NOT_IMPLEMENTED 
+}

@@ -80,8 +80,8 @@ static char* getStringParam(SimStruct *S, Parameter parameter, int index) {
 
 	const mxArray *array = ssGetSFcnParam(S, parameter);
 
-	const size_t m = mxGetM(array);  // number of strings
-	const size_t n = mxGetN(array);  // max length
+	const int m = (int)mxGetM(array);  // number of strings
+	const int n = (int)mxGetN(array);  // max length
 	const mxChar *data = (mxChar *)mxGetData(array);
 
 	char *cstr = (char *)mxMalloc(n + 1);
@@ -1563,7 +1563,9 @@ static void mdlInitializeConditions(SimStruct *S) {
 
 static void mdlOutputs(SimStruct *S, int_T tid) {
 
-	logDebug(S, "mdlOutputs(tid=%d, time=%.16g, majorTimeStep=%d)", tid, ssGetT(S), ssIsMajorTimeStep(S));
+    const time_T time = ssGetT(S);
+
+	logDebug(S, "mdlOutputs(tid=%d, time=%.16g, majorTimeStep=%d)", tid, time, ssIsMajorTimeStep(S));
 
 	void **p = ssGetPWork(S);
 
@@ -1575,7 +1577,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
 		if (isFMI1(S)) {
 
-			CHECK_STATUS(FMI1SetTime(instance, ssGetT(S)))
+			CHECK_STATUS(FMI1SetTime(instance, time))
 
 			if (nx(S) > 0) {
 				CHECK_STATUS(FMI1SetContinuousStates(instance, x, nx(S)))
@@ -1602,7 +1604,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 				CHECK_STATUS(FMI2EnterContinuousTimeMode(instance))
 			}
 
-			CHECK_STATUS(FMI2SetTime(instance, ssGetT(S)))
+			CHECK_STATUS(FMI2SetTime(instance, time))
 
 			if (nx(S) > 0) {
 				CHECK_STATUS(FMI2SetContinuousStates(instance, x, nx(S)))
@@ -1636,7 +1638,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 				CHECK_STATUS(FMI3EnterContinuousTimeMode(instance))
 			}
 
-			CHECK_STATUS(FMI3SetTime(instance, ssGetT(S)))
+			CHECK_STATUS(FMI3SetTime(instance, time))
 
 			if (nx(S) > 0) {
 				CHECK_STATUS(FMI3SetContinuousStates(instance, x, nx(S)))
@@ -1651,7 +1653,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
 	} else {
 
-		time_T h = ssGetT(S) - instance->time;
+		const time_T h = time - instance->time;
 
 		if (h > 0) {
 			if (isFMI1(S)) {
@@ -1660,11 +1662,11 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 				CHECK_STATUS(FMI2DoStep(instance, instance->time, h, fmi2False))
 			} else {
 				fmi3Boolean eventEncountered;
-				fmi3Boolean clocksAboutToTick;
-				fmi3Boolean terminate;
+				fmi3Boolean terminateSimulation;
 				fmi3Boolean earlyReturn;
 				fmi3Float64 lastSuccessfulTime;
-				CHECK_STATUS(FMI3DoStep(instance, instance->time, h, fmi2False, &eventEncountered, &clocksAboutToTick, &terminate, &earlyReturn, &lastSuccessfulTime))
+				CHECK_STATUS(FMI3DoStep(instance, instance->time, h, fmi2False, &eventEncountered, &terminateSimulation, &earlyReturn, &lastSuccessfulTime))
+                // TODO: handle terminateSimulation == true
 			}
 		}
 	}
@@ -1744,14 +1746,14 @@ static void mdlDerivatives(SimStruct *S) {
 	real_T *dx = ssGetdX(S);
 
 	if (isFMI1(S)) {
-		FMI1GetContinuousStates(instance, x, nx(S));
-		FMI1GetDerivatives(instance, dx, nx(S));
+        CHECK_STATUS(FMI1GetContinuousStates(instance, x, nx(S)))
+        CHECK_STATUS(FMI1GetDerivatives(instance, dx, nx(S)))
 	} else if (isFMI2(S)) {
-		FMI2GetContinuousStates(instance, x, nx(S));
-		FMI2GetDerivatives(instance, dx, nx(S));
+        CHECK_STATUS(FMI2GetContinuousStates(instance, x, nx(S)))
+        CHECK_STATUS(FMI2GetDerivatives(instance, dx, nx(S)))
 	} else {
-		FMI3GetContinuousStates(instance, x, nx(S));
-		FMI3GetDerivatives(instance, dx, nx(S));
+        CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
+        CHECK_STATUS(FMI3GetDerivatives(instance, dx, nx(S)))
 	}
 }
 #endif

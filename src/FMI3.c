@@ -921,17 +921,16 @@ fmi3Status FMI3DoStep(FMIInstance *instance,
 	fmi3Float64 communicationStepSize,
 	fmi3Boolean noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean* eventEncountered,
-	fmi3Boolean* clocksAboutToTick,
 	fmi3Boolean* terminate,
 	fmi3Boolean* earlyReturn,
 	fmi3Float64* lastSuccessfulTime) {
 
-	fmi3Status status = instance->fmi3DoStep(instance->component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, eventEncountered, clocksAboutToTick, terminate, earlyReturn, lastSuccessfulTime);
+	fmi3Status status = instance->fmi3DoStep(instance->component, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, eventEncountered, terminate, earlyReturn, lastSuccessfulTime);
 
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi3DoStep(currentCommunicationPoint=%g, communicationStepSize=%g, noSetFMUStatePriorToCurrentPoint=%d, eventEncountered=%d, clocksAboutToTick=%d, terminate=%d, earlyReturn=%d, lastSuccessfulTime=%g",
-			currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, *eventEncountered, *clocksAboutToTick, *terminate, *earlyReturn, *lastSuccessfulTime);
+			"fmi3DoStep(currentCommunicationPoint=%g, communicationStepSize=%g, noSetFMUStatePriorToCurrentPoint=%d, eventEncountered=%d, terminate=%d, earlyReturn=%d, lastSuccessfulTime=%g",
+			currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, *eventEncountered, *terminate, *earlyReturn, *lastSuccessfulTime);
 	}
 
 	return status;
