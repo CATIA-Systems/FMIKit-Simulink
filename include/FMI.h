@@ -21,6 +21,10 @@
 #define FMI_MAX_MESSAGE_LENGTH 4096
 #endif
 
+#ifndef FMI_STATIC
+#define FMI_STATIC
+#endif
+
 typedef enum {
 	FMIOK,
 	FMIWarning,
@@ -365,12 +369,12 @@ struct FMIInstance_ {
 
 };
 
-FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath, FMILogMessage *logMessage, FMILogFunctionCall *logFunctionCall);
+FMI_STATIC FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath, FMILogMessage *logMessage, FMILogFunctionCall *logFunctionCall);
 
-void FMIFreeInstance(FMIInstance *instance);
+FMI_STATIC void FMIFreeInstance(FMIInstance *instance);
 
-const char* FMIValueReferencesToString(FMIInstance *instance, const FMIValueReference vr[], size_t nvr);
+FMI_STATIC const char* FMIValueReferencesToString(FMIInstance *instance, const FMIValueReference vr[], size_t nvr);
 
-const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *value, FMIVariableType variableType);
+FMI_STATIC const char* FMIValuesToString(FMIInstance *instance, size_t nvr, const void *value, FMIVariableType variableType);
 
 #endif // FMI_H

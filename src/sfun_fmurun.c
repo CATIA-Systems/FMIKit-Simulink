@@ -12,6 +12,8 @@
 extern const char *FMU_RESOURCES_DIR;
 #endif
 
+#define FMI_STATIC static
+
 #include "FMI.c"
 #include "FMI1.c"
 #include "FMI2.c"

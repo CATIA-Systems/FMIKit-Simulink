@@ -15,22 +15,22 @@ Types for Common Functions
 ****************************************************/
 
 /* Inquire version numbers and setting logging status */
-const char* FMI3GetVersion(FMIInstance *instance);
+FMI_STATIC const char* FMI3GetVersion(FMIInstance *instance);
 
-fmi3Status FMI3SetDebugLogging(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetDebugLogging(FMIInstance *instance,
 	fmi3Boolean loggingOn,
 	size_t nCategories,
 	const fmi3String categories[]);
 
 /* Creation and destruction of FMU instances and setting debug status */
-fmi3Status FMI3InstantiateModelExchange(
+FMI_STATIC fmi3Status FMI3InstantiateModelExchange(
 	FMIInstance               *instance,
 	fmi3String                 instantiationToken,
 	fmi3String                 resourceLocation,
 	fmi3Boolean                visible,
 	fmi3Boolean                loggingOn);
 
-fmi3Status FMI3InstantiateCoSimulation(
+FMI_STATIC fmi3Status FMI3InstantiateCoSimulation(
 	FMIInstance                   *instance,
 	fmi3String                     instantiationToken,
 	fmi3String                     resourceLocation,
@@ -41,7 +41,7 @@ fmi3Status FMI3InstantiateCoSimulation(
 	size_t                         nRequiredIntermediateVariables,
 	fmi3CallbackIntermediateUpdate intermediateUpdate);
 
-fmi3Status FMI3InstantiateScheduledExecution(
+FMI_STATIC fmi3Status FMI3InstantiateScheduledExecution(
 	FMIInstance                   *instance,
 	fmi3String                     instantiationToken,
 	fmi3String                     resourceLocation,
@@ -53,182 +53,182 @@ fmi3Status FMI3InstantiateScheduledExecution(
 	fmi3CallbackLockPreemption     lockPreemption,
 	fmi3CallbackUnlockPreemption   unlockPreemption);
 
-fmi3Status FMI3FreeInstance(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3FreeInstance(FMIInstance *instance);
 
 /* Enter and exit initialization mode, enter event mode, terminate and reset */
-fmi3Status FMI3EnterInitializationMode(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3EnterInitializationMode(FMIInstance *instance,
 	fmi3Boolean toleranceDefined,
 	fmi3Float64 tolerance,
 	fmi3Float64 startTime,
 	fmi3Boolean stopTimeDefined,
 	fmi3Float64 stopTime);
 
-fmi3Status FMI3ExitInitializationMode(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3ExitInitializationMode(FMIInstance *instance);
 
-fmi3Status FMI3EnterEventMode(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3EnterEventMode(FMIInstance *instance,
 	fmi3Boolean stepEvent,
 	fmi3Boolean stateEvent,
 	const fmi3Int32 rootsFound[],
 	size_t nEventIndicators,
 	fmi3Boolean timeEvent);
 
-fmi3Status FMI3Terminate(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3Terminate(FMIInstance *instance);
 
-fmi3Status FMI3Reset(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3Reset(FMIInstance *instance);
 
 /* Getting and setting variable values */
-fmi3Status FMI3GetFloat32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetFloat32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Float32 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetFloat64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetFloat64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Float64 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetInt8(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetInt8(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Int8 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetUInt8(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetUInt8(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3UInt8 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetInt16(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetInt16(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Int16 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetUInt16(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetUInt16(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3UInt16 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetInt32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetInt32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Int32 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetUInt32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetUInt32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3UInt32 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetInt64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetInt64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Int64 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetUInt64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetUInt64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3UInt64 values[],
 	size_t nValues);
 
-fmi3Status FMI3GetBoolean(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetBoolean(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3Boolean values[],
 	size_t nValues);
 
-fmi3Status FMI3GetString(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetString(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	fmi3String values[],
 	size_t nValues);
 
-fmi3Status FMI3GetBinary(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetBinary(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	size_t sizes[],
 	fmi3Binary values[],
 	size_t nValues);
 
-fmi3Status FMI3SetFloat32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetFloat32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Float32 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetFloat64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetFloat64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Float64 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetInt8(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetInt8(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Int8 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetUInt8(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetUInt8(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3UInt8 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetInt16(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetInt16(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Int16 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetUInt16(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetUInt16(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3UInt16 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetInt32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetInt32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Int32 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetUInt32(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetUInt32(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3UInt32 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetInt64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetInt64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Int64 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetUInt64(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetUInt64(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3UInt64 values[],
 	size_t nValues);
 
-fmi3Status FMI3SetBoolean(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetBoolean(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Boolean values[],
 	size_t nValues);
 
-fmi3Status FMI3SetString(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetString(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3String values[],
 	size_t nValues);
 
-fmi3Status FMI3SetBinary(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetBinary(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const size_t sizes[],
@@ -236,11 +236,11 @@ fmi3Status FMI3SetBinary(FMIInstance *instance,
 	size_t nValues);
 
 /* Getting Variable Dependency Information */
-fmi3Status FMI3GetNumberOfVariableDependencies(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetNumberOfVariableDependencies(FMIInstance *instance,
 	fmi3ValueReference valueReference,
 	size_t* nDependencies);
 
-fmi3Status FMI3GetVariableDependencies(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetVariableDependencies(FMIInstance *instance,
 	fmi3ValueReference dependent,
 	size_t elementIndicesOfDependent[],
 	fmi3ValueReference independents[],
@@ -249,28 +249,28 @@ fmi3Status FMI3GetVariableDependencies(FMIInstance *instance,
 	size_t nDependencies);
 
 /* Getting and setting the internal FMU state */
-fmi3Status FMI3GetFMUState(FMIInstance *instance, fmi3FMUState* FMUState);
+FMI_STATIC fmi3Status FMI3GetFMUState(FMIInstance *instance, fmi3FMUState* FMUState);
 
-fmi3Status FMI3SetFMUState(FMIInstance *instance, fmi3FMUState  FMUState);
+FMI_STATIC fmi3Status FMI3SetFMUState(FMIInstance *instance, fmi3FMUState  FMUState);
 
-fmi3Status FMI3FreeFMUState(FMIInstance *instance, fmi3FMUState* FMUState);
+FMI_STATIC fmi3Status FMI3FreeFMUState(FMIInstance *instance, fmi3FMUState* FMUState);
 
-fmi3Status FMI3SerializedFMUStateSize(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SerializedFMUStateSize(FMIInstance *instance,
 	fmi3FMUState  FMUState,
 	size_t* size);
 
-fmi3Status FMI3SerializeFMUState(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SerializeFMUState(FMIInstance *instance,
 	fmi3FMUState  FMUState,
 	fmi3Byte serializedState[],
 	size_t size);
 
-fmi3Status FMI3DeSerializeFMUState(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3DeSerializeFMUState(FMIInstance *instance,
 	const fmi3Byte serializedState[],
 	size_t size,
 	fmi3FMUState* FMUState);
 
 /* Getting partial derivatives */
-fmi3Status FMI3GetDirectionalDerivative(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetDirectionalDerivative(FMIInstance *instance,
 	const fmi3ValueReference unknowns[],
 	size_t nUnknowns,
 	const fmi3ValueReference knowns[],
@@ -280,7 +280,7 @@ fmi3Status FMI3GetDirectionalDerivative(FMIInstance *instance,
 	fmi3Float64 sensitivity[],
 	size_t nSensitivity);
 
-fmi3Status FMI3GetAdjointDerivative(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetAdjointDerivative(FMIInstance *instance,
 	const fmi3ValueReference unknowns[],
 	size_t nUnknowns,
 	const fmi3ValueReference knowns[],
@@ -291,9 +291,9 @@ fmi3Status FMI3GetAdjointDerivative(FMIInstance *instance,
 	size_t nSensitivity);
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
-fmi3Status FMI3EnterConfigurationMode(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3EnterConfigurationMode(FMIInstance *instance);
 
-fmi3Status FMI3ExitConfigurationMode(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3ExitConfigurationMode(FMIInstance *instance);
 
 ///* Clock related functions */
 //fmi3Status FMI3GetClock(FMIInstance *instance,
@@ -335,7 +335,7 @@ fmi3Status FMI3ExitConfigurationMode(FMIInstance *instance);
 //	const fmi3UInt64 resolution[],
 //	size_t nValues);
 
-fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
 	fmi3Boolean *discreteStatesNeedUpdate,
 	fmi3Boolean *terminateSimulation,
 	fmi3Boolean *nominalsOfContinuousStatesChanged,
@@ -347,41 +347,41 @@ fmi3Status FMI3UpdateDiscreteStates(FMIInstance *instance,
 Types for Functions for Model Exchange
 ****************************************************/
 
-fmi3Status FMI3EnterContinuousTimeMode(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3EnterContinuousTimeMode(FMIInstance *instance);
 
-fmi3Status FMI3CompletedIntegratorStep(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3CompletedIntegratorStep(FMIInstance *instance,
 	fmi3Boolean noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean* enterEventMode,
 	fmi3Boolean* terminateSimulation);
 
 /* Providing independent variables and re-initialization of caching */
-fmi3Status FMI3SetTime(FMIInstance *instance, fmi3Float64 time);
+FMI_STATIC fmi3Status FMI3SetTime(FMIInstance *instance, fmi3Float64 time);
 
-fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
 	const fmi3Float64 continuousStates[],
 	size_t nContinuousStates);
 
 /* Evaluation of the model equations */
-fmi3Status FMI3GetDerivatives(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetDerivatives(FMIInstance *instance,
 	fmi3Float64 derivatives[],
 	size_t nContinuousStates);
 
-fmi3Status FMI3GetEventIndicators(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetEventIndicators(FMIInstance *instance,
 	fmi3Float64 eventIndicators[],
 	size_t nEventIndicators);
 
-fmi3Status FMI3GetContinuousStates(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetContinuousStates(FMIInstance *instance,
 	fmi3Float64 continuousStates[],
 	size_t nContinuousStates);
 
-fmi3Status FMI3GetNominalsOfContinuousStates(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetNominalsOfContinuousStates(FMIInstance *instance,
 	fmi3Float64 nominals[],
 	size_t nContinuousStates);
 
-fmi3Status FMI3GetNumberOfEventIndicators(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetNumberOfEventIndicators(FMIInstance *instance,
 	size_t* nEventIndicators);
 
-fmi3Status FMI3GetNumberOfContinuousStates(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetNumberOfContinuousStates(FMIInstance *instance,
 	size_t* nContinuousStates);
 
 /***************************************************
@@ -390,16 +390,16 @@ Types for Functions for Co-Simulation
 
 /* Simulating the FMU */
 
-fmi3Status FMI3EnterStepMode(FMIInstance *instance);
+FMI_STATIC fmi3Status FMI3EnterStepMode(FMIInstance *instance);
 
-fmi3Status FMI3GetOutputDerivatives(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetOutputDerivatives(FMIInstance *instance,
 	const fmi3ValueReference valueReferences[],
 	size_t nValueReferences,
 	const fmi3Int32 orders[],
 	fmi3Float64 values[],
 	size_t nValues);
 
-fmi3Status FMI3DoStep(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3DoStep(FMIInstance *instance,
 	fmi3Float64 currentCommunicationPoint,
 	fmi3Float64 communicationStepSize,
 	fmi3Boolean noSetFMUStatePriorToCurrentPoint,
@@ -408,7 +408,7 @@ fmi3Status FMI3DoStep(FMIInstance *instance,
 	fmi3Boolean* earlyReturn,
 	fmi3Float64* lastSuccessfulTime);
 
-fmi3Status FMI3ActivateModelPartition(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3ActivateModelPartition(FMIInstance *instance,
 	fmi3ValueReference clockReference,
 	size_t clockElementIndex,
 	fmi3Float64 activationTime);
