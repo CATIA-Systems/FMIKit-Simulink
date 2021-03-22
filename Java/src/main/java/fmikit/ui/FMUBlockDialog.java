@@ -336,6 +336,7 @@ public class FMUBlockDialog extends JDialog {
                 // Util.setTreeExpandedState(dialog.treeTable.ex, true);
                 dialog.treeTable.expandAll();
                 System.out.println(dialog.getSFunctionParameters());
+                System.out.println(dialog.getSourceFiles());
             }
         });
         //System.exit(0);
@@ -1517,7 +1518,31 @@ public class FMUBlockDialog extends JDialog {
     }
 
     public List<String> getSourceFiles() {
-        return getImplementation().sourceFiles;
+
+        ArrayList<String> sourceFiles = new ArrayList<String>();
+
+        Implementation implementation = getImplementation();
+
+        for (String sourceFile : implementation.sourceFiles) {
+
+            if ("all.c".equals(sourceFile)) {
+
+                    final File oldFile = new File(Util.joinPath(getUnzipDirectory(), "sources", "all.c"));
+                    final String newFilename = "all_" + implementation.modelIdentifier + ".c";
+                    final File newFile = new File(Util.joinPath(getUnzipDirectory(), "sources", newFilename));
+
+                    // rename all.c to avoid name clashes
+                    if (oldFile.exists() && !newFile.exists()) {
+                        oldFile.renameTo(newFile);
+                    }
+
+                    sourceFile = newFilename;
+            }
+
+            sourceFiles.add(sourceFile);
+        }
+
+        return sourceFiles;
     }
 
     public DefaultMutableTreeNode restoreOutportTree() {
