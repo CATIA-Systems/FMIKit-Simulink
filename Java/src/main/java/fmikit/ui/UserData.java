@@ -48,7 +48,9 @@ public class UserData {
 	
 	public String functionName;
 
-	public static class Port {
+    public boolean resettable;
+
+    public static class Port {
 
 	    public Port() {}
 

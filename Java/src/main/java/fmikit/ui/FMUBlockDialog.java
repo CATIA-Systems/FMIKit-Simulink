@@ -75,6 +75,7 @@ public class FMUBlockDialog extends JDialog {
     private JButton treeTableCollapseAllButton;
     private JButton variablesTreeExpandAllButton;
     private JButton variablesTreeCollapseAllButton;
+    private JCheckBox resettableCheckBox;
 
     public static boolean debugLogging = false;
     public static final String FMI_KIT_VERSION = "2.7";
@@ -582,6 +583,7 @@ public class FMUBlockDialog extends JDialog {
         userData.logToFile = chckbxLogToFile.isSelected();
         userData.sampleTime = txtSampleTime.getText();
         userData.relativeTolerance = txtRelativeTolerance.getText();
+        userData.resettable = resettableCheckBox.isSelected();
 
         if (modelDescription != null) {
 
@@ -663,6 +665,7 @@ public class FMUBlockDialog extends JDialog {
         chckbxDebugLogging.setSelected(userData.debugLogging);
         chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
+        resettableCheckBox.setSelected(userData.resettable);
 
         // TODO: restore outports?
     }
@@ -678,7 +681,8 @@ public class FMUBlockDialog extends JDialog {
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
-            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) continue;
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type))
+                continue;
 
             if ("input".equals(variable.causality)) {
 
@@ -943,6 +947,9 @@ public class FMUBlockDialog extends JDialog {
         params.add(Integer.toString(modelDescription.numberOfContinuousStates));
         params.add(Integer.toString(modelDescription.numberOfEventIndicators));
 
+        // resettable
+        params.add(resettableCheckBox.isSelected() ? "1" : "0");
+
         // structural parameters
         params.add("[" + Util.join(structuralParameterTypes, " ") + "]");
         params.add("[" + Util.join(structuralParameterVRs, " ") + "]");
@@ -1072,7 +1079,8 @@ public class FMUBlockDialog extends JDialog {
 
         for (ScalarVariable variable : scalarVariables) {
 
-            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) continue;
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type))
+                continue;
 
             if ("output".equals(variable.causality)) {
                 if (variable.name.endsWith("]")) {
@@ -1527,16 +1535,16 @@ public class FMUBlockDialog extends JDialog {
 
             if ("all.c".equals(sourceFile)) {
 
-                    final File oldFile = new File(Util.joinPath(getUnzipDirectory(), "sources", "all.c"));
-                    final String newFilename = "all_" + implementation.modelIdentifier + ".c";
-                    final File newFile = new File(Util.joinPath(getUnzipDirectory(), "sources", newFilename));
+                final File oldFile = new File(Util.joinPath(getUnzipDirectory(), "sources", "all.c"));
+                final String newFilename = "all_" + implementation.modelIdentifier + ".c";
+                final File newFile = new File(Util.joinPath(getUnzipDirectory(), "sources", newFilename));
 
-                    // rename all.c to avoid name clashes
-                    if (oldFile.exists() && !newFile.exists()) {
-                        oldFile.renameTo(newFile);
-                    }
+                // rename all.c to avoid name clashes
+                if (oldFile.exists() && !newFile.exists()) {
+                    oldFile.renameTo(newFile);
+                }
 
-                    sourceFile = newFilename;
+                sourceFile = newFilename;
             }
 
             sourceFiles.add(sourceFile);
@@ -1858,13 +1866,13 @@ public class FMUBlockDialog extends JDialog {
         variablesTreeCollapseAllButton.setToolTipText("Collapse all");
         panel13.add(variablesTreeCollapseAllButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         final JPanel panel14 = new JPanel();
-        panel14.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel14.setLayout(new GridLayoutManager(11, 2, new Insets(15, 15, 15, 15), 15, 12));
         panel14.setOpaque(false);
         tabbedPane.addTab("Advanced", panel14);
         txtUnzipDirectory = new JTextField();
         panel14.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final Spacer spacer8 = new Spacer();
-        panel14.add(spacer8, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel14.add(spacer8, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label13 = new JLabel();
         label13.setText("Unzip directory:");
         panel14.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -1922,6 +1930,10 @@ public class FMUBlockDialog extends JDialog {
         chckbxLogFMICalls.setOpaque(false);
         chckbxLogFMICalls.setText("Log FMI calls");
         panel14.add(chckbxLogFMICalls, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        resettableCheckBox = new JCheckBox();
+        resettableCheckBox.setOpaque(false);
+        resettableCheckBox.setText("Resettable");
+        panel14.add(resettableCheckBox, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

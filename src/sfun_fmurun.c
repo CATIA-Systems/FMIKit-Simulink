@@ -57,6 +57,7 @@ typedef enum {
 	offsetTimeParam,
 	nxParam,
 	nzParam,
+    resettableParam,
 	structuralParameterTypesParam,
 	structuralParameterVRsParam,
 	structuralParameterValuesParam,
@@ -159,6 +160,10 @@ static int nx(SimStruct *S) {
 // number of zero-crossings
 static int nz(SimStruct *S) {
     return (int)mxGetScalar(ssGetSFcnParam(S, nzParam));
+}
+
+static bool resettable(SimStruct *S) {
+    return mxGetScalar(ssGetSFcnParam(S, resettableParam));
 }
 
 static int nScalarStartValues(SimStruct *S) {
@@ -606,10 +611,10 @@ static void setOutput(SimStruct *S) {
 						break;
 					}
 				}
-             
-                iy++;
+
+			iy++;
             }
-        } else {
+		} else {
 
 			size_t nValues = outputPortWidth(S, i);
 			FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, i);
@@ -1036,6 +1041,88 @@ static bool isValidVariableType(FMIVariableType type) {
 	}
 }
 
+static void initialize(SimStruct *S) {
+
+    void **p = ssGetPWork(S);
+
+    FMIInstance *instance = p[0];
+    const time_T time = ssGetT(S);
+    const time_T stopTime = ssGetTFinal(S);  // can be -1
+    const bool toleranceDefined = relativeTolerance(S) > 0;
+
+    if (isFMI1(S)) {
+
+        CHECK_ERROR(setStartValues(S))
+            
+        if (isCS(S)) {
+            CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
+        } else {
+            CHECK_STATUS(FMI1SetTime(instance, time))
+            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
+            if (instance->eventInfo1.terminateSimulation) {
+                setErrorStatus(S, "Model requested termination at init");
+                return;
+            }
+        }
+
+    } else if (isFMI2(S)) {
+
+        CHECK_ERROR(setStartValues(S))
+        CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
+        CHECK_STATUS(FMI2EnterInitializationMode(instance))
+        CHECK_STATUS(FMI2ExitInitializationMode(instance))
+
+    } else {
+
+        if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
+            CHECK_STATUS(FMI3EnterConfigurationMode(instance))
+            CHECK_ERROR(setStructualParameters(S))
+            CHECK_STATUS(FMI3ExitConfigurationMode(instance))
+        }
+
+        CHECK_ERROR(setStartValues(S))
+
+        CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
+        CHECK_STATUS(FMI3ExitInitializationMode(instance))
+
+    }
+
+    if (isME(S)) {
+
+        // initialize the continuous states
+        real_T *x = ssGetContStates(S);
+
+        if (nx(S) > 0) {
+
+            if (isFMI1(S)) {
+                CHECK_STATUS(FMI1GetContinuousStates(instance, x, nx(S)))
+            } else if (isFMI2(S)) {
+                CHECK_STATUS(FMI2GetContinuousStates(instance, x, nx(S)))
+            } else {
+                CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
+            }
+        }
+
+        // initialize the event indicators
+        if (nz(S) > 0) {
+
+            real_T *prez = ssGetRWork(S);
+
+            if (isFMI1(S)) {
+                CHECK_STATUS(FMI1GetEventIndicators(instance, prez, nz(S)))
+            } else if (isFMI2(S)) {
+                    CHECK_STATUS(FMI2GetEventIndicators(instance, prez, nz(S)))
+                } else {
+                    CHECK_STATUS(FMI3GetEventIndicators(instance, prez, nz(S)))
+                }
+
+                real_T *z = prez + nz(S);
+
+                memcpy(z, prez, nz(S) * sizeof(real_T));
+        }
+    }
+}
+
 #define MDL_ENABLE
 static void mdlEnable(SimStruct *S) {
     
@@ -1046,7 +1133,7 @@ static void mdlEnable(SimStruct *S) {
     FMIInstance *instance = p[0];
 
     if (instance) {
-        return;
+        return;  // nothing to do
     }
 
     if (nz(S) > 0) {
@@ -1054,9 +1141,6 @@ static void mdlEnable(SimStruct *S) {
     }
 
     const char_T* instanceName = ssGetPath(S);
-    const time_T time = ssGetT(S);
-
-    const bool toleranceDefined = relativeTolerance(S) > 0;
 
     const bool loggingOn = debugLogging(S);
 
@@ -1129,32 +1213,19 @@ static void mdlEnable(SimStruct *S) {
         strcat(fmuResourceLocation, "/resources");
     }
 
-    const time_T stopTime = ssGetTFinal(S);  // can be -1
-
+    
+    // instantiate the FMU
     if (isFMI1(S)) {
 
         if (isCS(S)) {
             CHECK_STATUS(FMI1InstantiateSlave(instance, modelIdentifier, guid, fmuResourceLocation, "application/x-fmu-sharedlibrary", 0, fmi1False, fmi1False, loggingOn))
-            CHECK_ERROR(setStartValues(S))
-            CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
         } else {
             CHECK_STATUS(FMI1InstantiateModel(instance, modelIdentifier, guid, loggingOn))
-            CHECK_ERROR(setStartValues(S))
-            CHECK_STATUS(FMI1SetTime(instance, time))
-            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
-            if (instance->eventInfo1.terminateSimulation) {
-                setErrorStatus(S, "Model requested termination at init");
-                return;
-            }
         }
 
     } else if (isFMI2(S)) {
 
         CHECK_STATUS(FMI2Instantiate(instance, fmuResourceLocation, isCS(S) ? fmi2CoSimulation : fmi2ModelExchange, guid, fmi2False, loggingOn))
-        CHECK_ERROR(setStartValues(S))
-        CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-        CHECK_STATUS(FMI2EnterInitializationMode(instance))
-        CHECK_STATUS(FMI2ExitInitializationMode(instance))
 
     } else {
 
@@ -1164,58 +1235,15 @@ static void mdlEnable(SimStruct *S) {
             CHECK_STATUS(FMI3InstantiateCoSimulation(instance, guid, fmuResourceLocation, fmi3False, loggingOn, fmi3False, NULL, 0, NULL))
         }
 
-        if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
-            CHECK_STATUS(FMI3EnterConfigurationMode(instance))
-            CHECK_ERROR(setStructualParameters(S))
-            CHECK_STATUS(FMI3ExitConfigurationMode(instance))
-        }
-
-        CHECK_ERROR(setStartValues(S))
-
-        CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-        CHECK_STATUS(FMI3ExitInitializationMode(instance))
-
     }
 
+    // initialize the FMU instance
+    CHECK_ERROR(initialize(S))
+
+    // free string parameters
     mxFree((void *)modelIdentifier);
     mxFree((void *)unzipdir);
     mxFree((void *)guid);
-
-    if (isME(S)) {
-
-        // initialize the continuous states
-        real_T *x = ssGetContStates(S);
-
-        if (nx(S) > 0) {
-
-            if (isFMI1(S)) {
-                CHECK_STATUS(FMI1GetContinuousStates(instance, x, nx(S)))
-            } else if (isFMI2(S)) {
-                CHECK_STATUS(FMI2GetContinuousStates(instance, x, nx(S)))
-            } else {
-                CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
-            }
-        }
-
-        // initialize the event indicators
-        if (nz(S) > 0) {
-
-            real_T *prez = ssGetRWork(S);
-
-            if (isFMI1(S)) {
-                CHECK_STATUS(FMI1GetEventIndicators(instance, prez, nz(S)))
-            } else if (isFMI2(S)) {
-                CHECK_STATUS(FMI2GetEventIndicators(instance, prez, nz(S)))
-            } else {
-                CHECK_STATUS(FMI3GetEventIndicators(instance, prez, nz(S)))
-            }
-
-            real_T *z = prez + nz(S);
-
-            memcpy(z, prez, nz(S) * sizeof(real_T));
-        }
-    }
-
 }
 
 #define MDL_DISABLE
@@ -1494,7 +1522,9 @@ static void mdlInitializeSizes(SimStruct *S) {
 	ssSetNumContStates(S, isME(S) ? nx(S) : 0);
 	ssSetNumDiscStates(S, 0);
 
-	if (!ssSetNumInputPorts(S, nu(S))) return;
+    const int_T numInputPorts = nu(S) + (resettable(S) ? 1 : 0);
+
+	if (!ssSetNumInputPorts(S, numInputPorts)) return;
 
 	for (int i = 0; i < nu(S); i++) {
 		ssSetInputPortWidth(S, i, inputPortWidth(S, i));
@@ -1506,6 +1536,13 @@ static void mdlInitializeSizes(SimStruct *S) {
 		logDebug(S, "ssSetInputPortDirectFeedThrough(port=%d, dirFeed=%d)", i, dirFeed);
 	}
 
+    if (resettable(S)) {
+        ssSetInputPortWidth(S, nu(S), 1);
+        ssSetInputPortRequiredContiguous(S, nu(S), true); // direct input signal access
+        ssSetInputPortDataType(S, nu(S), SS_DOUBLE);
+        ssSetInputPortDirectFeedThrough(S, nu(S), true);
+    }
+
 	if (!ssSetNumOutputPorts(S, ny(S))) return;
 
 	for (int i = 0; i < ny(S); i++) {
@@ -1515,10 +1552,10 @@ static void mdlInitializeSizes(SimStruct *S) {
 	}
 
 	ssSetNumSampleTimes(S, 1);
-	ssSetNumRWork(S, 2 * nz(S) + nuv(S)); // prez & z, preu
-	ssSetNumIWork(S, 0);
-	ssSetNumPWork(S, 3); // [FMU, logfile, rootsFound]
-	ssSetNumModes(S, 3); // [stateEvent, timeEvent, stepEvent]
+	ssSetNumRWork(S, 2 * nz(S) + nuv(S) + (resettable(S) ? 1 : 0)); // [pre(z), z, pre(u), pre(reset)]
+	//ssSetNumIWork(S, resettable(S) ? 1 : 0); // pre(reset)
+	ssSetNumPWork(S, 3);                     // [FMU, logfile, rootsFound]
+	ssSetNumModes(S, 3);                     // [stateEvent, timeEvent, stepEvent]
 	ssSetNumNonsampledZCs(S, (isME(S)) ? nz(S) + 1 : 0);
 
 	// specify the sim state compliance to be same as a built-in block
@@ -1562,7 +1599,7 @@ static void mdlStart(SimStruct *S) {
 
     mxFree((void *)logFile);
 
-    logDebug(S, "mdlStart()");    
+	logDebug(S, "mdlStart()");
 }
 #endif /* MDL_START */
 
@@ -1576,6 +1613,18 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 	void **p = ssGetPWork(S);
 
 	FMIInstance *instance = (FMIInstance *)p[0];
+
+    if (resettable(S)) {
+        real_T *preReset = &(ssGetRWork(S)[2 * nz(S) + nuv(S)]);
+        const real_T reset = *ssGetInputPortRealSignal(S, nu(S));
+
+        if (*preReset == 0 && reset > 0) {
+            CHECK_STATUS(FMI2Reset(instance))
+            CHECK_ERROR(initialize(S))
+        }
+
+        *preReset = reset;
+    }
 
 	if (isME(S)) {
 
@@ -1775,41 +1824,41 @@ static void mdlTerminate(SimStruct *S) {
 
     if (instance) {
 
-        if (!ssGetErrorStatus(S)) {
+	if (!ssGetErrorStatus(S)) {
 
-            if (isFMI1(S)) {
+		if (isFMI1(S)) {
+		
+			if (isME(S)) {
+				CHECK_STATUS(FMI1Terminate(instance))
+				FMI1FreeModelInstance(instance);
+			} else {
+				CHECK_STATUS(FMI1TerminateSlave(instance))
+				FMI1FreeSlaveInstance(instance);
+			}
 
-                if (isME(S)) {
-                    CHECK_STATUS(FMI1Terminate(instance))
-                        FMI1FreeModelInstance(instance);
-                } else {
-                    CHECK_STATUS(FMI1TerminateSlave(instance))
-                        FMI1FreeSlaveInstance(instance);
-                }
+		} else if (isFMI2(S)) {
+			
+			CHECK_STATUS(FMI2Terminate(instance))
+			FMI2FreeInstance(instance);
+		
+		} else {
+		
+			CHECK_STATUS(FMI3Terminate(instance))
+			FMI3FreeInstance(instance);
+		
+		}
+	}
 
-            } else if (isFMI2(S)) {
-
-                CHECK_STATUS(FMI2Terminate(instance))
-                    FMI2FreeInstance(instance);
-
-            } else {
-
-                CHECK_STATUS(FMI3Terminate(instance))
-                    FMI3FreeInstance(instance);
-
-            }
-        }
-
-        FMIFreeInstance(instance);
+	FMIFreeInstance(instance);
     }
 
 	FILE *logFile = (FILE *)p[1];
-	
-    if (logFile) {
-		fclose(logFile);
-		p[1] = NULL;
+
+		if (logFile) {
+			fclose(logFile);
+			p[1] = NULL;
+		}
 	}
-}
 
 /*=============================*
 * Required S-function trailer *

@@ -47,5 +47,6 @@ end
 userData.useSourceCode    = ud.useSourceCode;
 userData.functionName     = ud.functionName;
 userData.parameters       = ud.parameters;
+userData.resettable       = ud.resettable;
 
 end
