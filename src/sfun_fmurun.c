@@ -609,7 +609,7 @@ static void setOutput(SimStruct *S) {
              
                 iy++;
             }
-		} else {
+        } else {
 
 			size_t nValues = outputPortWidth(S, i);
 			FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, i);
@@ -925,7 +925,7 @@ static void update(SimStruct *S) {
 			const bool falling = (prez[i] > 0 && z[i] <= 0) || (prez[i] == 0 && z[i] < 0);
 
 			if (rising || falling) {
-				logDebug(S, "State event %s z[%d] at t=%.16g\n", rising ? "-\\+" : "+/-", i, instance->time);
+				logDebug(S, "State event %s z[%d] at t=%.16g", rising ? "-\\+" : "+/-", i, instance->time);
 				stateEvent = true;
 				rootsFound[i] = rising ? 1 : -1;
 			} else {
@@ -1034,6 +1034,193 @@ static bool isValidVariableType(FMIVariableType type) {
 	default:
 		return false;
 	}
+}
+
+#define MDL_ENABLE
+static void mdlEnable(SimStruct *S) {
+    
+    logDebug(S, "mdlEnable()");
+
+    void **p = ssGetPWork(S);
+
+    FMIInstance *instance = p[0];
+
+    if (instance) {
+        return;
+    }
+
+    if (nz(S) > 0) {
+        p[2] = calloc(nz(S), sizeof(fmi3Int32)); // rootsFound
+    }
+
+    const char_T* instanceName = ssGetPath(S);
+    const time_T time = ssGetT(S);
+
+    const bool toleranceDefined = relativeTolerance(S) > 0;
+
+    const bool loggingOn = debugLogging(S);
+
+    const char *modelIdentifier = getStringParam(S, modelIdentifierParam, 0);
+
+#ifdef GRTFMI
+    char *unzipdir = (char *)mxMalloc(MAX_PATH);
+    strncpy(unzipdir, FMU_RESOURCES_DIR, MAX_PATH);
+    strncat(unzipdir, "/", MAX_PATH);
+    strncat(unzipdir, modelIdentifier, MAX_PATH);
+#else
+    char *unzipdir = getStringParam(S, unzipDirectoryParam, 0);
+#endif
+
+#ifdef _WIN32
+    char libraryPath[MAX_PATH];
+    strncpy(libraryPath, unzipdir, MAX_PATH);
+    PathAppend(libraryPath, "binaries");
+    if (isFMI1(S) || isFMI2(S)) {
+#ifdef _WIN64
+        PathAppend(libraryPath, "win64");
+#else
+        PathAppend(libraryPath, "win32");
+#endif
+    } else {
+#ifdef _WIN64
+        PathAppend(libraryPath, "x86_64-windows");
+#else
+        PathAppend(libraryPath, "i686-windows");
+#endif
+    }
+    PathAppend(libraryPath, modelIdentifier);
+    strncat(libraryPath, ".dll", MAX_PATH);
+#elif defined(__APPLE__)
+    char libraryPath[PATH_MAX];
+    strncpy(libraryPath, unzipdir, PATH_MAX);
+    strncat(libraryPath, "/binaries/darwin64/", PATH_MAX);
+    strncat(libraryPath, modelIdentifier, PATH_MAX);
+    strncat(libraryPath, ".dylib", PATH_MAX);
+#else
+    char libraryPath[PATH_MAX];
+    strncpy(libraryPath, unzipdir, PATH_MAX);
+    strncat(libraryPath, "/binaries/linux64/", PATH_MAX);
+    strncat(libraryPath, modelIdentifier, PATH_MAX);
+    strncat(libraryPath, ".so", PATH_MAX);
+#endif
+
+    instance = FMICreateInstance(instanceName, libraryPath, cb_logMessage, logFMICalls(S) ? cb_logFunctionCall : NULL);
+
+    instance->userData = S;
+
+    p[0] = instance;
+
+    const char *guid = getStringParam(S, guidParam, 0);
+
+    char fmuResourceLocation[INTERNET_MAX_URL_LENGTH];
+
+#ifdef _WIN32
+    DWORD fmuLocationLength = INTERNET_MAX_URL_LENGTH;
+    if (UrlCreateFromPath(unzipdir, fmuResourceLocation, &fmuLocationLength, 0) != S_OK) {
+        setErrorStatus(S, "Failed to create fmuResourceLocation.");
+        return;
+    }
+#else
+    strcpy(fmuResourceLocation, "file://");
+    strcat(fmuResourceLocation, unzipdir);
+#endif
+
+    if (!isFMI1(S)) {
+        strcat(fmuResourceLocation, "/resources");
+    }
+
+    const time_T stopTime = ssGetTFinal(S);  // can be -1
+
+    if (isFMI1(S)) {
+
+        if (isCS(S)) {
+            CHECK_STATUS(FMI1InstantiateSlave(instance, modelIdentifier, guid, fmuResourceLocation, "application/x-fmu-sharedlibrary", 0, fmi1False, fmi1False, loggingOn))
+            CHECK_ERROR(setStartValues(S))
+            CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
+        } else {
+            CHECK_STATUS(FMI1InstantiateModel(instance, modelIdentifier, guid, loggingOn))
+            CHECK_ERROR(setStartValues(S))
+            CHECK_STATUS(FMI1SetTime(instance, time))
+            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
+            if (instance->eventInfo1.terminateSimulation) {
+                setErrorStatus(S, "Model requested termination at init");
+                return;
+            }
+        }
+
+    } else if (isFMI2(S)) {
+
+        CHECK_STATUS(FMI2Instantiate(instance, fmuResourceLocation, isCS(S) ? fmi2CoSimulation : fmi2ModelExchange, guid, fmi2False, loggingOn))
+        CHECK_ERROR(setStartValues(S))
+        CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
+        CHECK_STATUS(FMI2EnterInitializationMode(instance))
+        CHECK_STATUS(FMI2ExitInitializationMode(instance))
+
+    } else {
+
+        if (isME(S)) {
+            CHECK_STATUS(FMI3InstantiateModelExchange(instance, guid, fmuResourceLocation, fmi3False, loggingOn))
+        } else {
+            CHECK_STATUS(FMI3InstantiateCoSimulation(instance, guid, fmuResourceLocation, fmi3False, loggingOn, fmi3False, NULL, 0, NULL))
+        }
+
+        if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
+            CHECK_STATUS(FMI3EnterConfigurationMode(instance))
+            CHECK_ERROR(setStructualParameters(S))
+            CHECK_STATUS(FMI3ExitConfigurationMode(instance))
+        }
+
+        CHECK_ERROR(setStartValues(S))
+
+        CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
+        CHECK_STATUS(FMI3ExitInitializationMode(instance))
+
+    }
+
+    mxFree((void *)modelIdentifier);
+    mxFree((void *)unzipdir);
+    mxFree((void *)guid);
+
+    if (isME(S)) {
+
+        // initialize the continuous states
+        real_T *x = ssGetContStates(S);
+
+        if (nx(S) > 0) {
+
+            if (isFMI1(S)) {
+                CHECK_STATUS(FMI1GetContinuousStates(instance, x, nx(S)))
+            } else if (isFMI2(S)) {
+                CHECK_STATUS(FMI2GetContinuousStates(instance, x, nx(S)))
+            } else {
+                CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
+            }
+        }
+
+        // initialize the event indicators
+        if (nz(S) > 0) {
+
+            real_T *prez = ssGetRWork(S);
+
+            if (isFMI1(S)) {
+                CHECK_STATUS(FMI1GetEventIndicators(instance, prez, nz(S)))
+            } else if (isFMI2(S)) {
+                CHECK_STATUS(FMI2GetEventIndicators(instance, prez, nz(S)))
+            } else {
+                CHECK_STATUS(FMI3GetEventIndicators(instance, prez, nz(S)))
+            }
+
+            real_T *z = prez + nz(S);
+
+            memcpy(z, prez, nz(S) * sizeof(real_T));
+        }
+    }
+
+}
+
+#define MDL_DISABLE
+static void mdlDisable(SimStruct *S) {
+    logDebug(S, "mdlDisable()");
 }
 
 #define MDL_CHECK_PARAMETERS
@@ -1373,193 +1560,11 @@ static void mdlStart(SimStruct *S) {
 	    p[1] = fopen(logFile, "w");
 	}
 
-	if (nz(S) > 0) {
-		p[2] = calloc(nz(S), sizeof(fmi3Int32));
-	} else {
-		p[2] = NULL;
-	}
+    mxFree((void *)logFile);
 
-	logDebug(S, "mdlStart()");
-
-	const char_T* instanceName = ssGetPath(S);
-	time_T time = ssGetT(S);
-
-	bool toleranceDefined = relativeTolerance(S) > 0;
-
-    bool loggingOn = debugLogging(S);
-
-	const char *modelIdentifier = getStringParam(S, modelIdentifierParam, 0);
-
-#ifdef GRTFMI
-	char *unzipdir = (char *)mxMalloc(MAX_PATH);
-	strncpy(unzipdir, FMU_RESOURCES_DIR, MAX_PATH);
-	strncat(unzipdir, "/", MAX_PATH);
-	strncat(unzipdir, modelIdentifier, MAX_PATH);
-#else
-	char *unzipdir = getStringParam(S, unzipDirectoryParam, 0);
-#endif
-
-#ifdef _WIN32
-	char libraryPath[MAX_PATH];
-	strncpy(libraryPath, unzipdir, MAX_PATH);
-	PathAppend(libraryPath, "binaries");
-	if (isFMI1(S) || isFMI2(S)) {
-#ifdef _WIN64
-		PathAppend(libraryPath, "win64");
-#else
-		PathAppend(libraryPath, "win32");
-#endif
-	} else {
-#ifdef _WIN64
-		PathAppend(libraryPath, "x86_64-windows");
-#else
-		PathAppend(libraryPath, "i686-windows");
-#endif
-	}
-	PathAppend(libraryPath, modelIdentifier);
-	strncat(libraryPath, ".dll", MAX_PATH);
-#elif defined(__APPLE__)
-    char libraryPath[PATH_MAX];
-    strncpy(libraryPath, unzipdir, PATH_MAX);
-    strncat(libraryPath, "/binaries/darwin64/", PATH_MAX);
-    strncat(libraryPath, modelIdentifier, PATH_MAX);
-    strncat(libraryPath, ".dylib", PATH_MAX);
-#else
-	char libraryPath[PATH_MAX];
-	strncpy(libraryPath, unzipdir, PATH_MAX);
-	strncat(libraryPath, "/binaries/linux64/", PATH_MAX);
-	strncat(libraryPath, modelIdentifier, PATH_MAX);
-	strncat(libraryPath, ".so", PATH_MAX);
-#endif
-
-	FMIInstance *instance = FMICreateInstance(instanceName, libraryPath, cb_logMessage, logFMICalls(S) ? cb_logFunctionCall : NULL);
-
-	instance->userData = S;
-
-	p[0] = instance;
-
-	const char *guid = getStringParam(S, guidParam, 0);
-
-	char fmuResourceLocation[INTERNET_MAX_URL_LENGTH];
-
-#ifdef _WIN32
-	DWORD fmuLocationLength = INTERNET_MAX_URL_LENGTH;
-	if (UrlCreateFromPath(unzipdir, fmuResourceLocation, &fmuLocationLength, 0) != S_OK) {
-		setErrorStatus(S, "Failed to create fmuResourceLocation.");
-		return;
-	}
-#else
-	strcpy(fmuResourceLocation, "file://");
-	strcat(fmuResourceLocation, unzipdir);
-#endif
-
-	if (!isFMI1(S)) {
-		strcat(fmuResourceLocation, "/resources");
-	}
-
-	const time_T stopTime = ssGetTFinal(S);  // can be -1
-
-	if (isFMI1(S)) {
-
-		if (isCS(S)) {
-			CHECK_STATUS(FMI1InstantiateSlave(instance, modelIdentifier, guid, fmuResourceLocation, "application/x-fmu-sharedlibrary", 0, fmi1False, fmi1False, loggingOn))
-			CHECK_ERROR(setStartValues(S))
-			CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
-		} else {
-			CHECK_STATUS(FMI1InstantiateModel(instance, modelIdentifier, guid, loggingOn))
-			CHECK_ERROR(setStartValues(S))
-			CHECK_STATUS(FMI1SetTime(instance, time))
-			CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
-			if (instance->eventInfo1.terminateSimulation) {
-				setErrorStatus(S, "Model requested termination at init");
-				return;
-			}
-		}
-
-	} else if (isFMI2(S)) {
-
-		CHECK_STATUS(FMI2Instantiate(instance, fmuResourceLocation, isCS(S) ? fmi2CoSimulation : fmi2ModelExchange, guid, fmi2False, loggingOn))
-		CHECK_ERROR(setStartValues(S))
-		CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-		CHECK_STATUS(FMI2EnterInitializationMode(instance))
-		CHECK_STATUS(FMI2ExitInitializationMode(instance))
-	
-	} else {
-
-		if (isME(S)) {
-			CHECK_STATUS(FMI3InstantiateModelExchange(instance, guid, fmuResourceLocation, fmi3False, loggingOn))
-		} else {
-			CHECK_STATUS(FMI3InstantiateCoSimulation(instance, guid, fmuResourceLocation, fmi3False, loggingOn, fmi3False, NULL, 0, NULL))
-		}
-
-		if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
-			CHECK_STATUS(FMI3EnterConfigurationMode(instance))
-			CHECK_ERROR(setStructualParameters(S))
-			CHECK_STATUS(FMI3ExitConfigurationMode(instance))
-		}
-
-		CHECK_ERROR(setStartValues(S))
-
-		CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-		CHECK_STATUS(FMI3ExitInitializationMode(instance))
-
-	}
-
-	mxFree((void *)logFile);
-	mxFree((void *)modelIdentifier);
-	mxFree((void *)unzipdir);
-	mxFree((void *)guid);
+    logDebug(S, "mdlStart()");    
 }
 #endif /* MDL_START */
-
-
-#define MDL_INITIALIZE_CONDITIONS
-#if defined(MDL_INITIALIZE_CONDITIONS)
-static void mdlInitializeConditions(SimStruct *S) {
-
-	logDebug(S, "mdlInitializeConditions()");
-
-	if (isCS(S)) {
-		return;  // nothing to do
-	}
-
-	void **p = ssGetPWork(S);
-
-	FMIInstance *instance = (FMIInstance *)p[0];
-
-	// initialize the continuous states
-	real_T *x = ssGetContStates(S);
-
-	if (nx(S) > 0) {
-
-		if (isFMI1(S)) {
-			CHECK_STATUS(FMI1GetContinuousStates(instance, x, nx(S)))
-		} else if (isFMI2(S)) {
-			CHECK_STATUS(FMI2GetContinuousStates(instance, x, nx(S)))
-		} else {
-			CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
-		}
-	}
-
-	// initialize the event indicators
-	if (nz(S) > 0) {
-
-		real_T *prez = ssGetRWork(S);
-
-		if (isFMI1(S)) {
-			CHECK_STATUS(FMI1GetEventIndicators(instance, prez, nz(S)))
-		} else if (isFMI2(S)) {
-			CHECK_STATUS(FMI2GetEventIndicators(instance, prez, nz(S)))
-		} else {
-			CHECK_STATUS(FMI3GetEventIndicators(instance, prez, nz(S)))
-		}
-
-		real_T *z = prez + nz(S);
-
-		memcpy(z, prez, nz(S) * sizeof(real_T));
-	}
-}
-#endif
 
 
 static void mdlOutputs(SimStruct *S, int_T tid) {
@@ -1768,42 +1773,41 @@ static void mdlTerminate(SimStruct *S) {
 
 	FMIInstance *instance = (FMIInstance *)p[0];
 
-	if (!ssGetErrorStatus(S)) {
+    if (instance) {
 
-		if (isFMI1(S)) {
-		
-			if (isME(S)) {
-				CHECK_STATUS(FMI1Terminate(instance))
-				FMI1FreeModelInstance(instance);
-			} else {
-				CHECK_STATUS(FMI1TerminateSlave(instance))
-				FMI1FreeSlaveInstance(instance);
-			}
+        if (!ssGetErrorStatus(S)) {
 
-		} else if (isFMI2(S)) {
-			
-			CHECK_STATUS(FMI2Terminate(instance))
-			FMI2FreeInstance(instance);
-		
-		} else {
-		
-			CHECK_STATUS(FMI3Terminate(instance))
-			FMI3FreeInstance(instance);
-		
-		}
-	}
+            if (isFMI1(S)) {
 
-	FMIFreeInstance(instance);
+                if (isME(S)) {
+                    CHECK_STATUS(FMI1Terminate(instance))
+                        FMI1FreeModelInstance(instance);
+                } else {
+                    CHECK_STATUS(FMI1TerminateSlave(instance))
+                        FMI1FreeSlaveInstance(instance);
+                }
 
-	FILE *logFile = NULL;
+            } else if (isFMI2(S)) {
 
-	if (p) {
-		logFile = (FILE *)p[1];
-		if (logFile) {
-			fclose(logFile);
-			void **p = ssGetPWork(S);
-			p[1] = NULL;
-		}
+                CHECK_STATUS(FMI2Terminate(instance))
+                    FMI2FreeInstance(instance);
+
+            } else {
+
+                CHECK_STATUS(FMI3Terminate(instance))
+                    FMI3FreeInstance(instance);
+
+            }
+        }
+
+        FMIFreeInstance(instance);
+    }
+
+	FILE *logFile = (FILE *)p[1];
+	
+    if (logFile) {
+		fclose(logFile);
+		p[1] = NULL;
 	}
 }
 
