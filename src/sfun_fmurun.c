@@ -557,7 +557,7 @@ static void setOutput(SimStruct *S) {
 
 	FMIInstance *instance = (FMIInstance *)p[0];
 
-	int iy = 0;
+	int iy = 0;  // output port variable index
 
 	for (int i = 0; i < ny(S); i++) {
 
@@ -606,10 +606,9 @@ static void setOutput(SimStruct *S) {
 						break;
 					}
 				}
-			}
-
-			iy++;
-
+             
+                iy++;
+            }
 		} else {
 
 			size_t nValues = outputPortWidth(S, i);
