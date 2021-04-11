@@ -27,7 +27,7 @@ static void cb_logMessage3(fmi3InstanceEnvironment instanceEnvironment,
 	fmi3Status status,
 	fmi3String category,
 	fmi3String message) {
-	
+
 	FMIInstance *instance = instanceEnvironment;
 
 	instance->logMessage(instance, status, category, message);
@@ -98,7 +98,7 @@ fmi3Status FMI3SetDebugLogging(FMIInstance *instance,
 static fmi3Status loadSymbols3(FMIInstance *instance) {
 
 #if !defined(FMI_VERSION) || FMI_VERSION == 3
-	
+
 	instance->fmiVersion = FMIVersion3;
 
 	/***************************************************
@@ -213,7 +213,7 @@ static fmi3Status loadSymbols3(FMIInstance *instance) {
 	return fmi3OK;
 
 #else
-    
+
     return fmi3Error;
 
 #endif
@@ -230,11 +230,11 @@ fmi3Status FMI3InstantiateModelExchange(
 	fmi3Status status = loadSymbols3(instance);
 
 	instance->component = instance->fmi3InstantiateModelExchange(instance->name, instantiationToken, resourceLocation, visible, loggingOn, instance, cb_logMessage3);
-	
+
 	if (!instance->component) {
 		return fmi3Error;
 	}
-	
+
 	instance->state = FMI2InstantiatedState;
 
 	return status;
@@ -257,16 +257,16 @@ fmi3Status FMI3InstantiateCoSimulation(
 
 	instance->component = instance->fmi3InstantiateCoSimulation(
 		instance->name,
-		instantiationToken, 
-		resourceLocation, 
-		visible, 
-		loggingOn, 
+		instantiationToken,
+		resourceLocation,
+		visible,
+		loggingOn,
 		eventModeUsed,
 		fmi3False,
-		requiredIntermediateVariables, 
-		nRequiredIntermediateVariables, 
-		instance, 
-		cb_logMessage3, 
+		requiredIntermediateVariables,
+		nRequiredIntermediateVariables,
+		instance,
+		cb_logMessage3,
 		intermediateUpdate);
 
 	if (!instance->component) {
@@ -336,8 +336,8 @@ fmi3Status FMI3EnterInitializationMode(FMIInstance *instance,
 
 	instance->state = FMI2InitializationModeState;
 
-	CALL_ARGS(EnterInitializationMode, 
-		"fmi3EnterInitializationMode(toleranceDefined=%d, tolerance=%g, startTime=%g, stopTimeDefined=%d, stopTime=%.16g)",
+	CALL_ARGS(EnterInitializationMode,
+		"fmi3EnterInitializationMode(toleranceDefined=%d, tolerance=%.16g, startTime=%.16g, stopTimeDefined=%d, stopTime=%.16g)",
 		toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
 }
 
@@ -359,8 +359,8 @@ fmi3Status FMI3EnterEventMode(FMIInstance *instance,
 
 	if (instance->logFunctionCall) {
 		FMIValuesToString(instance, nEventIndicators, rootsFound, FMIInt32Type);
-		instance->logFunctionCall(instance, status, 
-			"fmi3EnterEventMode(stepEvent=%d, stateEvent=%d, rootsFound=%s, nEventIndicators=%zu, timeEvent=%d)", 
+		instance->logFunctionCall(instance, status,
+			"fmi3EnterEventMode(stepEvent=%d, stateEvent=%d, rootsFound=%s, nEventIndicators=%zu, timeEvent=%d)",
 			stepEvent, stateEvent, instance->buf2, nEventIndicators, timeEvent);
 	}
 
@@ -483,11 +483,11 @@ fmi3Status FMI3GetBinary(FMIInstance *instance,
 
 	fmi3Status status = instance->fmi3GetBinary(instance->component, valueReferences, nValueReferences, sizes, values, nValues);
 
-	if (instance->logFunctionCall) { 
-		FMIValueReferencesToString(instance, valueReferences, nValueReferences); 
-		FMIValuesToString(instance, nValues, values, FMIBinaryType); 
-		instance->logFunctionCall(instance, status, "fmi3GetBinary(valueReferences=%s, nValueReferences=%zu, sizes=%p, values=%s, nValues=%zu)", instance->buf1, nValueReferences, sizes, instance->buf2, nValues); 
-	} 
+	if (instance->logFunctionCall) {
+		FMIValueReferencesToString(instance, valueReferences, nValueReferences);
+		FMIValuesToString(instance, nValues, values, FMIBinaryType);
+		instance->logFunctionCall(instance, status, "fmi3GetBinary(valueReferences=%s, nValueReferences=%zu, sizes=%p, values=%s, nValues=%zu)", instance->buf1, nValueReferences, sizes, instance->buf2, nValues);
+	}
 
 	return status;
 }
@@ -810,7 +810,7 @@ fmi3Status FMI3CompletedIntegratorStep(FMIInstance *instance,
 
 /* Providing independent variables and re-initialization of caching */
 fmi3Status FMI3SetTime(FMIInstance *instance, fmi3Float64 time) {
-	CALL_ARGS(SetTime, "time=%g", time);
+	CALL_ARGS(SetTime, "time=%.16g", time);
 }
 
 fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
@@ -929,7 +929,7 @@ fmi3Status FMI3DoStep(FMIInstance *instance,
 
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi3DoStep(currentCommunicationPoint=%g, communicationStepSize=%g, noSetFMUStatePriorToCurrentPoint=%d, eventEncountered=%d, terminate=%d, earlyReturn=%d, lastSuccessfulTime=%g",
+			"fmi3DoStep(currentCommunicationPoint=%.16g, communicationStepSize=%.16g, noSetFMUStatePriorToCurrentPoint=%d, eventEncountered=%d, terminate=%d, earlyReturn=%d, lastSuccessfulTime=%.16g",
 			currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, *eventEncountered, *terminate, *earlyReturn, *lastSuccessfulTime);
 	}
 
@@ -941,7 +941,7 @@ fmi3Status FMI3ActivateModelPartition(FMIInstance *instance,
 	size_t clockElementIndex,
 	fmi3Float64 activationTime) {
 	CALL_ARGS(ActivateModelPartition,
-		"clockReference=%u, clockElementIndex=%zu, activationTime=%g",
+		"clockReference=%u, clockElementIndex=%zu, activationTime=%.16g",
 		clockReference, clockElementIndex, activationTime);
 }
 

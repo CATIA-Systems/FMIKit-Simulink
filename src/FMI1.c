@@ -14,9 +14,9 @@
 static FMIInstance *currentInstance = NULL;
 
 static void cb_logMessage1(fmi1Component c, fmi1String instanceName, fmi1Status status, fmi1String category, fmi1String message, ...) {
-	
+
 	if (!currentInstance) return;
-	
+
 	char buf[FMI_MAX_MESSAGE_LENGTH];
 
 	va_list args;
@@ -132,7 +132,7 @@ const char*   FMI1GetModelTypesPlatform(FMIInstance *instance) {
 }
 
 const char*   FMI1GetVersion(FMIInstance *instance) {
-	currentInstance = instance; 
+	currentInstance = instance;
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, FMIOK, "fmiGetVersion()");
 	}
@@ -146,7 +146,7 @@ fmi1Status FMI1InstantiateModel(FMIInstance *instance, fmi1String modelIdentifie
 	instance->fmiVersion = FMIVersion1;
 
 	fmi1Status status = fmi1OK;
-	
+
 	/***************************************************
 	 Common Functions for FMI 1.0
 	****************************************************/
@@ -203,14 +203,14 @@ void FMI1FreeModelInstance(FMIInstance *instance) {
 	currentInstance = instance;
 
 	instance->fmi1FreeModelInstance(instance->component);
-	
+
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, FMIOK, "fmi1FreeModelInstance()");
 	}
 }
 
 fmi1Status    FMI1SetTime(FMIInstance *instance, fmi1Real time) {
-	CALL_ARGS(SetTime, "time=%g", time)
+	CALL_ARGS(SetTime, "time=%.16g", time)
 }
 
 fmi1Status    FMI1SetContinuousStates(FMIInstance *instance, const fmi1Real x[], size_t nx) {
@@ -238,12 +238,12 @@ fmi1Status    FMI1Initialize(FMIInstance *instance, fmi1Boolean toleranceControl
 	fmi1Status status = instance->fmi1Initialize(instance->component, toleranceControlled, relativeTolerance, e);
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi1Initialize(toleranceControlled=%d, relativeTolerance=%g, eventInfo={iterationConverged=%d, stateValueReferencesChanged=%d, stateValuesChanged=%d, terminateSimulation=%d, upcomingTimeEvent=%d, nextEventTime=%g})", 
+			"fmi1Initialize(toleranceControlled=%d, relativeTolerance=%.16g, eventInfo={iterationConverged=%d, stateValueReferencesChanged=%d, stateValuesChanged=%d, terminateSimulation=%d, upcomingTimeEvent=%d, nextEventTime=%.16g})",
 			toleranceControlled, relativeTolerance, e->iterationConverged, e->stateValueReferencesChanged, e->stateValuesChanged, e->terminateSimulation, e->upcomingTimeEvent, e->nextEventTime);
 	}
 	return status;
 
-	
+
 }
 
 fmi1Status    FMI1GetDerivatives(FMIInstance *instance, fmi1Real derivatives[], size_t nx) {
@@ -272,7 +272,7 @@ fmi1Status    FMI1EventUpdate(FMIInstance *instance, fmi1Boolean intermediateRes
 	fmi1Status status = instance->fmi1EventUpdate(instance->component, intermediateResults, e);
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi1Initialize(intermediateResults=%d, eventInfo={iterationConverged=%d, stateValueReferencesChanged=%d, stateValuesChanged=%d, terminateSimulation=%d, upcomingTimeEvent=%d, nextEventTime=%g})",
+			"fmi1Initialize(intermediateResults=%d, eventInfo={iterationConverged=%d, stateValueReferencesChanged=%d, stateValuesChanged=%d, terminateSimulation=%d, upcomingTimeEvent=%d, nextEventTime=%.16g})",
 			intermediateResults, e->iterationConverged, e->stateValueReferencesChanged, e->stateValuesChanged, e->terminateSimulation, e->upcomingTimeEvent, e->nextEventTime);
 	}
 	return status;
@@ -374,7 +374,7 @@ fmi1Status FMI1InstantiateSlave(FMIInstance *instance, fmi1String modelIdentifie
 
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi1InstantiateSlave(instanceName=\"%s\", fmuGUID=\"%s\", fmuLocation=\"%s\", mimeType=\"%s\", timeout=%g, visible=%d, interactive=%d, functions=0x%p, loggingOn=%d)",
+			"fmi1InstantiateSlave(instanceName=\"%s\", fmuGUID=\"%s\", fmuLocation=\"%s\", mimeType=\"%s\", timeout=%.16g, visible=%d, interactive=%d, functions=0x%p, loggingOn=%d)",
 			instance->name, fmuGUID, fmuLocation, mimeType, timeout, visible, interactive, &instance->functions1, loggingOn);
 	}
 
@@ -383,7 +383,7 @@ fail:
 }
 
 fmi1Status    FMI1InitializeSlave(FMIInstance *instance, fmi1Real tStart, fmi1Boolean stopTimeDefined, fmi1Real tStop) {
-	CALL_ARGS(InitializeSlave, "tStart=%g, stopTimeDefined=%d, tStop=%g", tStart, stopTimeDefined, tStop);
+	CALL_ARGS(InitializeSlave, "tStart=%.16g, stopTimeDefined=%d, tStop=%.16g", tStart, stopTimeDefined, tStop);
 }
 
 fmi1Status    FMI1TerminateSlave(FMIInstance *instance) {
@@ -423,7 +423,7 @@ fmi1Status    FMI1DoStep(FMIInstance *instance, fmi1Real currentCommunicationPoi
 
 	instance->time = currentCommunicationPoint + communicationStepSize;
 
-	CALL_ARGS(DoStep, "currentCommunicationPoint=%g, communicationStepSize=%g, newStep=%d",
+	CALL_ARGS(DoStep, "currentCommunicationPoint=%.16g, communicationStepSize=%.16g, newStep=%d",
 		currentCommunicationPoint, communicationStepSize, newStep)
 }
 

@@ -23,9 +23,9 @@
 
 
 static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2String instanceName, fmi2Status status, fmi2String category, fmi2String message, ...) {
-	
+
 	FMIInstance *instance = componentEnvironment;
-	
+
 	char buf[FMI_MAX_MESSAGE_LENGTH];
 
 	va_list args;
@@ -216,9 +216,9 @@ fail:
 }
 
 void FMI2FreeInstance(FMIInstance *instance) {
-	
+
 	instance->fmi2FreeInstance(instance->component);
-	
+
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, FMIOK, "fmi2FreeInstance()");
 	}
@@ -233,8 +233,8 @@ fmi2Status FMI2SetupExperiment(FMIInstance *instance,
 	fmi2Real stopTime) {
 
 	instance->time = startTime;
-	
-	CALL_ARGS(SetupExperiment, "toleranceDefined=%d, tolerance=%g, startTime=%g, stopTimeDefined=%d, stopTime=%g", toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+
+	CALL_ARGS(SetupExperiment, "toleranceDefined=%d, tolerance=%.16g, startTime=%.16g, stopTimeDefined=%d, stopTime=%.16g", toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
 }
 
 fmi2Status FMI2EnterInitializationMode(FMIInstance *instance) {
@@ -325,7 +325,7 @@ fmi2Status FMI2GetDirectionalDerivative(FMIInstance *instance,
 	const fmi2ValueReference vKnown_ref[], size_t nKnown,
 	const fmi2Real dvKnown[],
 	fmi2Real dvUnknown[]) {
-	CALL_ARGS(GetDirectionalDerivative, "vUnknown_ref=0x%p, nUnknown=%zu, vKnown_ref=0x%p, nKnown=%zu, dvKnown=0x%p, dvUnknown=0x%p", 
+	CALL_ARGS(GetDirectionalDerivative, "vUnknown_ref=0x%p, nUnknown=%zu, vKnown_ref=0x%p, nKnown=%zu, dvKnown=0x%p, dvUnknown=0x%p",
 		vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
 }
 
@@ -343,7 +343,7 @@ fmi2Status FMI2NewDiscreteStates(FMIInstance *instance, fmi2EventInfo *eventInfo
 	fmi2Status status = instance->fmi2NewDiscreteStates(instance->component, eventInfo);
 	if (instance->logFunctionCall) {
 		instance->logFunctionCall(instance, status,
-			"fmi2NewDiscreteStates(eventInfo={newDiscreteStatesNeeded=%d, terminateSimulation=%d, nominalsOfContinuousStatesChanged=%d, valuesOfContinuousStatesChanged=%d, nextEventTimeDefined=%d, nextEventTime=%g})",
+			"fmi2NewDiscreteStates(eventInfo={newDiscreteStatesNeeded=%d, terminateSimulation=%d, nominalsOfContinuousStatesChanged=%d, valuesOfContinuousStatesChanged=%d, nextEventTimeDefined=%d, nextEventTime=%.16g})",
 			eventInfo->newDiscreteStatesNeeded, eventInfo->terminateSimulation, eventInfo->nominalsOfContinuousStatesChanged, eventInfo->valuesOfContinuousStatesChanged, eventInfo->nextEventTimeDefined, eventInfo->nextEventTime);
 	}
 	return status;
@@ -367,7 +367,7 @@ fmi2Status FMI2CompletedIntegratorStep(FMIInstance *instance,
 
 /* Providing independent variables and re-initialization of caching */
 fmi2Status FMI2SetTime(FMIInstance *instance, fmi2Real time) {
-	CALL_ARGS(SetTime, "time=%g", time)
+	CALL_ARGS(SetTime, "time=%.16g", time)
 }
 
 fmi2Status FMI2SetContinuousStates(FMIInstance *instance, const fmi2Real x[], size_t nx) {
@@ -441,8 +441,8 @@ fmi2Status FMI2DoStep(FMIInstance *instance,
 	fmi2Boolean   noSetFMUStatePriorToCurrentPoint) {
 
 	instance->time = currentCommunicationPoint + communicationStepSize;
-	
-	CALL_ARGS(DoStep, "currentCommunicationPoint=%g, communicationStepSize=%g, noSetFMUStatePriorToCurrentPoint=%d",
+
+	CALL_ARGS(DoStep, "currentCommunicationPoint=%.16g, communicationStepSize=%.16g, noSetFMUStatePriorToCurrentPoint=%d",
 		currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
 }
 
@@ -462,7 +462,7 @@ fmi2Status FMI2GetStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Stat
 fmi2Status FMI2GetRealStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Real* value) {
 	fmi2Status status = instance->fmi2GetRealStatus(instance->component, s, value);
 	if (instance->logFunctionCall) {
-		instance->logFunctionCall(instance, status, "fmi2GetRealStatus(s=%s, value=%g)", s, *value);
+		instance->logFunctionCall(instance, status, "fmi2GetRealStatus(s=%s, value=%.16g)", s, *value);
 	}
 	return status;
 }
