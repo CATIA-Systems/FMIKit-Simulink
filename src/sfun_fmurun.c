@@ -79,6 +79,22 @@ typedef enum {
 
 } Parameter;
 
+static size_t typeSizes[13] = {
+    sizeof(real32_T),  //FMIFloat32Type,
+    sizeof(real32_T),  //FMIDiscreteFloat32Type,
+    sizeof(real_T),    //FMIFloat64Type,
+    sizeof(real_T),    //FMIDiscreteFloat64Type,
+    sizeof(int8_T),    //FMIInt8Type,
+    sizeof(uint8_T),   //FMIUInt8Type,
+    sizeof(int16_T),   //FMIInt16Type,
+    sizeof(uint16_T),  //FMIUInt16Type,
+    sizeof(int32_T),   //FMIInt32Type,
+    sizeof(uint32_T),  //FMIUInt32Type,
+    sizeof(int32_T),   //FMIInt64Type,
+    sizeof(uint32_T),  //FMIUInt64Type,
+    sizeof(boolean_T), //FMIBooleanType,
+};
+
 static char* getStringParam(SimStruct *S, Parameter parameter, int index) {
 
 	const mxArray *array = ssGetSFcnParam(S, parameter);
@@ -439,13 +455,17 @@ static void setErrorStatus(SimStruct *S, const char *message, ...) {
 	va_end(args);
 }
 
-static void setInput(SimStruct *S, bool direct) {
+static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent) {
+
+    *inputEvent = false;
 
 	void **p = ssGetPWork(S);
 
 	FMIInstance *instance = (FMIInstance *)p[0];
+    const char *preU = p[3];
 
-	int iu = 0;
+	int iu  = 0;  // input port index
+    int ipu = 0;  // previous input index
 
 	for (int i = 0; i < nu(S); i++) {
 
@@ -465,6 +485,23 @@ static void setInput(SimStruct *S, bool direct) {
 			for (int j = 0; j < w; j++) {
 
 				const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, iu);
+                const size_t typeSize = typeSizes[type];
+                const bool discreteVariable = type != FMIFloat32Type && type != FMIFloat64Type;
+
+                const char *value = &((const char *)y)[j * typeSize];
+                char *preValue = &preU[ipu];
+
+                ipu += typeSize;
+
+                if (memcmp(value, preValue, typeSize)) {
+                    if (!discreteVariable || (discreteVariable && discrete)) {
+                        memcpy(preValue, value, typeSize);
+                    }
+                    *inputEvent |= discreteVariable;
+                } else {
+                    iu++;
+                    continue;
+                }
 
 				// set the input
 				if (isFMI1(S)) {
@@ -486,22 +523,18 @@ static void setInput(SimStruct *S, bool direct) {
 
 				} else {
 
-					switch (type) {
-					case FMIRealType:
-						CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &((const real_T *)y)[j]))
-						break;
-					case FMIIntegerType:
-						CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &((const int32_T *)y)[j]))
-						break;
-					case FMIBooleanType: {
-						const fmi2Boolean booleanValue = ((const boolean_T *)y)[j];
-						CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
-						break;
-					}
-					default:
-						setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
-						return;
-					}
+                    if (type == FMIRealType || (type == FMIDiscreteRealType && discrete)) {
+                        CHECK_STATUS(FMI2SetReal(instance, &vr, 1, (const fmi2Real *)value))
+                    } else if (type == FMIIntegerType && discrete) {
+                        CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, (const int32_T *)value))
+                    } else if (type == FMIBooleanType && discrete) {
+                        const fmi2Boolean booleanValue = *value;
+                        CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
+                    } /*else {
+                        setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+                        return;
+                    }*/
+
 				}
 
 				iu++;
@@ -611,8 +644,8 @@ static void setOutput(SimStruct *S) {
 						break;
 					}
 				}
-
-			iy++;
+            
+                iy++;
             }
 		} else {
 
@@ -769,9 +802,16 @@ static void setStartValues(SimStruct *S) {
 			fmi2Boolean boolValue = (fmi2Boolean)realValue;
 
 			switch (type) {
-			case FMIRealType:    CHECK_STATUS(FMI2SetReal    (instance, &vr, 1, &realValue)); break;
-			case FMIIntegerType: CHECK_STATUS(FMI2SetInteger (instance, &vr, 1, &intValue));  break;
-			case FMIBooleanType: CHECK_STATUS(FMI2SetBoolean (instance, &vr, 1, &boolValue)); break;
+			case FMIRealType:    
+			case FMIDiscreteRealType:    
+                CHECK_STATUS(FMI2SetReal    (instance, &vr, 1, &realValue));
+                break;
+			case FMIIntegerType:
+                CHECK_STATUS(FMI2SetInteger (instance, &vr, 1, &intValue));
+                break;
+			case FMIBooleanType:
+                CHECK_STATUS(FMI2SetBoolean (instance, &vr, 1, &boolValue));
+                break;
 			default:
 				setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
 				return;
@@ -842,7 +882,7 @@ static void setStartValues(SimStruct *S) {
 	}
 }
 
-static void update(SimStruct *S) {
+static void update(SimStruct *S, bool inputEvent) {
 
 	if (isCS(S)) {
 		return;  // nothing to do
@@ -942,15 +982,19 @@ static void update(SimStruct *S) {
 		for (int i = 0; i < nz(S); i++) prez[i] = z[i];
 	}
 
-	if (timeEvent || stepEvent || stateEvent) {
+	if (inputEvent || timeEvent || stepEvent || stateEvent) {
 
 		if (isFMI1(S)) {
 
-			CHECK_STATUS(FMI1EventUpdate(instance, fmi1False, &instance->eventInfo1));
+            CHECK_ERROR(setInput(S, true, true, &inputEvent))
+                
+            CHECK_STATUS(FMI1EventUpdate(instance, fmi1False, &instance->eventInfo1));
 		
 		} else if (isFMI2(S)) {
 
 			CHECK_STATUS(FMI2EnterEventMode(instance))
+
+            CHECK_ERROR(setInput(S, true, true, &inputEvent))
 
 			do {
 				CHECK_STATUS(FMI2NewDiscreteStates(instance, &instance->eventInfo2))
@@ -965,6 +1009,8 @@ static void update(SimStruct *S) {
 		} else {
 
 			CHECK_STATUS(FMI3EnterEventMode(instance, stepEvent, stateEvent, rootsFound, nz(S), timeEvent))
+
+            CHECK_ERROR(setInput(S, true, true, &inputEvent))
 
 			do {
 				CHECK_STATUS(FMI3UpdateDiscreteStates(instance,
@@ -1021,9 +1067,11 @@ static bool isScalar(SimStruct *S, Parameter param) {
 
 static bool isValidVariableType(FMIVariableType type) {
 	switch (type) {
-	case FMIFloat32Type:
-	case FMIFloat64Type:
-	case FMIInt8Type:
+    case FMIFloat32Type:
+    case FMIDiscreteFloat32Type:
+    case FMIFloat64Type:
+    case FMIDiscreteFloat64Type:
+    case FMIInt8Type:
 	case FMIUInt8Type:
 	case FMIInt16Type:
 	case FMIUInt16Type:
@@ -1516,6 +1564,23 @@ static void mdlCheckParameters(SimStruct *S) {
 #endif /* MDL_CHECK_PARAMETERS */
 
 
+
+
+
+static int inputSize(SimStruct *S) {
+
+    size_t s = 0;
+
+    for (int i = 0; i < nu(S); i++) {
+        const size_t nValues = inputPortWidth(S, i);
+        FMIVariableType type = variableType(S, inputPortTypesParam, i);        
+        s += nValues * typeSizes[type];
+    }
+
+    return s;
+}
+
+
 static void mdlInitializeSizes(SimStruct *S) {
 
 	logDebug(S, "mdlInitializeSizes()");
@@ -1535,7 +1600,7 @@ static void mdlInitializeSizes(SimStruct *S) {
 
 	ssSetNumContStates(S, isME(S) ? nx(S) : 0);
 	ssSetNumDiscStates(S, 0);
-
+    
     const int_T numInputPorts = nu(S) + (resettable(S) ? 1 : 0);
 
 	if (!ssSetNumInputPorts(S, numInputPorts)) return;
@@ -1567,9 +1632,8 @@ static void mdlInitializeSizes(SimStruct *S) {
 
 	ssSetNumSampleTimes(S, 1);
 	ssSetNumRWork(S, 2 * nz(S) + nuv(S) + (resettable(S) ? 1 : 0)); // [pre(z), z, pre(u), pre(reset)]
-	//ssSetNumIWork(S, resettable(S) ? 1 : 0); // pre(reset)
-	ssSetNumPWork(S, 3);                     // [FMU, logfile, rootsFound]
-	ssSetNumModes(S, 3);                     // [stateEvent, timeEvent, stepEvent]
+    ssSetNumPWork(S, 4); // [FMU, logfile, rootsFound, preInput]
+    ssSetNumModes(S, 3); // [stateEvent, timeEvent, stepEvent]
 	ssSetNumNonsampledZCs(S, (isME(S)) ? nz(S) + 1 : 0);
 
 	// specify the sim state compliance to be same as a built-in block
@@ -1612,6 +1676,18 @@ static void mdlStart(SimStruct *S) {
 	}
 
     mxFree((void *)logFile);
+	if (nz(S) > 0) {
+		p[2] = calloc(nz(S), sizeof(fmi3Int32));
+	} else {
+		p[2] = NULL;
+	}
+
+    const size_t s = inputSize(S);
+    
+    if (s > 0) {
+        p[3] = malloc(s);
+        memset(p[3], 0xFF, s);
+    }
 
 	logDebug(S, "mdlStart()");
 }
@@ -1643,7 +1719,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
             }
 
             CHECK_ERROR(initialize(S))
-        }
+		}
 
         *preReset = reset;
     }
@@ -1664,7 +1740,9 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 
 			if (instance->state == FMI2EventModeState) {
 
-				CHECK_ERROR(setInput(S, true))
+                bool inputEvent;
+
+				CHECK_ERROR(setInput(S, true, true, &inputEvent))
 
 				do {
 					CHECK_STATUS(FMI2NewDiscreteStates(instance, &instance->eventInfo2))
@@ -1691,7 +1769,9 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 			
 			if (instance->state == FMI2EventModeState) {
 
-				CHECK_ERROR(setInput(S, true))
+                bool inputEvent;
+
+                CHECK_ERROR(setInput(S, true, true, &inputEvent))
 
 				do {
 					CHECK_STATUS(FMI3UpdateDiscreteStates(instance,
@@ -1721,11 +1801,13 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 				CHECK_STATUS(FMI3SetContinuousStates(instance, x, nx(S)))
 			}
 		}
+
+        bool inputEvent;
 			   		
-		CHECK_ERROR(setInput(S, true))
+		CHECK_ERROR(setInput(S, true, false, &inputEvent))
 
 		if (ssIsMajorTimeStep(S)) {
-			CHECK_ERROR(update(S))
+			CHECK_ERROR(update(S, inputEvent))
 		}
 
 	} else {
@@ -1751,13 +1833,20 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 	CHECK_ERROR(setOutput(S))
 }
 
+
 #define MDL_UPDATE
 #if defined(MDL_UPDATE)
 static void mdlUpdate(SimStruct *S, int_T tid) {
 
 	logDebug(S, "mdlUpdate(tid=%d, time=%.16g, majorTimeStep=%d)", tid, ssGetT(S), ssIsMajorTimeStep(S));
 
-	CHECK_ERROR(setInput(S, false))
+    bool inputEvent;
+
+    CHECK_ERROR(setInput(S, false, isCS(S), &inputEvent))
+
+    if (isME(S) && inputEvent) {
+        ssSetErrorStatus(S, "Unexpected input event in mdlUpdate().");
+    }
 }
 #endif // MDL_UPDATE
 
@@ -1770,7 +1859,14 @@ static void mdlZeroCrossings(SimStruct *S) {
 
 	if (isME(S)) {
 
-		CHECK_ERROR(setInput(S, true))
+		bool inputEvent;
+
+        CHECK_ERROR(setInput(S, true, false, &inputEvent))
+
+        if (inputEvent) {
+            ssSetErrorStatus(S, "Unexpected input event in mdlZeroCrossings().");
+            return;
+        }
 
 		real_T *z = ssGetNonsampledZCs(S);
 
@@ -1817,7 +1913,13 @@ static void mdlDerivatives(SimStruct *S) {
 
 	FMIInstance *instance = (FMIInstance *)p[0];
 
-	CHECK_ERROR(setInput(S, true))
+    bool inputEvent;
+
+	CHECK_ERROR(setInput(S, true, false, &inputEvent))
+
+    if (isME(S) && inputEvent) {
+        ssSetErrorStatus(S, "Unexpected input event in mdlDerivatives().");
+    }
 
 	real_T *x = ssGetContStates(S);
 	real_T *dx = ssGetdX(S);
@@ -1846,32 +1948,38 @@ static void mdlTerminate(SimStruct *S) {
 
     if (instance) {
 
-	if (!ssGetErrorStatus(S)) {
+	    if (!ssGetErrorStatus(S)) {
 
-		if (isFMI1(S)) {
+		    if (isFMI1(S)) {
 		
-			if (isME(S)) {
-				CHECK_STATUS(FMI1Terminate(instance))
-				FMI1FreeModelInstance(instance);
-			} else {
-				CHECK_STATUS(FMI1TerminateSlave(instance))
-				FMI1FreeSlaveInstance(instance);
-			}
+			    if (isME(S)) {
+				    CHECK_STATUS(FMI1Terminate(instance))
+				    FMI1FreeModelInstance(instance);
+			    } else {
+				    CHECK_STATUS(FMI1TerminateSlave(instance))
+				    FMI1FreeSlaveInstance(instance);
+			    }
 
-		} else if (isFMI2(S)) {
+		    } else if (isFMI2(S)) {
 			
-			CHECK_STATUS(FMI2Terminate(instance))
-			FMI2FreeInstance(instance);
+			    CHECK_STATUS(FMI2Terminate(instance))
+			    FMI2FreeInstance(instance);
 		
-		} else {
+		    } else {
 		
-			CHECK_STATUS(FMI3Terminate(instance))
-			FMI3FreeInstance(instance);
+			    CHECK_STATUS(FMI3Terminate(instance))
+			    FMI3FreeInstance(instance);
 		
-		}
-	}
+		    }
+	    }
 
-	FMIFreeInstance(instance);
+	    FMIFreeInstance(instance);
+    }
+
+    char *preU = p[3];
+
+    if (preU) {
+        free(preU);
     }
 
 	FILE *logFile = (FILE *)p[1];

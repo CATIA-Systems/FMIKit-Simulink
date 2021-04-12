@@ -56,6 +56,7 @@ public class FMI2ModelDescriptionHandler extends ModelDescriptionHandler {
 			modelDescription.scalarVariables.add(sv);
 			sv.description = attributes.getValue("description");
 			sv.causality = attributes.getValue("causality");
+			sv.variability = attributes.getValue("variability");
 			sv.valueReference = attributes.getValue("valueReference");
 			
 			if ("output".equals(sv.causality)) {

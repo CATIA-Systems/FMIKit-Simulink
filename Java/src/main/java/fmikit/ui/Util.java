@@ -7,6 +7,7 @@ package fmikit.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import fmikit.ScalarVariable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -172,39 +173,42 @@ public class Util {
 			throw new FileNotFoundException("Failed to delete file: " + f);
 	}
 
-	public static int typeEnumForName(String type) {
+	public static int typeEnumForVariable(ScalarVariable variable) {
+
+		final String type = variable.type;
+		final boolean tunable = "tunable".equals(variable.variability);
 
 		if ("Float32".equals(type)) {
-			return 0;
+			return tunable ? 1 : 0;
 		} else if ("Float64".equals(type) || "Real".equals(type)) {
-			return 1;
+			return tunable ? 3 : 2;
 		} else if ("Int8".equals(type)) {
-			return 2;
-		} else if ("UInt8".equals(type)) {
-			return 3;
-		} else if ("Int16".equals(type)) {
 			return 4;
-		} else if ("UInt16".equals(type)) {
+		} else if ("UInt8".equals(type)) {
 			return 5;
-		} else if ("Int32".equals(type) || "Integer".equals(type) || "Enumeration".equals(type)) {
+		} else if ("Int16".equals(type)) {
 			return 6;
-		} else if ("UInt32".equals(type)) {
+		} else if ("UInt16".equals(type)) {
 			return 7;
-		} else if ("Int64".equals(type)) {
+		} else if ("Int32".equals(type) || "Integer".equals(type) || "Enumeration".equals(type)) {
 			return 8;
-		} else if ("UInt64".equals(type)) {
+		} else if ("UInt32".equals(type)) {
 			return 9;
-		} else if ("Boolean".equals(type)) {
+		} else if ("Int64".equals(type)) {
 			return 10;
-		} else if ("String".equals(type)) {
+		} else if ("UInt64".equals(type)) {
 			return 11;
-		} else if ("Binary".equals(type)) {
+		} else if ("Boolean".equals(type)) {
 			return 12;
-		} else if ("Clock".equals(type)) {
+		} else if ("String".equals(type)) {
 			return 13;
-		} else {
-			throw new RuntimeException("Unknown variable type: " + type);
-		}		
+		} else if ("Binary".equals(type)) {
+			return 14;
+		} else if ("Clock".equals(type)) {
+			return 15;
+		}
+
+		throw new RuntimeException("Unknown variable type: " + type);
 	}
 
 }
