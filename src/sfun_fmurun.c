@@ -1619,7 +1619,15 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
         const real_T reset = *ssGetInputPortRealSignal(S, nu(S));
 
         if (*preReset == 0 && reset > 0) {
-            CHECK_STATUS(FMI2Reset(instance))
+            
+            if (isFMI1(S) && isCS(S)) {
+                CHECK_STATUS(FMI1ResetSlave(instance))
+            } else if (isFMI2(S)) {
+                CHECK_STATUS(FMI2Reset(instance))
+            } else if (isFMI3(S)) {
+                CHECK_STATUS(FMI3Reset(instance))
+            }
+
             CHECK_ERROR(initialize(S))
         }
 
