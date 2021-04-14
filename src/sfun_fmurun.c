@@ -1135,6 +1135,7 @@ static void mdlEnable(SimStruct *S) {
     if (instance) {
 
         if (isCS(S)) {
+
             if (isFMI1(S)) {
                 CHECK_STATUS(FMI1ResetSlave(instance))
             } else if (isFMI2(S)) {
@@ -1142,6 +1143,8 @@ static void mdlEnable(SimStruct *S) {
             } else {
                 CHECK_STATUS(FMI3Reset(instance))
             }
+
+            CHECK_ERROR(initialize(S))
         }
 
         return;
