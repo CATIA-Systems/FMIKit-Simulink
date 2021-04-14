@@ -1133,7 +1133,18 @@ static void mdlEnable(SimStruct *S) {
     FMIInstance *instance = p[0];
 
     if (instance) {
-        return;  // nothing to do
+
+        if (isCS(S)) {
+            if (isFMI1(S)) {
+                CHECK_STATUS(FMI1ResetSlave(instance))
+            } else if (isFMI2(S)) {
+                CHECK_STATUS(FMI2Reset(instance))
+            } else {
+                CHECK_STATUS(FMI3Reset(instance))
+            }
+        }
+
+        return;
     }
 
     if (nz(S) > 0) {
