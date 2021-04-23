@@ -235,6 +235,14 @@ add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E c
   ${FMU_BUILD_DIR}/modelDescription.xml
 )
 
+# buildDescription.xml
+if (EXISTS ${RTW_DIR}/buildDescription.xml)
+  add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+    ${RTW_DIR}/buildDescription.xml
+    ${FMU_BUILD_DIR}/sources/buildDescription.xml
+  )
+endif ()
+
 # shared library
 add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
   $<TARGET_FILE:${MODEL_NAME}>

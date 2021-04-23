@@ -1,4 +1,4 @@
-%% Starting generation of modelDescription.xml
+%% Generate modelDescription.xml
 %openfile xmlfile = "modelDescription.xml"
 %openfile incfile = "fmiwrapper.inc"
 %with CompiledModel
@@ -13,7 +13,7 @@
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-alpha.6"
+  fmiVersion="3.0-beta.1"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
@@ -58,20 +58,8 @@
     %endif
   %endif
   </CoSimulation>
-  %if FMIVersion == "3" && SourceCodeFMU
 
-  <BuildConfiguration modelIdentifier="%<OrigName>">
-    <SourceFileSet>
-      <SourceFile name="fmi3Functions.c"/>
-    %foreach i = SIZE(sourceFiles, 1)
-      %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
-      <SourceFile name="%<sourceFile>"/>
-    %endforeach
-    </SourceFileSet>
-  </BuildConfiguration>
-  %endif
   %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
-
   <UnitDefinitions>
     %foreach unitIdx = Units.NumUnits
       %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
@@ -328,9 +316,17 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       <Unknown index="%<outputIndices[iOutputIndex]>"/>
       %endforeach
     </Outputs>
+    <InitialUnknowns>
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
+      <Unknown index="%<outputIndices[iOutputIndex]>"/>
+      %endforeach
+    </InitialUnknowns>
     %else
       %foreach iOutputIndex = SIZE(outputIndices, 1)
     <Output valueReference="%<outputIndices[iOutputIndex]>"/>
+      %endforeach
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
+    <InitialUnknown valueReference="%<outputIndices[iOutputIndex]>"/>
       %endforeach
     %endif
   %endif

@@ -15,6 +15,9 @@
 %include "grtfmilib.tlc"
 %include "grtfmixml.tlc"
 
+%if FMIVersion == "3" && SourceCodeFMU
+  %include "grtfmibd.tlc"
+%endif
 
 %% The contents between 'BEGIN_RTW_OPTIONS' and 'END_RTW_OPTIONS' in this file
 %% are used to maintain backward compatibility to R13 and preR13 custom target 
