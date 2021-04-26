@@ -19,6 +19,7 @@ public class ScalarVariable {
     public String variability;
 	public String unit;
 	public SimpleType declaredType;
+	public String derivative;
 
 	/** List of fixed dimensions (Integer) or variables (ScalarVariable) that hold the dimensions */
 	public List<Object> dimensions = new ArrayList<Object>();

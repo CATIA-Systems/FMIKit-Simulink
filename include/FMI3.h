@@ -362,7 +362,7 @@ FMI_STATIC fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
 	size_t nContinuousStates);
 
 /* Evaluation of the model equations */
-FMI_STATIC fmi3Status FMI3GetDerivatives(FMIInstance *instance,
+FMI_STATIC fmi3Status FMI3GetContinuousStateDerivatives(FMIInstance *instance,
 	fmi3Float64 derivatives[],
 	size_t nContinuousStates);
 

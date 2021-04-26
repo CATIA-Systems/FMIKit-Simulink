@@ -191,7 +191,7 @@ static fmi3Status loadSymbols3(FMIInstance *instance) {
 	LOAD_SYMBOL(SetContinuousStates)
 
 	/* Evaluation of the model equations */
-	LOAD_SYMBOL(GetDerivatives)
+	LOAD_SYMBOL(GetContinuousStateDerivatives)
 	LOAD_SYMBOL(GetEventIndicators)
 	LOAD_SYMBOL(GetContinuousStates)
 	LOAD_SYMBOL(GetNominalsOfContinuousStates)
@@ -830,11 +830,11 @@ fmi3Status FMI3SetContinuousStates(FMIInstance *instance,
 }
 
 /* Evaluation of the model equations */
-fmi3Status FMI3GetDerivatives(FMIInstance *instance,
+fmi3Status FMI3GetContinuousStateDerivatives(FMIInstance *instance,
 	fmi3Float64 derivatives[],
 	size_t nContinuousStates) {
 
-	fmi3Status status = instance->fmi3GetDerivatives(instance->component, derivatives, nContinuousStates);
+	fmi3Status status = instance->fmi3GetContinuousStateDerivatives(instance->component, derivatives, nContinuousStates);
 
 	if (instance->logFunctionCall) {
 		FMIValuesToString(instance, nContinuousStates, derivatives, FMIFloat64Type);

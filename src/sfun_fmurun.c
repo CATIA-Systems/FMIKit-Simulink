@@ -1932,7 +1932,7 @@ static void mdlDerivatives(SimStruct *S) {
         CHECK_STATUS(FMI2GetDerivatives(instance, dx, nx(S)))
 	} else {
         CHECK_STATUS(FMI3GetContinuousStates(instance, x, nx(S)))
-        CHECK_STATUS(FMI3GetDerivatives(instance, dx, nx(S)))
+        CHECK_STATUS(FMI3GetContinuousStateDerivatives(instance, dx, nx(S)))
 	}
 }
 #endif

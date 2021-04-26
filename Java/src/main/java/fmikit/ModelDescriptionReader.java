@@ -91,7 +91,7 @@ public class ModelDescriptionReader {
 		} else if ("2.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi2/fmi2ModelDescription.xsd");
 			handler = new FMI2ModelDescriptionHandler();
-		} else if ("3.0-alpha.5".equals(fmiVersionHandler.fmiVersion)) {
+		} else if ("3.0-beta.1".equals(fmiVersionHandler.fmiVersion)) {
 			return readModelDescription3(filename);
 		} else {
 			throw new Exception("Unsupported FMI version");
@@ -348,6 +348,7 @@ public class ModelDescriptionReader {
 			scalarVariable.description = element.getAttribute("description");
 			scalarVariable.causality = element.getAttribute("causality");
 			scalarVariable.unit = element.getAttribute("unit");
+			scalarVariable.derivative = element.getAttribute("derivative");
 
 			if (element.hasAttribute("declaredType")) {
 				String declaredType = element.getAttribute("declaredType");
@@ -393,18 +394,33 @@ public class ModelDescriptionReader {
 
 			if ("Output".equals(tagName)) {
 				modelDescription.modelStructure.outputs.put(variable, dependencies);
-			} else if ("Derivative".equals(tagName)) {
+			} else if ("ContinuousStateDerivative".equals(tagName)) {
 				modelDescription.modelStructure.derivatives.put(variable, dependencies);
-				modelDescription.numberOfContinuousStates++;
+				ScalarVariable continuousState = variables.get(variable.derivative);
+				modelDescription.numberOfContinuousStates += calculateInitialSize(continuousState);
 			} else if ("InitialUnknown".equals(tagName)) {
 				modelDescription.modelStructure.initialUnknowns.put(variable, dependencies);
 			} else if ("EventIndicator".equals(tagName)) {
-				modelDescription.numberOfEventIndicators++;
+				modelDescription.numberOfEventIndicators += calculateInitialSize(continuousState);;
 			}
 
 		}
 
 		return modelDescription;
+	}
+
+	private int calculateInitialSize(ScalarVariable continuousState) {
+		int size = 1;  // initial size
+
+		for (Object dimension : continuousState.dimensions) {
+			if (dimension instanceof Integer) {
+				size *= (Integer)dimension;
+			} else {
+				ScalarVariable dimensionVariable = (ScalarVariable) dimension;
+				size *= Integer.parseInt(dimensionVariable.startValue);
+			}
+		}
+		return size;
 	}
 
 }

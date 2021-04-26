@@ -320,7 +320,7 @@ struct FMIInstance_ {
 	fmi3SetContinuousStatesTYPE *fmi3SetContinuousStates;
 
 	/* Evaluation of the model equations */
-	fmi3GetDerivativesTYPE                *fmi3GetDerivatives;
+	fmi3GetContinuousStateDerivativesTYPE *fmi3GetContinuousStateDerivatives;
 	fmi3GetEventIndicatorsTYPE            *fmi3GetEventIndicators;
 	fmi3GetContinuousStatesTYPE           *fmi3GetContinuousStates;
 	fmi3GetNominalsOfContinuousStatesTYPE *fmi3GetNominalsOfContinuousStates;
