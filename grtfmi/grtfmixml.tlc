@@ -115,6 +115,8 @@
   %assign vr = 1
   %assign outputIndices = []
   %selectfile incfile
+#include "simstruc_types.h"
+
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
 
