@@ -401,7 +401,8 @@ public class ModelDescriptionReader {
 			} else if ("InitialUnknown".equals(tagName)) {
 				modelDescription.modelStructure.initialUnknowns.put(variable, dependencies);
 			} else if ("EventIndicator".equals(tagName)) {
-				modelDescription.numberOfEventIndicators += calculateInitialSize(continuousState);;
+				ScalarVariable eventIndicator = variables.get(variable.derivative);
+				modelDescription.numberOfEventIndicators += calculateInitialSize(eventIndicator);;
 			}
 
 		}
