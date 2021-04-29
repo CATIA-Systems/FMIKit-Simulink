@@ -470,13 +470,16 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
 	for (int i = 0; i < nu(S); i++) {
 
 		const int w = inputPortWidth(S, i);
+        
+        FMIVariableType type = variableType(S, inputPortTypesParam, i);
+        const size_t typeSize = typeSizes[type];
+        const bool discreteVariable = type != FMIFloat32Type && type != FMIFloat64Type;
 
 		if (direct && !inputPortDirectFeedThrough(S, i)) {
 			iu += w;
+            ipu += w * typeSize;
 			continue;
 		}
-
-		FMIVariableType type = variableType(S, inputPortTypesParam, i);
 
 		const void *y = ssGetInputPortSignal(S, i);
 
@@ -485,8 +488,6 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
 			for (int j = 0; j < w; j++) {
 
 				const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, iu);
-                const size_t typeSize = typeSizes[type];
-                const bool discreteVariable = type != FMIFloat32Type && type != FMIFloat64Type;
 
                 const char *value = &((const char *)y)[j * typeSize];
                 char *preValue = &preU[ipu];
@@ -530,10 +531,10 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
                     } else if (type == FMIBooleanType && discrete) {
                         const fmi2Boolean booleanValue = *value;
                         CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &booleanValue))
-                    } /*else {
+                    } else {
                         setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
                         return;
-                    }*/
+                    }
 
 				}
 
@@ -542,8 +543,21 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
 
 		} else {
 
-			size_t nValues = inputPortWidth(S, i);
-			const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, i);
+            const size_t nValues = inputPortWidth(S, i);
+            const FMIValueReference vr = valueReference(S, inputPortVariableVRsParam, i);
+
+            char *preValue = &preU[ipu];
+
+            ipu += nValues * typeSize;
+
+            if (memcmp(y, preValue, nValues * typeSize)) {
+                if (!discreteVariable || (discreteVariable && discrete)) {
+                    memcpy(preValue, y, nValues * typeSize);
+                }
+                *inputEvent |= discreteVariable;
+            } else {
+                continue;
+            }
 
 			switch (type) {
 			case FMIFloat32Type:
@@ -589,7 +603,7 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
 	}
 }
 
-static void setOutput(SimStruct *S) {
+static void getOutput(SimStruct *S) {
 
 	void **p = ssGetPWork(S);
 
@@ -599,65 +613,76 @@ static void setOutput(SimStruct *S) {
 
 	for (int i = 0; i < ny(S); i++) {
 
-		FMIVariableType type = variableType(S, outputPortTypesParam, i);
+		const FMIVariableType type = variableType(S, outputPortTypesParam, i);
 
 		void *y = ssGetOutputPortSignal(S, i);
 
-		if (isFMI1(S) || isFMI2(S)) {
-			
-			for (int j = 0; j < outputPortWidth(S, i); j++) {
+        if (isFMI1(S)) {
 
-				FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, iy);
+            for (int j = 0; j < outputPortWidth(S, i); j++) {
 
-				if (isFMI1(S)) {
+                const FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, iy);
 
-					switch (type) {
-					case FMIRealType:
-						CHECK_STATUS(FMI1GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-						break;
-					case FMIIntegerType:
-						CHECK_STATUS(FMI1GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-						break;
-					case FMIBooleanType:
-						CHECK_STATUS(FMI1GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j]))
-						break;
-					default:
-						break;
-					}
+                switch (type) {
+                case FMIRealType:
+                case FMIDiscreteRealType:
+                    CHECK_STATUS(FMI1GetReal(instance, &vr, 1, &((real_T *)y)[j]))
+                    break;
+                case FMIIntegerType:
+                    CHECK_STATUS(FMI1GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
+                    break;
+                case FMIBooleanType:
+                    CHECK_STATUS(FMI1GetBoolean(instance, &vr, 1, &((boolean_T *)y)[j]))
+                    break;
+                default:
+                    setErrorStatus(S, "Unsupported type id for FMI 1.0: %d", type);
+                    return;
+                }
 
-				} else if (isFMI2(S)) {
+                iy++;
+            }
 
-					switch (type) {
-					case FMIRealType:
-						CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
-						break;
-					case FMIIntegerType:
-						CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
-						break;
-					case FMIBooleanType: {
-						fmi2Boolean booleanValue;
-						CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
-						((boolean_T *)y)[j] = booleanValue;
-						break;
-					}
-					default:
-						break;
-					}
-				}
+        } else if (isFMI2(S)) {
+
+            for (int j = 0; j < outputPortWidth(S, i); j++) {
+
+                const FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, iy);
+
+                switch (type) {
+                case FMIRealType:
+                case FMIDiscreteRealType:
+                    CHECK_STATUS(FMI2GetReal(instance, &vr, 1, &((real_T *)y)[j]))
+                    break;
+                case FMIIntegerType:
+                    CHECK_STATUS(FMI2GetInteger(instance, &vr, 1, &((int32_T *)y)[j]))
+                    break;
+                case FMIBooleanType: {
+                    fmi2Boolean booleanValue;
+                    CHECK_STATUS(FMI2GetBoolean(instance, &vr, 1, &booleanValue))
+                    ((boolean_T *)y)[j] = booleanValue;
+                    break;
+                }
+                default:
+                    setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+                    return;
+                }
             
                 iy++;
             }
+
 		} else {
 
-			size_t nValues = outputPortWidth(S, i);
-			FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, i);
+			const size_t nValues = outputPortWidth(S, i);
+			const FMIValueReference vr = valueReference(S, outputPortVariableVRsParam, i);
 
 			switch (type) {
-			case FMIFloat32Type:
-				CHECK_STATUS(FMI3GetFloat32(instance, &vr, 1, (real32_T *)y, nValues))
+            case FMIFloat32Type:
+            case FMIDiscreteFloat32Type:
+                CHECK_STATUS(FMI3GetFloat32(instance, &vr, 1, (real32_T *)y, nValues))
 				break;
-			case FMIFloat64Type:
-				CHECK_STATUS(FMI3GetFloat64(instance, &vr, 1, (real_T *)y, nValues))
+            case FMIFloat64Type:
+            case FMIDiscreteFloat64Type:
+                CHECK_STATUS(FMI3GetFloat64(instance, &vr, 1, (real_T *)y, nValues))
 				break;
 			case FMIInt8Type:
 				CHECK_STATUS(FMI3GetInt8(instance, &vr, 1, (int8_T *)y, nValues))
@@ -1830,7 +1855,7 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 		}
 	}
 
-	CHECK_ERROR(setOutput(S))
+	CHECK_ERROR(getOutput(S))
 }
 
 

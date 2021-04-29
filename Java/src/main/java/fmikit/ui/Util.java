@@ -176,12 +176,12 @@ public class Util {
 	public static int typeEnumForVariable(ScalarVariable variable) {
 
 		final String type = variable.type;
-		final boolean tunable = "tunable".equals(variable.variability);
+		final boolean discrete = "tunable".equals(variable.variability) || "discrete".equals(variable.variability);
 
 		if ("Float32".equals(type)) {
-			return tunable ? 1 : 0;
+			return discrete ? 1 : 0;
 		} else if ("Float64".equals(type) || "Real".equals(type)) {
-			return tunable ? 3 : 2;
+			return discrete ? 3 : 2;
 		} else if ("Int8".equals(type)) {
 			return 4;
 		} else if ("UInt8".equals(type)) {
