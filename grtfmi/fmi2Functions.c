@@ -146,7 +146,14 @@ const char* fmi2GetVersion() {
 fmi2Status  fmi2SetDebugLogging(fmi2Component c,
 	fmi2Boolean loggingOn,
 	size_t nCategories,
-	const fmi2String categories[]) { NOT_IMPLEMENTED }
+	const fmi2String categories[]) { 
+    
+    if (nCategories == 0) {
+        return fmi2OK;
+    }
+
+    return fmi2Error;
+}
 
 /* Creation and destruction of FMU instances and setting debug status */
 fmi2Component fmi2Instantiate(fmi2String instanceName,

@@ -33,7 +33,12 @@ fmi3Status  fmi3SetDebugLogging(fmi3Instance c,
 	fmi3Boolean loggingOn,
 	size_t nCategories,
 	const fmi3String categories[]) {
-    NOT_IMPLEMENTED
+
+    if (nCategories == 0) {
+        return fmi3OK;
+    }
+
+    return fmi3Error;
 }
 
 /* Creation and destruction of FMU instances and setting debug status */
