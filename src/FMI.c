@@ -21,22 +21,10 @@
 
 FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath, FMILogMessage *logMessage, FMILogFunctionCall *logFunctionCall) {
 
-	FMIInstance* instance = (FMIInstance*)calloc(1, sizeof(FMIInstance));
-
-	instance->logMessage = logMessage;
-	instance->logFunctionCall = logFunctionCall;
-
-	instance->bufsize1 = INITIAL_MESSAGE_BUFFER_SIZE;
-	instance->bufsize2 = INITIAL_MESSAGE_BUFFER_SIZE;
-
-	instance->buf1 = (char *)calloc(instance->bufsize1, sizeof(char));
-	instance->buf2 = (char *)calloc(instance->bufsize1, sizeof(char));
-
-	instance->name = strdup(instanceName);
-
-	instance->status = FMIOK;
-
 # ifdef _WIN32
+    TCHAR Buffer[1024];
+    GetCurrentDirectory(1024, Buffer);
+
 	WCHAR dllDirectory[MAX_PATH];
 
 	// convert path to unicode
@@ -47,7 +35,7 @@ FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath
 
 	// TODO: log getLastSystemError()
 
-	instance->libraryHandle = LoadLibraryExA(libraryPath, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+	HMODULE libraryHandle = LoadLibraryExA(libraryPath, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
 	// remove the binaries directory from the DLL path
 	if (dllDirectoryCookie) {
@@ -57,8 +45,29 @@ FMIInstance *FMICreateInstance(const char *instanceName, const char *libraryPath
 	// TODO: log error
 
 # else
-	instance->libraryHandle = dlopen(libraryPath, RTLD_LAZY);
+	void *libraryHandle = dlopen(libraryPath, RTLD_LAZY);
 # endif
+
+    if (!libraryHandle) {
+        return NULL;
+    }
+
+    FMIInstance* instance = (FMIInstance*)calloc(1, sizeof(FMIInstance));
+
+    instance->libraryHandle = libraryHandle;
+
+    instance->logMessage = logMessage;
+    instance->logFunctionCall = logFunctionCall;
+
+    instance->bufsize1 = INITIAL_MESSAGE_BUFFER_SIZE;
+    instance->bufsize2 = INITIAL_MESSAGE_BUFFER_SIZE;
+
+    instance->buf1 = (char *)calloc(instance->bufsize1, sizeof(char));
+    instance->buf2 = (char *)calloc(instance->bufsize1, sizeof(char));
+
+    instance->name = strdup(instanceName);
+
+    instance->status = FMIOK;
 
 	return instance;
 }

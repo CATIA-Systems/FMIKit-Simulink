@@ -1277,6 +1277,11 @@ static void mdlEnable(SimStruct *S) {
 
     instance = FMICreateInstance(instanceName, libraryPath, cb_logMessage, logFMICalls(S) ? cb_logFunctionCall : NULL);
 
+    if (!instance) {
+        setErrorStatus("Failed to load %s.", libraryPath);
+        return;
+    }
+
     instance->userData = S;
 
     p[0] = instance;
