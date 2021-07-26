@@ -13,7 +13,7 @@
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-beta.1"
+  fmiVersion="3.0-beta.2"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
@@ -163,6 +163,11 @@ typedef struct {
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
   %selectfile xmlfile
+  %if FMIVersion == "3"
+
+    <!-- Independent Variable -->
+    <Float64 name="time2" valueReference="0" causality="independent" variability="continuous"/>
+  %endif
 
     <!-- Parameters -->
   %with ModelParameters

@@ -91,7 +91,7 @@ public class ModelDescriptionReader {
 		} else if ("2.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi2/fmi2ModelDescription.xsd");
 			handler = new FMI2ModelDescriptionHandler();
-		} else if ("3.0-beta.1".equals(fmiVersionHandler.fmiVersion)) {
+		} else if ("3.0-beta.2".equals(fmiVersionHandler.fmiVersion)) {
 			return readModelDescription3(filename);
 		} else {
 			throw new Exception("Unsupported FMI version");

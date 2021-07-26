@@ -45,7 +45,7 @@ fmi3Status  fmi3SetDebugLogging(fmi3Instance c,
 fmi3Instance fmi3InstantiateModelExchange(
 	fmi3String                 instanceName,
 	fmi3String                 instantiationToken,
-	fmi3String                 resourceLocation,
+	fmi3String                 resourcePath,
 	fmi3Boolean                visible,
 	fmi3Boolean                loggingOn,
 	fmi3InstanceEnvironment    instanceEnvironment,
@@ -57,7 +57,7 @@ fmi3Instance fmi3InstantiateModelExchange(
 fmi3Instance fmi3InstantiateCoSimulation(
     fmi3String                     instanceName,
     fmi3String                     instantiationToken,
-    fmi3String                     resourceLocation,
+    fmi3String                     resourcePath,
     fmi3Boolean                    visible,
     fmi3Boolean                    loggingOn,
     fmi3Boolean                    eventModeUsed,
@@ -98,7 +98,7 @@ fmi3Instance fmi3InstantiateCoSimulation(
 fmi3Instance fmi3InstantiateScheduledExecution(
 	fmi3String                     instanceName,
 	fmi3String                     instantiationToken,
-	fmi3String                     resourceLocation,
+	fmi3String                     resourcePath,
 	fmi3Boolean                    visible,
 	fmi3Boolean                    loggingOn,
 	const fmi3ValueReference       requiredIntermediateVariables[],
@@ -189,6 +189,21 @@ static fmi3Status getVariables(ModelInstance *instance,
 	ModelVariable v;
 
 	for (i = 0; i < nvr; i++) {
+
+        // independent variable
+        if (vr[i] == 0) {
+            
+            if (datatypeID != SS_DOUBLE || typeSize != sizeof(REAL64_T)) {
+                return fmi3Error;
+            }
+#ifdef rtmGetT
+            *((fmi3Float64*)values) = rtmGetT(instance->S);
+#else
+            *((fmi3Float64*)values) = 0;
+#endif
+            values = (char *)values + sizeof(REAL64_T);
+            continue;
+        }
 
 		index = vr[i] - 1;
 
@@ -515,11 +530,11 @@ fmi3Status fmi3GetAdjointDerivative(fmi3Instance instance,
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 fmi3Status fmi3EnterConfigurationMode(fmi3Instance instance) {
-    NOT_IMPLEMENTED
+    return fmi3OK;
 }
 
 fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
-    NOT_IMPLEMENTED
+    return fmi3OK;
 }
 
 fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,
@@ -575,6 +590,10 @@ fmi3Status fmi3SetIntervalFraction(fmi3Instance instance,
     NOT_IMPLEMENTED
 }
 
+fmi3Status fmi3EvaluateDiscreteStates(fmi3Instance instance) {
+    NOT_IMPLEMENTED
+}
+
 fmi3Status fmi3UpdateDiscreteStates(fmi3Instance instance,
     fmi3Boolean* discreteStatesNeedUpdate,
     fmi3Boolean* terminateSimulation,
@@ -610,7 +629,7 @@ fmi3Status fmi3SetContinuousStates(fmi3Instance c, const fmi3Float64 x[], size_t
 }
 
 /* Evaluation of the model equations */
-fmi3Status fmi3GetDerivatives(fmi3Instance c, fmi3Float64 derivatives[], size_t nx) { 
+fmi3Status fmi3GetContinuousStateDerivatives(fmi3Instance c, fmi3Float64 derivatives[], size_t nx) {
     NOT_IMPLEMENTED
 }
 

@@ -1290,16 +1290,20 @@ static void mdlEnable(SimStruct *S) {
 
     char fmuResourceLocation[INTERNET_MAX_URL_LENGTH];
 
+    if (isFMI3(S)) {
+        strncpy(fmuResourceLocation, unzipdir, INTERNET_MAX_URL_LENGTH);
+    } else {
 #ifdef _WIN32
-    DWORD fmuLocationLength = INTERNET_MAX_URL_LENGTH;
-    if (UrlCreateFromPath(unzipdir, fmuResourceLocation, &fmuLocationLength, 0) != S_OK) {
-        setErrorStatus(S, "Failed to create fmuResourceLocation.");
-        return;
-    }
+        DWORD fmuLocationLength = INTERNET_MAX_URL_LENGTH;
+        if (UrlCreateFromPath(unzipdir, fmuResourceLocation, &fmuLocationLength, 0) != S_OK) {
+            setErrorStatus(S, "Failed to create fmuResourceLocation.");
+            return;
+        }
 #else
-    strcpy(fmuResourceLocation, "file://");
-    strcat(fmuResourceLocation, unzipdir);
+        strcpy(fmuResourceLocation, "file://");
+        strcat(fmuResourceLocation, unzipdir);
 #endif
+    }
 
     if (!isFMI1(S)) {
         strcat(fmuResourceLocation, "/resources");
