@@ -6,7 +6,7 @@ Requirements: MATLAB, Java JDK 7 or later, Apache Maven
 ### Clone the repository
 
 ```
-git clone https://github.com/CATIA-Systems/FMIKit
+git clone https://github.com/CATIA-Systems/FMIKit-Simulink
 ```
 
 ### Build fmikit.jar
