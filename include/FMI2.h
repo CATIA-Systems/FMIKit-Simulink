@@ -1,13 +1,88 @@
 #ifndef FMI2_H
 #define FMI2_H
 
-/*****************************************************************
- *  Copyright (c) Dassault Systemes. All rights reserved.        *
- *  This file is part of FMIKit. See LICENSE.txt in the project  *
- *  root for license information.                                *
- *****************************************************************/
+/**************************************************************
+ *  Copyright (c) Modelica Association Project "FMI".         *
+ *  All rights reserved.                                      *
+ *  This file is part of the Reference FMUs. See LICENSE.txt  *
+ *  in the project root for license information.              *
+ **************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "fmi2Functions.h"
 #include "FMI.h"
+
+struct FMI2Functions_ {
+
+    fmi2CallbackFunctions            callbacks;
+    fmi2EventInfo                    eventInfo;
+
+    /***************************************************
+    Common Functions for FMI 2.0
+    ****************************************************/
+
+    /* required functions */
+    fmi2GetTypesPlatformTYPE         *fmi2GetTypesPlatform;
+    fmi2GetVersionTYPE               *fmi2GetVersion;
+    fmi2SetDebugLoggingTYPE          *fmi2SetDebugLogging;
+    fmi2InstantiateTYPE              *fmi2Instantiate;
+    fmi2FreeInstanceTYPE             *fmi2FreeInstance;
+    fmi2SetupExperimentTYPE          *fmi2SetupExperiment;
+    fmi2EnterInitializationModeTYPE  *fmi2EnterInitializationMode;
+    fmi2ExitInitializationModeTYPE   *fmi2ExitInitializationMode;
+    fmi2TerminateTYPE                *fmi2Terminate;
+    fmi2ResetTYPE                    *fmi2Reset;
+    fmi2GetRealTYPE                  *fmi2GetReal;
+    fmi2GetIntegerTYPE               *fmi2GetInteger;
+    fmi2GetBooleanTYPE               *fmi2GetBoolean;
+    fmi2GetStringTYPE                *fmi2GetString;
+    fmi2SetRealTYPE                  *fmi2SetReal;
+    fmi2SetIntegerTYPE               *fmi2SetInteger;
+    fmi2SetBooleanTYPE               *fmi2SetBoolean;
+    fmi2SetStringTYPE                *fmi2SetString;
+
+    /* optional functions */
+    fmi2GetFMUstateTYPE              *fmi2GetFMUstate;
+    fmi2SetFMUstateTYPE              *fmi2SetFMUstate;
+    fmi2FreeFMUstateTYPE             *fmi2FreeFMUstate;
+    fmi2SerializedFMUstateSizeTYPE   *fmi2SerializedFMUstateSize;
+    fmi2SerializeFMUstateTYPE        *fmi2SerializeFMUstate;
+    fmi2DeSerializeFMUstateTYPE      *fmi2DeSerializeFMUstate;
+    fmi2GetDirectionalDerivativeTYPE *fmi2GetDirectionalDerivative;
+
+    /***************************************************
+    Functions for FMI 2.0 for Model Exchange
+    ****************************************************/
+
+    fmi2EnterEventModeTYPE                *fmi2EnterEventMode;
+    fmi2NewDiscreteStatesTYPE             *fmi2NewDiscreteStates;
+    fmi2EnterContinuousTimeModeTYPE       *fmi2EnterContinuousTimeMode;
+    fmi2CompletedIntegratorStepTYPE       *fmi2CompletedIntegratorStep;
+    fmi2SetTimeTYPE                       *fmi2SetTime;
+    fmi2SetContinuousStatesTYPE           *fmi2SetContinuousStates;
+    fmi2GetDerivativesTYPE                *fmi2GetDerivatives;
+    fmi2GetEventIndicatorsTYPE            *fmi2GetEventIndicators;
+    fmi2GetContinuousStatesTYPE           *fmi2GetContinuousStates;
+    fmi2GetNominalsOfContinuousStatesTYPE *fmi2GetNominalsOfContinuousStates;
+
+    /***************************************************
+    Functions for FMI 2.0 for Co-Simulation
+    ****************************************************/
+
+    fmi2SetRealInputDerivativesTYPE  *fmi2SetRealInputDerivatives;
+    fmi2GetRealOutputDerivativesTYPE *fmi2GetRealOutputDerivatives;
+    fmi2DoStepTYPE                   *fmi2DoStep;
+    fmi2CancelStepTYPE               *fmi2CancelStep;
+    fmi2GetStatusTYPE                *fmi2GetStatus;
+    fmi2GetRealStatusTYPE            *fmi2GetRealStatus;
+    fmi2GetIntegerStatusTYPE         *fmi2GetIntegerStatus;
+    fmi2GetBooleanStatusTYPE         *fmi2GetBooleanStatus;
+    fmi2GetStringStatusTYPE          *fmi2GetStringStatus;
+
+};
 
 
 /***************************************************
@@ -22,17 +97,17 @@ FMI_STATIC const char* FMI2GetVersion(FMIInstance *instance);
 FMI_STATIC fmi2Status FMI2SetDebugLogging(FMIInstance *instance, fmi2Boolean loggingOn, size_t nCategories, const fmi2String categories[]);
 
 FMI_STATIC fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocation, fmi2Type fmuType, fmi2String fmuGUID,
-	fmi2Boolean visible, fmi2Boolean loggingOn);
+    fmi2Boolean visible, fmi2Boolean loggingOn);
 
 FMI_STATIC void FMI2FreeInstance(FMIInstance *instance);
 
 /* Enter and exit initialization mode, terminate and reset */
 FMI_STATIC fmi2Status FMI2SetupExperiment(FMIInstance *instance,
-	fmi2Boolean toleranceDefined,
-	fmi2Real tolerance,
-	fmi2Real startTime,
-	fmi2Boolean stopTimeDefined,
-	fmi2Real stopTime);
+    fmi2Boolean toleranceDefined,
+    fmi2Real tolerance,
+    fmi2Real startTime,
+    fmi2Boolean stopTimeDefined,
+    fmi2Real stopTime);
 
 FMI_STATIC fmi2Status FMI2EnterInitializationMode(FMIInstance *instance);
 
@@ -43,11 +118,11 @@ FMI_STATIC fmi2Status FMI2Terminate(FMIInstance *instance);
 FMI_STATIC fmi2Status FMI2Reset(FMIInstance *instance);
 
 FMI_STATIC fmi2Status FMI2SetupExperiment(FMIInstance *instance,
-	fmi2Boolean toleranceDefined,
-	fmi2Real tolerance,
-	fmi2Real startTime,
-	fmi2Boolean stopTimeDefined,
-	fmi2Real stopTime);
+    fmi2Boolean toleranceDefined,
+    fmi2Real tolerance,
+    fmi2Real startTime,
+    fmi2Boolean stopTimeDefined,
+    fmi2Real stopTime);
 
 /* Getting and setting variable values */
 FMI_STATIC fmi2Status FMI2GetReal(FMIInstance *instance, const fmi2ValueReference vr[], size_t nvr, fmi2Real value[]);
@@ -81,10 +156,10 @@ FMI_STATIC fmi2Status FMI2DeSerializeFMUstate(FMIInstance *instance, const fmi2B
 
 /* Getting partial derivatives */
 FMI_STATIC fmi2Status FMI2GetDirectionalDerivative(FMIInstance *instance,
-	const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
-	const fmi2ValueReference vKnown_ref[], size_t nKnown,
-	const fmi2Real dvKnown[],
-	fmi2Real dvUnknown[]);
+    const fmi2ValueReference vUnknown_ref[], size_t nUnknown,
+    const fmi2ValueReference vKnown_ref[], size_t nKnown,
+    const fmi2Real dvKnown[],
+    fmi2Real dvUnknown[]);
 
 /***************************************************
 Types for Functions for FMI2 for Model Exchange
@@ -98,9 +173,9 @@ FMI_STATIC fmi2Status FMI2NewDiscreteStates(FMIInstance *instance, fmi2EventInfo
 FMI_STATIC fmi2Status FMI2EnterContinuousTimeMode(FMIInstance *instance);
 
 FMI_STATIC fmi2Status FMI2CompletedIntegratorStep(FMIInstance *instance,
-	fmi2Boolean   noSetFMUStatePriorToCurrentPoint,
-	fmi2Boolean*  enterEventMode,
-	fmi2Boolean*  terminateSimulation);
+    fmi2Boolean   noSetFMUStatePriorToCurrentPoint,
+    fmi2Boolean*  enterEventMode,
+    fmi2Boolean*  terminateSimulation);
 
 /* Providing independent variables and re-initialization of caching */
 FMI_STATIC fmi2Status FMI2SetTime(FMIInstance *instance, fmi2Real time);
@@ -123,19 +198,19 @@ Types for Functions for FMI2 for Co-Simulation
 
 /* Simulating the slave */
 FMI_STATIC fmi2Status FMI2SetRealInputDerivatives(FMIInstance *instance,
-	const fmi2ValueReference vr[], size_t nvr,
-	const fmi2Integer order[],
-	const fmi2Real value[]);
+    const fmi2ValueReference vr[], size_t nvr,
+    const fmi2Integer order[],
+    const fmi2Real value[]);
 
 FMI_STATIC fmi2Status FMI2GetRealOutputDerivatives(FMIInstance *instance,
-	const fmi2ValueReference vr[], size_t nvr,
-	const fmi2Integer order[],
-	fmi2Real value[]);
+    const fmi2ValueReference vr[], size_t nvr,
+    const fmi2Integer order[],
+    fmi2Real value[]);
 
 FMI_STATIC fmi2Status FMI2DoStep(FMIInstance *instance,
-	fmi2Real      currentCommunicationPoint,
-	fmi2Real      communicationStepSize,
-	fmi2Boolean   noSetFMUStatePriorToCurrentPoint);
+    fmi2Real      currentCommunicationPoint,
+    fmi2Real      communicationStepSize,
+    fmi2Boolean   noSetFMUStatePriorToCurrentPoint);
 
 FMI_STATIC fmi2Status FMI2CancelStep(FMIInstance *instance);
 
@@ -149,5 +224,9 @@ FMI_STATIC fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2Stat
 FMI_STATIC fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Boolean* value);
 
 FMI_STATIC fmi2Status FMI2GetStringStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2String*  value);
+
+#ifdef __cplusplus
+}  /* end of extern "C" { */
+#endif
 
 #endif // FMI2_H
