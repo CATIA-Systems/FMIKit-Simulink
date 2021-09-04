@@ -5,13 +5,14 @@
 
 package fmikit;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import fmikit.Dependency.DependencyKind;
+import fmikit.ui.Util;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -22,17 +23,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-import fmikit.Dependency.DependencyKind;
-import fmikit.ui.Util;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class ModelDescriptionReader {
 
@@ -167,6 +164,44 @@ public class ModelDescriptionReader {
 
 		if (modelDescription.modelExchange != null) {
 			checkPlatforms(modelDescription.modelExchange);
+		}
+
+		HashSet<Character> c1 = new HashSet<Character>();
+
+		c1.add('_');
+		for (char c = 'A'; c < 'Z'; c++) c1.add(c);
+		for (char c = 'a'; c < 'z'; c++) c1.add(c);
+
+		HashSet<Character> c2 = new HashSet<Character>(c1);
+		for (char c = '0'; c < '9'; c++) c2.add(c);
+
+		HashSet<String> dialogParameters = new HashSet<String>();
+
+		// generate dialog parameter names
+		for (ScalarVariable variable : modelDescription.scalarVariables) {
+
+			char[] chars = variable.name.toCharArray();
+
+			// replace special characters with '_'
+			for (int i = 0; i < chars.length; i++) {
+				if ((i == 0 && !c1.contains(chars[i])) || (i > 0 && !c2.contains(chars[i]))) {
+					chars[i] = '_';
+				}
+			}
+
+			String dialogParameter = new String(chars);
+
+			// make name unique
+			if (dialogParameters.contains(dialogParameter)) {
+				int i = 2;
+				while (dialogParameters.contains(dialogParameter + Integer.toString(i))) {
+					i++;
+				}
+				dialogParameter = dialogParameter + Integer.toString(i);
+			}
+
+			variable.dialogParameter = dialogParameter;
+			dialogParameters.add(dialogParameter);
 		}
 
 		return modelDescription;

@@ -86,7 +86,6 @@ public class FMUBlockDialog extends JDialog {
     public DefaultMutableTreeNode outportRoot; // TODO: access via model
     public DefaultTreeModel outportTreeModel; // TODO: access via tree
     public HashMap<String, String> startValues = new HashMap<String, String>();
-    public HashSet<String> inputVariables = new HashSet<String>();
     private UserData userData;
     public String mdlDirectory;
     public double blockHandle;
@@ -621,7 +620,11 @@ public class FMUBlockDialog extends JDialog {
             userData.outputPorts.add(outputPort);
         }
 
-        userData.startValues = new HashMap<String, String>(startValues);
+        for (ScalarVariable variable : modelDescription.scalarVariables) {
+            if (startValues.containsKey(variable.name)) {
+                userData.startValues.add(new UserData.DialogParameter(variable.dialogParameter, variable.name, startValues.get(variable.name)));
+            }
+        }
 
         userData.useSourceCode = chckbxUseSourceCode.isSelected();
 
@@ -653,7 +656,9 @@ public class FMUBlockDialog extends JDialog {
         txtFMUPath.setText(userData.fmuFile);
         cmbbxRunAsKind.setSelectedIndex(userData.runAsKind);
 
-        startValues.putAll(userData.startValues);
+        for (UserData.DialogParameter s : userData.startValues) {
+            startValues.put(s.prompt, s.value);
+        }
 
         // Advanced tab
         txtUnzipDirectory.setText(userData.unzipDirectory);
@@ -667,13 +672,6 @@ public class FMUBlockDialog extends JDialog {
         chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
         resettableCheckBox.setSelected(userData.resettable);
-
-        // restore input variables
-        for (UserData.Port port : userData.inputPorts) {
-            if (port.variables.size() == 1) {
-                inputVariables.add(port.variables.get(0));
-            }
-        }
 
         // TODO: restore outports?
     }
@@ -707,11 +705,6 @@ public class FMUBlockDialog extends JDialog {
                 }
 
                 previousVariable = variable;
-
-            } else if (inputVariables.contains(variable.name)) {
-                List<ScalarVariable> inputPort = new ArrayList<ScalarVariable>();
-                inputPort.add(variable);
-                inputPorts.add(inputPort);
             }
         }
 
@@ -964,22 +957,6 @@ public class FMUBlockDialog extends JDialog {
         // resettable
         params.add(resettableCheckBox.isSelected() ? "1" : "0");
 
-        // structural parameters
-        params.add("[" + Util.join(structuralParameterTypes, " ") + "]");
-        params.add("[" + Util.join(structuralParameterVRs, " ") + "]");
-        params.add("[" + Util.join(structuralParameterValues, " ") + "]");
-
-        // scalar start values
-        params.add("[" + Util.join(scalarStartSizes, " ") + "]");
-        params.add("[" + Util.join(scalarStartTypes, " ") + "]");
-        params.add("[" + Util.join(scalarStartVRs, " ") + "]");
-        params.add("[" + Util.join(scalarStartValues, " ") + "]");
-
-        // string start values
-        params.add("[" + Util.join(stringStartSizes, " ") + "]");
-        params.add("[" + Util.join(stringStartVRs, " ") + "]");
-        params.add("char({" + Util.join(stringStartValues, " ") + "})");
-
         List<Boolean> inputPortDirectFeedThrough = getInputPortDirectFeedThrough(inputPorts, outputPorts);
 
         ArrayList<Double> inputPortDirectFeedThroughDouble = new ArrayList<Double>();
@@ -1011,6 +988,32 @@ public class FMUBlockDialog extends JDialog {
 
         // output port variable VRs
         params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
+
+        // parameters
+        for (ScalarVariable variable : modelDescription.scalarVariables) {
+
+            final boolean isStructural = "structuralParameter".equals(variable.causality);
+            final boolean isTunable = "tunable".equals(variable.variability);
+            final boolean isStartValue = startValues.containsKey(variable.name);
+
+            if (isStartValue) {
+
+                // structural
+                params.add(isStructural ? "1" : "0");
+
+                // tunable
+                params.add(isTunable ? "1" : "0");
+
+                // variable type
+                params.add(Integer.toString(Util.typeEnumForVariable(variable)));
+
+                // value reference
+                params.add(variable.valueReference);
+
+                // value
+                params.add(variable.dialogParameter);
+            }
+        }
 
         return Util.join(params, " ");
     }
@@ -1383,7 +1386,7 @@ public class FMUBlockDialog extends JDialog {
 
         DefaultMutableTreeNode root = FMUBlockDialog.createTree(modelDescription.scalarVariables);
 
-        VariablesTreeTableModel myTreeTableModel = new VariablesTreeTableModel(root, startValues, inputVariables);
+        VariablesTreeTableModel myTreeTableModel = new VariablesTreeTableModel(root, startValues);
 
         treeTable.setTreeTableModel(myTreeTableModel);
 
@@ -1393,7 +1396,7 @@ public class FMUBlockDialog extends JDialog {
             treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(280);
             treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(70);
             treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(70);
-            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(600);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(670);
         } else {
             treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(200);
             treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(50);
@@ -1407,17 +1410,6 @@ public class FMUBlockDialog extends JDialog {
         treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setCellRenderer(new UnitTableCellRenderer());
         treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN)
                 .setCellRenderer(new DescriptionTableCellRenderer());
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.INPUT_COLUMN)
-                .setCellRenderer(new InputCellRenderer(inputVariables));
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.INPUT_COLUMN)
-                .setCellEditor(new InputCellEditor(inputVariables));
-
-        // Inputs
-        for (ScalarVariable variable : modelDescription.scalarVariables) {
-            if ("input".equals(variable.causality)) {
-                inputVariables.add(variable.name);
-            }
-        }
 
         // Outputs
         variablesTree.setCellRenderer(new NameTreeCellRenderer());

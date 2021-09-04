@@ -6,6 +6,15 @@ if isempty(userData)
     return
 end
 
+mask = Simulink.Mask.get(block);
+
+userData.startValues = containers.Map;
+
+for i = 1:numel(mask.Parameters)
+    parameter = mask.Parameters(i);
+    userData.startValues(parameter.Prompt) = parameter.Value;
+end
+
 if any(strcmp(userData.fmiKitVersion, {'2.4', '2.6'}))
 
     disp(['Updating ' getfullname(block) ' that was imported with an older version of FMI Kit.'])

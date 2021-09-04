@@ -54,12 +54,6 @@ for i = 1:userData.outputPorts.size()
     end
 end
 
-it = userData.startValues.entrySet().iterator();
-while it.hasNext()
-    entry = it.next();
-    ud.startValues(entry.getKey()) = entry.getValue();
-end
-
 ud.useSourceCode    = userData.useSourceCode;
 ud.functionName     = char(userData.functionName);
 ud.parameters       = char(userData.parameters);

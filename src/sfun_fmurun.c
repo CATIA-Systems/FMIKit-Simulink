@@ -58,16 +58,6 @@ typedef enum {
 	nxParam,
 	nzParam,
     resettableParam,
-	structuralParameterTypesParam,
-	structuralParameterVRsParam,
-	structuralParameterValuesParam,
-	scalarStartSizesParam,
-	scalarStartTypesParam,
-	scalarStartVRsParam,
-	scalarStartValuesParam,
-	stringStartSizesParam,
-	stringStartVRsParam,
-	stringStartValuesParam,
 	inputPortWidthsParam,
 	inputPortDirectFeedThroughParam,
 	inputPortTypesParam,
@@ -75,7 +65,7 @@ typedef enum {
 	outputPortWidthsParam,
 	outputPortTypesParam,
 	outputPortVariableVRsParam,
-	numParams
+    numParams
 
 } Parameter;
 
@@ -180,10 +170,6 @@ static int nz(SimStruct *S) {
 
 static bool resettable(SimStruct *S) {
     return mxGetScalar(ssGetSFcnParam(S, resettableParam));
-}
-
-static int nScalarStartValues(SimStruct *S) {
-    return (int)mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam));
 }
 
 static int inputPortWidth(SimStruct *S, int index) {
@@ -719,67 +705,75 @@ static void getOutput(SimStruct *S) {
 	}
 }
 
-static void setStructualParameters(SimStruct *S) {
 
-	void **p = ssGetPWork(S);
+// all, only structural, only tunable
+static void setParameters(SimStruct *S, bool structuralOnly, bool tunableOnly) {
 
-	FMIInstance *instance = (FMIInstance *)p[0];
+    void **p = ssGetPWork(S);
 
-	const int nStructuralParameters = (int)mxGetNumberOfElements(ssGetSFcnParam(S, structuralParameterTypesParam));
+    FMIInstance *instance = (FMIInstance *)p[0];
+    FMIStatus status = FMIOK;
 
-	// scalar start values
-	for (int i = 0; i < nStructuralParameters; i++) {
+    int nSFcnParams = ssGetSFcnParamsCount(S);
 
-		const FMIValueReference vr = valueReference(S, structuralParameterVRsParam, i);
-		const FMIVariableType type = variableType(S, structuralParameterTypesParam, i);
-		const real_T realValue = scalarValue(S, structuralParameterValuesParam, i);
+    for (int i = numParams; i < nSFcnParams; i += 5) {
 
-		switch (type) {
-		case FMIInt8Type: {
-			const fmi3Int8 value = (fmi3Int8)realValue;
-			CHECK_STATUS(FMI3SetInt8(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIUInt8Type: {
-			const fmi3UInt8 value = (fmi3UInt8)realValue;
-			CHECK_STATUS(FMI3SetUInt8(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIInt16Type: {
-			const fmi3Int16 value = (fmi3Int16)realValue;
-			CHECK_STATUS(FMI3SetInt16(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIUInt16Type: {
-			const fmi3UInt16 value = (fmi3UInt16)realValue;
-			CHECK_STATUS(FMI3SetUInt16(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIInt32Type: {
-			const fmi3Int32 value = (fmi3Int32)realValue;
-			CHECK_STATUS(FMI3SetInt32(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIUInt32Type: {
-			const fmi3UInt32 value = (fmi3UInt32)realValue;
-			CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIInt64Type: {
-			const fmi3Int64 value = (fmi3Int64)realValue;
-			CHECK_STATUS(FMI3SetInt64(instance, &vr, 1, &value, 1));
-			break;
-		}
-		case FMIUInt64Type: {
-			const fmi3UInt64 value = (fmi3UInt64)realValue;
-			CHECK_STATUS(FMI3SetUInt64(instance, &vr, 1, &value, 1));
-			break;
-		}
-		default:
-			setErrorStatus(S, "Unsupported type id for structural parameters: %d", type);
-			return;
-		}
-	}
+        const double            strucural = mxGetScalar(ssGetSFcnParam(S, i));
+        const double            tunable   = mxGetScalar(ssGetSFcnParam(S, i + 1));
+        const FMIVariableType   type      = mxGetScalar(ssGetSFcnParam(S, i + 2));
+        const FMIValueReference vr        = mxGetScalar(ssGetSFcnParam(S, i + 3));
+
+        if (structuralOnly && !strucural) continue;
+
+        if (tunableOnly && !tunable) continue;
+
+        if (isFMI2(S)) {
+
+            if (instance->state == FMI2ContinuousTimeModeState) {
+                CHECK_STATUS(FMI2EnterEventMode(instance));
+            }
+
+            for (int j = 0; j < 1; j++) {
+
+                // TODO: iterate over array
+
+                switch (type) {
+                case FMIRealType:
+                case FMIDiscreteRealType: {
+                    const fmi2Real value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &value));
+                    break;
+                }
+                case FMIIntegerType: {
+                    const fmi2Integer value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &value));
+                    break;
+                }
+                case FMIBooleanType: {
+                    const fmi2Boolean value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &value));
+                    break;
+                }
+                case FMIStringType: {
+                    const mxArray *pa    = ssGetSFcnParam(S, i + 4);
+                	const char    *value = getStringParam(S, i + 4, 0);
+               		CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String *)&value));
+                	mxFree(value);
+                    break;
+                }
+                default:
+                    setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+                    return;
+                }
+            }
+
+            if (instance->state == FMI2EventModeState) {
+                CHECK_STATUS(FMI2EnterContinuousTimeMode(instance));
+            }
+        }
+
+    }
+
 }
 
 #define SET_VALUES(t) \
@@ -791,121 +785,6 @@ static void setStructualParameters(SimStruct *S) {
 		CHECK_STATUS(FMI3Set ## t(instance, &vr, 1, values, nValues)); \
 		free(values); \
 	}
-
-
-static void setStartValues(SimStruct *S) {
-
-	void **p = ssGetPWork(S);
-
-	FMIInstance *instance = (FMIInstance *)p[0];
-	size_t iv = 0;
-
-    // scalar start values
-	for (int i = 0; i < nScalarStartValues(S); i++) {
-
-		FMIValueReference vr = valueReference(S, scalarStartVRsParam, i);
-		FMIVariableType type = variableType(S, scalarStartTypesParam, i);
-		real_T realValue = scalarValue(S, scalarStartValuesParam, i);
-				
-		if (isFMI1(S)) {
-
-			fmi1Integer intValue  = (fmi1Integer)realValue;
-			fmi1Boolean boolValue = (fmi1Boolean)realValue;
-
-			switch (type) {
-			case FMIRealType:    CHECK_STATUS(FMI1SetReal    (instance, &vr, 1, &realValue)); break;
-			case FMIIntegerType: CHECK_STATUS(FMI1SetInteger (instance, &vr, 1, &intValue));  break;
-			case FMIBooleanType: CHECK_STATUS(FMI1SetBoolean (instance, &vr, 1, &boolValue)); break;
-			default:
-				setErrorStatus(S, "Unsupported type id for FMI 1.0: %d", type);
-				return;
-			}
-
-		} else if (isFMI2(S)) {
-
-			fmi2Integer intValue  = (fmi2Integer)realValue;
-			fmi2Boolean boolValue = (fmi2Boolean)realValue;
-
-			switch (type) {
-			case FMIRealType:    
-			case FMIDiscreteRealType:    
-                CHECK_STATUS(FMI2SetReal    (instance, &vr, 1, &realValue));
-                break;
-			case FMIIntegerType:
-                CHECK_STATUS(FMI2SetInteger (instance, &vr, 1, &intValue));
-                break;
-			case FMIBooleanType:
-                CHECK_STATUS(FMI2SetBoolean (instance, &vr, 1, &boolValue));
-                break;
-			default:
-				setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
-				return;
-			}
-
-		} else {
-
-			const size_t nValues = startValueSize(S, scalarStartSizesParam, i);
-			const size_t s = mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam));
-			const mxArray *param = ssGetSFcnParam(S, scalarStartValuesParam);
-			const real_T *realValues = (real_T *)mxGetData(param);
-
-			switch (type) {
-			case FMIFloat32Type:
-				SET_VALUES(Float32)
-				break;
-			case FMIFloat64Type:
-				SET_VALUES(Float64)
-				break;
-			case FMIInt8Type:
-				SET_VALUES(Int8)
-				break;
-			case FMIUInt8Type:
-				SET_VALUES(UInt8)
-				break;
-			case FMIInt16Type:
-				SET_VALUES(Int16)
-				break;
-			case FMIUInt16Type:
-				SET_VALUES(UInt16)
-				break;
-			case FMIInt32Type:
-				SET_VALUES(Int32)
-				break;
-			case FMIUInt32Type:
-				SET_VALUES(UInt32)
-				break;
-			case FMIBooleanType:
-				SET_VALUES(Boolean)
-				break;
-			default:
-				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
-				return;
-			}
-
-			iv += nValues;
-		}
-    }
-
-	// string start values
-	const mxArray *pa = ssGetSFcnParam(S, stringStartValuesParam);
-	const int m       = (int)mxGetM(pa);
-
-	for (int i = 0; i < m; i++) {
-
-		FMIValueReference vr = valueReference(S, stringStartVRsParam, i);
-		char *value = getStringParam(S, stringStartValuesParam, i);
-
-		if (isFMI1(S)) {
-			CHECK_STATUS(FMI1SetString(instance, &vr, 1, (const fmi1String *)&value));
-		} else if (isFMI2(S)) {
-			CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String *)&value));
-		} else {
-			CHECK_STATUS(FMI3SetString(instance, &vr, 1, (const fmi3String *)&value, 1));
-		}
-
-		mxFree(value);
-	}
-}
 
 static void update(SimStruct *S, bool inputEvent) {
 
@@ -1127,13 +1006,13 @@ static void initialize(SimStruct *S) {
 
     if (isFMI1(S)) {
 
-        CHECK_ERROR(setStartValues(S))
-            
+        CHECK_ERROR(setParameters(S, false, false));
+
         if (isCS(S)) {
-            CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime))
+            CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime));
         } else {
-            CHECK_STATUS(FMI1SetTime(instance, time))
-            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)))
+            CHECK_STATUS(FMI1SetTime(instance, time));
+            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)));
             if (instance->fmi1Functions->eventInfo.terminateSimulation) {
                 setErrorStatus(S, "Model requested termination at init");
                 return;
@@ -1142,23 +1021,23 @@ static void initialize(SimStruct *S) {
 
     } else if (isFMI2(S)) {
 
-        CHECK_ERROR(setStartValues(S))
-        CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-        CHECK_STATUS(FMI2EnterInitializationMode(instance))
-        CHECK_STATUS(FMI2ExitInitializationMode(instance))
+        CHECK_ERROR(setParameters(S, false, false));
+        CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime));
+        CHECK_STATUS(FMI2EnterInitializationMode(instance));
+        CHECK_STATUS(FMI2ExitInitializationMode(instance));
 
     } else {
 
         if (mxGetNumberOfElements(ssGetSFcnParam(S, inputPortWidthsParam)) > 0) {
-            CHECK_STATUS(FMI3EnterConfigurationMode(instance))
-            CHECK_ERROR(setStructualParameters(S))
-            CHECK_STATUS(FMI3ExitConfigurationMode(instance))
+            CHECK_STATUS(FMI3EnterConfigurationMode(instance));
+            CHECK_ERROR(setParameters(S, true, false));
+            CHECK_STATUS(FMI3ExitConfigurationMode(instance));
         }
 
-        CHECK_ERROR(setStartValues(S))
+        CHECK_ERROR(setParameters(S, false, false));
 
-        CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime))
-        CHECK_STATUS(FMI3ExitInitializationMode(instance))
+        CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime));
+        CHECK_STATUS(FMI3ExitInitializationMode(instance));
 
     }
 
@@ -1426,58 +1305,6 @@ static void mdlCheckParameters(SimStruct *S) {
 		return;
 	}
 
-	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartTypesParam))) {
-		setErrorStatus(S, "Parameter %d (scalar start value types) must be a double array", scalarStartTypesParam + 1);
-		return;
-	}
-
-	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartVRsParam))) {
-		setErrorStatus(S, "Parameter %d (scalar start value references) must be a double array", scalarStartVRsParam + 1);
-		return;
-	}
-
-	if (isFMI1(S) || isFMI2(S)) {
-		if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartVRsParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
-			setErrorStatus(S, "The number of elements in parameter %d (scalar start value references) and parameter %d (scalar start value types) must be equal", scalarStartVRsParam + 1, scalarStartTypesParam + 1);
-			return;
-		}
-	} else {
-		// TODO
-	}
-
-	// TODO: check VRS values!
-
-	if (!mxIsDouble(ssGetSFcnParam(S, scalarStartValuesParam))) {
-		setErrorStatus(S, "Parameter %d (scalar start values) must be a double array", scalarStartValuesParam + 1);
-		return;
-	}
-
-	if (isFMI1(S) || isFMI2(S)) {
-		if (mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, scalarStartTypesParam))) {
-			setErrorStatus(S, "The number of elements in parameter %d (scalar start values) and parameter %d (scalar start value types) must be equal", scalarStartValuesParam + 1, scalarStartTypesParam + 1);
-			return;
-		}
-	} else {
-		// TODO
-	}
-
-	if (!mxIsDouble(ssGetSFcnParam(S, stringStartVRsParam))) {
-		setErrorStatus(S, "Parameter %d (string start value references) must be a double array", stringStartVRsParam + 1);
-		return;
-	}
-
-	// TODO: check VRS values!
-
-	if (!mxIsChar(ssGetSFcnParam(S, stringStartValuesParam))) {
-		setErrorStatus(S, "Parameter %d (string start values) must be a char matrix", stringStartValuesParam + 1);
-		return;
-	}
-
-	if (mxGetM(ssGetSFcnParam(S, stringStartValuesParam)) != mxGetNumberOfElements(ssGetSFcnParam(S, stringStartVRsParam))) {
-		setErrorStatus(S, "The number of rows in parameter %d (string start values) must be equal to the number of elements in parameter %d (string start value references)", stringStartValuesParam + 1, stringStartVRsParam + 1);
-		return;
-	}
-
 	if (!mxIsDouble(ssGetSFcnParam(S, inputPortWidthsParam))) {
 		setErrorStatus(S, "Parameter %d (input port widths) must be a double array", inputPortWidthsParam + 1);
 		return;
@@ -1600,9 +1427,6 @@ static void mdlCheckParameters(SimStruct *S) {
 #endif /* MDL_CHECK_PARAMETERS */
 
 
-
-
-
 static int inputSize(SimStruct *S) {
 
     size_t s = 0;
@@ -1617,11 +1441,35 @@ static int inputSize(SimStruct *S) {
 }
 
 
+#define MDL_PROCESS_PARAMETERS   /* Change to #undef to remove function */
+#if defined(MDL_PROCESS_PARAMETERS) && defined(MATLAB_MEX_FILE)
+static void mdlProcessParameters(SimStruct *S) {
+
+    logDebug(S, "mdlProcessParameters()");
+
+    CHECK_ERROR(setParameters(S, false, true));
+}
+#endif /* MDL_PROCESS_PARAMETERS */
+
+
 static void mdlInitializeSizes(SimStruct *S) {
 
 	logDebug(S, "mdlInitializeSizes()");
 
-	ssSetNumSFcnParams(S, numParams);
+    const int nSFcnParams = ssGetSFcnParamsCount(S);
+
+    // TODO: check nSFcnParams
+
+	ssSetNumSFcnParams(S, nSFcnParams);
+
+    for (int i = 0; i < numParams; i++) {
+        ssSetSFcnParamTunable(S, i, false);
+    }
+
+    for (int i = numParams; i < nSFcnParams; i += 4) {
+        const double paramTunable = mxGetScalar(ssGetSFcnParam(S, i + 1));
+        ssSetSFcnParamTunable(S, i, paramTunable != 0);
+    }
 
 #if defined(MATLAB_MEX_FILE)
 	if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {

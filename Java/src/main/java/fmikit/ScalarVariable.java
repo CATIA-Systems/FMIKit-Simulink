@@ -20,6 +20,7 @@ public class ScalarVariable {
 	public String unit;
 	public SimpleType declaredType;
 	public String derivative;
+	public String dialogParameter;
 
 	/** List of fixed dimensions (Integer) or variables (ScalarVariable) that hold the dimensions */
 	public List<Object> dimensions = new ArrayList<Object>();

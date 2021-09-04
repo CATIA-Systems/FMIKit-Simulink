@@ -2,12 +2,51 @@ function applyDialog(dialog)
 
 %#ok<*AGROW>
 
+block = dialog.blockHandle;
+
+% break the library link
+set_param(block, 'LinkStatus', 'none');
+
+mask = Simulink.Mask.get(block);
+
+mask.removeAllParameters();
+
+userData = dialog.getUserData();
+
+% add dialog parameters
+for i = 0:userData.startValues.size()-1
+    p = userData.startValues.get(i);
+    mask.addParameter(...
+      'Name', char(p.name), ...
+      'Prompt', char(p.prompt), ...
+      'Value', char(p.value));
+end
+
 % set the user data
 userData = userDataToStruct(dialog.getUserData());
-set_param(dialog.blockHandle, 'UserData', userData, 'UserDataPersistent', 'on');
+set_param(block, 'UserData', userData, 'UserDataPersistent', 'on');
 
 % set the S-function parameters
-FMIKit.setSFunctionParameters(dialog.blockHandle)
+FMIKit.setSFunctionParameters(block)
+
+% draw the port labels
+display = '';
+
+ports = get_param(block, 'Ports');
+
+for i = 1:min(numel(userData.inputPorts), ports(1))
+    display = [display 'port_label(''input'', ' num2str(i) ', ''' userData.inputPorts(i).label ''');' sprintf('\n')];
+end
+
+if FMIKit.isResettable(gcb)
+    display = [display 'port_label(''input'', ' num2str(ports(1)) ', ''reset'');' sprintf('\n')];
+end
+
+for i = 1:min(numel(userData.outputPorts), ports(2))
+    display = [display 'port_label(''output'', ' num2str(i) ', ''' userData.outputPorts(i).label ''');' sprintf('\n')];
+end
+
+mask.Display = display;
 
 if userData.useSourceCode
 

@@ -23,7 +23,17 @@ dialog.mdlDirectory = folder;
 userData = getUserData(block);
 
 if ~isempty(userData)
+    
     userData = userDataFromStruct(userData);
+    
+    mask = Simulink.Mask.get(gcb);
+    
+    for i = 1:numel(mask.Parameters)
+        p = mask.Parameters(i);
+        startValue = javaObject('fmikit.ui.UserData$DialogParameter', p.Name, p.Prompt, p.Value);
+        userData.startValues.add(startValue);
+    end
+    
     dialog.setUserData(userData);
     dialog.loadModelDescription();
 end

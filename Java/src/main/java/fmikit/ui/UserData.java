@@ -7,7 +7,6 @@ package fmikit.ui;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 
 public class UserData {
@@ -39,8 +38,8 @@ public class UserData {
 	public ArrayList<Port> inputPorts = new ArrayList<Port>();
 
 	public ArrayList<Port> outputPorts = new ArrayList<Port>();
-	
-	public HashMap<String, String> startValues = new HashMap<String, String>();
+
+	public ArrayList<DialogParameter> startValues = new ArrayList<DialogParameter>();
 
 	public boolean useSourceCode = false;
 
@@ -63,6 +62,19 @@ public class UserData {
 
 		public ArrayList<String> variables = new ArrayList<String>();
 		
+	}
+
+	public static class DialogParameter {
+
+    	public String name;
+    	public String prompt;
+    	public String value;
+
+		public DialogParameter(String name, String prompt, String value) {
+			this.name = name;
+			this.prompt = prompt;
+			this.value = value;
+		}
 	}
 
 }
