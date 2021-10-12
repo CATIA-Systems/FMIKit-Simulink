@@ -1224,23 +1224,6 @@ public class FMUBlockDialog extends JDialog {
             return;
         }
 
-        // show model.png
-        try {
-            File modelImageFile = new File(unzipdir, "model.png").getCanonicalFile();
-            BufferedImage modelImage = ImageIO.read(modelImageFile);
-            ImageIcon modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
-            lblModelImage.setEnabled(true);
-            lblModelImage.setIcon(modelImageIcon);
-            lblModelImage.setText(null);
-            String url = modelImageFile.toURI().toURL().toString();
-            lblModelImage.setToolTipText("<html><img src=\"" + url + "\"/></html>");
-        } catch (IOException e) {
-            lblModelImage.setEnabled(false);
-            lblModelImage.setIcon(null);
-            lblModelImage.setText("no image available");
-            lblModelImage.setToolTipText(null);
-        }
-
         loadModelDescription();
     }
 
@@ -1493,6 +1476,23 @@ public class FMUBlockDialog extends JDialog {
         // enable the dialog buttons
         btnApply.setEnabled(true);
         btnOK.setEnabled(true);
+
+        // show model.png
+        try {
+            File modelImageFile = new File(getUnzipDirectory(), "model.png").getCanonicalFile();
+            BufferedImage modelImage = ImageIO.read(modelImageFile);
+            ImageIcon modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
+            lblModelImage.setEnabled(true);
+            lblModelImage.setIcon(modelImageIcon);
+            lblModelImage.setText(null);
+            String url = modelImageFile.toURI().toURL().toString();
+            lblModelImage.setToolTipText("<html><img src=\"" + url + "\"/></html>");
+        } catch (IOException e) {
+            lblModelImage.setEnabled(false);
+            lblModelImage.setIcon(null);
+            lblModelImage.setText("no image available");
+            lblModelImage.setToolTipText(null);
+        }
     }
 
     public boolean canUseSourceCode() {
