@@ -933,29 +933,36 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
 	Model* model = (Model*) c;
 	fmi2Real lastSolverTime, nextSolverTime;
 	fmi2Real endStepTime;
+    fmi2Status status = fmi2OK;
 
 	if (model->status <= modelInitializationMode) {
         logger(model, model->instanceName, fmi2Warning, "", "fmi2DoStep: Slave is not initialized\n");
-		return fmi2Warning;
+		status = fmi2Warning;
 	}
-	if (model->status == modelTerminated) {
+	
+    if (model->status == modelTerminated) {
         logger(model, model->instanceName, fmi2Warning, "", "fmi2DoStep: Slave terminated in previous step\n");
-		return fmi2Warning;
-	}
+        status = fmi2Warning;
+    }
+
 	if (!isEqual(model->time, currentCommunicationPoint)) {
 		logger(model, model->instanceName, fmi2Warning, "", "fmi2DoStep: Invalid currentCommunicationPoint = %.16f, expected %.16f\n", currentCommunicationPoint, model->time);
-		return fmi2Warning;
-	}
-	model->S->mdlInfo->simTimeStep = MAJOR_TIME_STEP;
-	if (fabs(communicationStepSize) < SFCN_FMI_EPS) {
+        status = fmi2Warning;
+    }
+	
+    model->S->mdlInfo->simTimeStep = MAJOR_TIME_STEP;
+	
+    if (fabs(communicationStepSize) < SFCN_FMI_EPS) {
 		/* Zero step size; External event iteration, just recompute outputs */
 		sfcnOutputs(model->S, 0);
-		return fmi2OK;
+		return status;
 	}
+
 	endStepTime = currentCommunicationPoint + communicationStepSize;
 	lastSolverTime = model->nbrSolverSteps*SFCN_FMI_FIXED_STEP_SIZE;
 	nextSolverTime = (model->nbrSolverSteps+1.0)*SFCN_FMI_FIXED_STEP_SIZE;
-	while ( (nextSolverTime < endStepTime) || isEqual(nextSolverTime, endStepTime) ) {
+	
+    while ( (nextSolverTime < endStepTime) || isEqual(nextSolverTime, endStepTime) ) {
 #if defined(SFCN_FMI_VERBOSITY)
 		logger(model, model->instanceName, fmi2OK, "", "fmi2DoStep: Internal solver step from %.16f to %.16f\n", lastSolverTime, nextSolverTime);
 #endif
@@ -983,9 +990,10 @@ fmi2Status fmi2DoStep(fmi2Component c, fmi2Real currentCommunicationPoint, fmi2R
 		model->nbrSolverSteps++;
 		nextSolverTime = (model->nbrSolverSteps+1.0)*SFCN_FMI_FIXED_STEP_SIZE;
 	}
+
 	model->time = endStepTime;
 
-	return fmi2OK;
+	return status;
 }
 
 fmi2Status fmi2CancelStep(fmi2Component c)
