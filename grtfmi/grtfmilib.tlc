@@ -123,11 +123,18 @@
     %return vr
   %endif
   %if ISEMPTY(fmiType)
-    %if ISFIELD(dataType, "Elements") && width == 1
+    %if ISFIELD(dataType, "Elements")
       %% Bus
-      %foreach elementIdx = dataType.NumElements
-        %assign element = dataType.Elements[elementIdx]
-        %assign vr = VariableFMI2(element, "%<variableName>.%<element.Name>", "%<dataName>.%<element.Name>", vr, variableAttr, typeAttr)
+      %foreach arrIdx = width
+        %foreach elementIdx = dataType.NumElements
+          %if width == 1
+            %assign subs = ""
+          %else
+            %assign subs = "[%<arrIdx>]"
+          %endif
+          %assign element = dataType.Elements[elementIdx]
+          %assign vr = VariableFMI2(element, "%<variableName>%<subs>.%<element.Name>", "%<dataName>%<subs>.%<element.Name>", vr, variableAttr, typeAttr)
+        %endforeach
       %endforeach
     %else
       %return vr
