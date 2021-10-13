@@ -7,17 +7,23 @@
 
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
 
+typedef struct {
+    RT_MDL_TYPE *S;
+    const char *instanceName;
+    fmi3CallbackLogMessage logger;
+    fmi3InstanceEnvironment componentEnvironment;
+    ModelVariable modelVariables[N_MODEL_VARIABLES];
+} ModelInstance;
+
 int rtPrintfNoOp(const char *fmt, ...) {
 	return 0;  /* do nothing */
 }
 
-typedef struct {
-	RT_MDL_TYPE *S;
-	const char *instanceName;
-	fmi3CallbackLogMessage logger;
-	fmi3InstanceEnvironment componentEnvironment;
-	ModelVariable modelVariables[N_MODEL_VARIABLES];
-} ModelInstance;
+static void logError(ModelInstance *modelInstance, const char *message) {
+    if (modelInstance && modelInstance->logger) {
+        modelInstance->logger(modelInstance->componentEnvironment, modelInstance->instanceName, fmi3Error, "error", message);
+    }
+}
 
 #define NOT_IMPLEMENTED return fmi3Error;
 
@@ -124,6 +130,19 @@ fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
 									   fmi3Float64 startTime,
 									   fmi3Boolean stopTimeDefined,
 									   fmi3Float64 stopTime) {
+
+    ModelInstance *modelInstance = (ModelInstance *)instance;
+
+    if (startTime != 0) {
+        logError(modelInstance, "startTime != 0.0 is not supported.");
+        return fmi3Error;
+    }
+
+    if (stopTimeDefined && stopTime <= startTime) {
+        logError(modelInstance, "stopTime must be greater than startTime.");
+        return fmi3Error;
+    }
+
 	return fmi3OK;
 }
 

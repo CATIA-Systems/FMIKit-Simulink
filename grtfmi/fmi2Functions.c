@@ -61,6 +61,12 @@ int rtPrintfNoOp(const char *fmt, ...) {
 	return 0;
 }
 
+static void logError(ModelInstance *instance, const char *message) {
+    if (instance && instance->logger) {
+        instance->logger(instance->componentEnvironment, instance->instanceName, fmi2Error, "error", message);
+    }
+}
+
 static void setResourcePath(const char *uri) {
 
 	const char *scheme1 = "file:///";
@@ -218,7 +224,13 @@ fmi2Status fmi2SetupExperiment(fmi2Component c,
 
 	GET_INSTANCE
 
+    if (startTime != 0) {
+        logError(instance, "startTime != 0.0 is not supported.");
+        return fmi2Error;
+    }
+
 	if (stopTimeDefined && stopTime <= startTime) {
+        logError(instance, "stopTime must be greater than startTime.");
 		return fmi2Error;
 	}
 
