@@ -165,6 +165,7 @@ jobs:
       cp -r rtwsfcnfmi               dist/rtwsfcnfmi
       cp FMIKit_blocks_R2012b.slx    dist
       cp fmikit.jar                  dist
+      cp FMU_bare.png                dist
       cp forms_rt.jar                dist
       cp info.xml                    dist
       cp LICENSE.txt                 dist
