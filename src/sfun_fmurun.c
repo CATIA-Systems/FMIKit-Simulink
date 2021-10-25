@@ -85,7 +85,7 @@ static size_t typeSizes[13] = {
     sizeof(boolean_T), //FMIBooleanType,
 };
 
-static char* getStringParam(SimStruct *S, Parameter parameter, int index) {
+static char* getStringParam(SimStruct *S, int parameter, int index) {
 
 	const mxArray *array = ssGetSFcnParam(S, parameter);
 
@@ -737,25 +737,26 @@ static void setParameters(SimStruct *S, bool structuralOnly, bool tunableOnly) {
 
                 // TODO: iterate over array
 
+                const mxArray *pa = ssGetSFcnParam(S, i + 4);
+
                 switch (type) {
                 case FMIRealType:
                 case FMIDiscreteRealType: {
-                    const fmi2Real value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    const fmi2Real value = mxGetScalar(pa);
                     CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &value));
                     break;
                 }
                 case FMIIntegerType: {
-                    const fmi2Integer value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    const fmi2Integer value = mxGetScalar(pa);
                     CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &value));
                     break;
                 }
                 case FMIBooleanType: {
-                    const fmi2Boolean value = mxGetScalar(ssGetSFcnParam(S, i + 4));
+                    const fmi2Boolean value = mxGetScalar(pa);
                     CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &value));
                     break;
                 }
                 case FMIStringType: {
-                    const mxArray *pa    = ssGetSFcnParam(S, i + 4);
                 	const char    *value = getStringParam(S, i + 4, 0);
                		CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String *)&value));
                 	mxFree(value);
@@ -1458,7 +1459,10 @@ static void mdlInitializeSizes(SimStruct *S) {
 
     const int nSFcnParams = ssGetSFcnParamsCount(S);
 
-    // TODO: check nSFcnParams
+    if ((nSFcnParams - numParams) % 5) {
+        setErrorStatus(S, "Wrong number of arguments.");
+        return;
+    }
 
 	ssSetNumSFcnParams(S, nSFcnParams);
 
@@ -1466,7 +1470,7 @@ static void mdlInitializeSizes(SimStruct *S) {
         ssSetSFcnParamTunable(S, i, false);
     }
 
-    for (int i = numParams; i < nSFcnParams; i += 4) {
+    for (int i = numParams; i < nSFcnParams; i += 5) {
         const double paramTunable = mxGetScalar(ssGetSFcnParam(S, i + 1));
         ssSetSFcnParamTunable(S, i, paramTunable != 0);
     }
