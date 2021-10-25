@@ -147,13 +147,13 @@ public class FMUBlockDialog extends JDialog {
         });
 
         // call onCancel() on ESCAPE
-        contentPane.registerKeyboardAction(new ActionListener() {
+        getRootPane().registerKeyboardAction(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 dispose();
             }
 
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         // TODO: center the window on screen
         setBounds(200, 200, 852, 619);
