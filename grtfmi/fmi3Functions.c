@@ -1,11 +1,22 @@
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#endif
+
 #include "fmi3Functions.h"
 
-#include <float.h>  /* for DBL_EPSILON */
+#include <float.h>  /* for DBL_EPSILON, FLT_MAX */
+#include <math.h>   /* for fabs() */
+#include <string.h> /* for strdup() */
+#include <stdarg.h> /* for va_list */
+#include <stdio.h>  /* for vsnprintf(), vprintf() */
 
 #include "fmiwrapper.inc"
 
 
 const char *RT_MEMORY_ALLOCATION_ERROR = "memory allocation error";
+
+/* Path to the resources directory of the extracted FMU */
+const char *FMU_RESOURCES_DIR = NULL;
 
 typedef struct {
     RT_MDL_TYPE *S;
@@ -15,17 +26,92 @@ typedef struct {
     ModelVariable modelVariables[N_MODEL_VARIABLES];
 } ModelInstance;
 
+static ModelInstance *s_instance = NULL;
+
+#define ASSERT_INSTANCE \
+    if (!instance || instance != s_instance) { \
+        return fmi3Error; \
+    }
+
+#define NOT_IMPLEMENTED \
+    logError("Function is not implemented."); \
+	return fmi3Error;
+
+#define CHECK_ERROR_STATUS \
+	const char *errorStatus = rtmGetErrorStatus(s_instance->S); \
+	if (errorStatus) { \
+		logError(errorStatus); \
+		return fmi3Error; \
+	}
+
+#define UNUSED(x) (void)(x)
+
 int rtPrintfNoOp(const char *fmt, ...) {
-	return 0;  /* do nothing */
+
+    va_list args;
+    va_start(args, fmt);
+
+    if (s_instance && s_instance->logger) {
+        char message[1024] = "";
+        vsnprintf(message, 1024, fmt, args);
+        s_instance->logger(s_instance->componentEnvironment, s_instance->instanceName, fmi3OK, "info", message);
+    } else {
+        vprintf(fmt, args);
+    }
+
+    va_end(args);
+
+    return 0;
 }
 
-static void logError(ModelInstance *modelInstance, const char *message) {
-    if (modelInstance && modelInstance->logger) {
-        modelInstance->logger(modelInstance->componentEnvironment, modelInstance->instanceName, fmi3Error, "error", message);
+static void logError(const char *message) {
+    if (s_instance && s_instance->logger) {
+        s_instance->logger(s_instance->componentEnvironment, s_instance->instanceName, fmi3Error, "error", message);
     }
 }
 
-#define NOT_IMPLEMENTED return fmi3Error;
+static void doFixedStep(RT_MDL_TYPE *S) {
+
+#if NUM_TASKS > 1 // multitasking
+
+#ifdef REUSABLE_FUNCTION
+    // step the model for the base sample time
+    MODEL_STEP(S, 0);
+
+    // step the model for any other sample times (subrates)
+    for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+        if (rtmStepTask(S, i)) {
+            MODEL_STEP(S, i);
+        }
+        if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+            rtmTaskCounter(S, i) = 0;
+        }
+    }
+#else
+    // step the model for the base sample time
+    MODEL_STEP(0);
+
+    // step the model for any other sample times (subrates)
+    for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
+        if (rtmStepTask(S, i)) {
+            MODEL_STEP(i);
+        }
+        if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
+            rtmTaskCounter(S, i) = 0;
+        }
+    }
+#endif
+
+#else // multitasking
+
+#ifdef REUSABLE_FUNCTION
+    MODEL_STEP(S);
+#else
+    MODEL_STEP();
+#endif
+
+#endif // multitasking
+}
 
 /***************************************************
 Types for Common Functions
@@ -35,10 +121,12 @@ const char* fmi3GetVersion() {
 	return fmi3Version;
 }
 
-fmi3Status  fmi3SetDebugLogging(fmi3Instance c,
+fmi3Status  fmi3SetDebugLogging(fmi3Instance instance,
 	fmi3Boolean loggingOn,
 	size_t nCategories,
 	const fmi3String categories[]) {
+
+    ASSERT_INSTANCE
 
     if (nCategories == 0) {
         return fmi3OK;
@@ -79,26 +167,32 @@ fmi3Instance fmi3InstantiateCoSimulation(
 		return NULL;
 	}
 
-	ModelInstance *instance = malloc(sizeof(ModelInstance));
+    /* check if the FMU has already been instantiated */
+    if (s_instance) {
+        logError("The FMU can only be instantiated once per process.");
+        return NULL;
+    }
 
-	size_t len = strlen(instanceName);
-	instance->instanceName = malloc((len + 1) * sizeof(char));
-	strncpy((char *)instance->instanceName, instanceName, len + 1);
-	instance->logger = logMessage;
-	instance->componentEnvironment = instanceEnvironment;
+    /* set the path to the resources directory */
+    if (!FMU_RESOURCES_DIR && resourcePath) {
+        FMU_RESOURCES_DIR = strdup(resourcePath);
+    }
+
+	s_instance = malloc(sizeof(ModelInstance));
+
+    s_instance->instanceName = strdup(instanceName);
+    s_instance->logger = logMessage;
+    s_instance->componentEnvironment = instanceEnvironment;
 
 #ifdef REUSABLE_FUNCTION
-	instance->S = MODEL();
-	MODEL_INITIALIZE(instance->S);
+    s_instance->S = MODEL();
 #else
-	MODEL_INITIALIZE();
-
-	instance->S = RT_MDL_INSTANCE;
+    s_instance->S = RT_MDL_INSTANCE;
 #endif
 
-	initializeModelVariables(instance->S, instance->modelVariables);
+	initializeModelVariables(s_instance->S, s_instance->modelVariables);
 
-	return instance;
+	return s_instance;
 }
 
 fmi3Instance fmi3InstantiateScheduledExecution(
@@ -118,10 +212,16 @@ fmi3Instance fmi3InstantiateScheduledExecution(
 	return NULL; // not supported
 }
 
-void fmi3FreeInstance(fmi3Instance c) {
-	ModelInstance *instance = (ModelInstance *)c;
-	free((void *)instance->instanceName);
-	free(instance);
+void fmi3FreeInstance(fmi3Instance instance) {
+
+    if (!instance || instance != s_instance) return;
+
+    free((void *)s_instance->instanceName);
+	free(s_instance);
+    free((void *)FMU_RESOURCES_DIR);
+
+    FMU_RESOURCES_DIR = NULL;
+    s_instance = NULL;
 }
 
 fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
@@ -131,22 +231,38 @@ fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
 									   fmi3Boolean stopTimeDefined,
 									   fmi3Float64 stopTime) {
 
-    ModelInstance *modelInstance = (ModelInstance *)instance;
+    ASSERT_INSTANCE
 
     if (startTime != 0) {
-        logError(modelInstance, "startTime != 0.0 is not supported.");
+        logError("startTime != 0.0 is not supported.");
         return fmi3Error;
     }
 
     if (stopTimeDefined && stopTime <= startTime) {
-        logError(modelInstance, "stopTime must be greater than startTime.");
+        logError("stopTime must be greater than startTime.");
         return fmi3Error;
     }
+
+
+#ifdef REUSABLE_FUNCTION
+    MODEL_INITIALIZE(s_instance->S);
+#else
+    MODEL_INITIALIZE();
+#endif
+
+    CHECK_ERROR_STATUS
 
 	return fmi3OK;
 }
 
-fmi3Status fmi3ExitInitializationMode(fmi3Instance c) {
+fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
+    
+    ASSERT_INSTANCE
+
+    doFixedStep(s_instance->S);
+
+    CHECK_ERROR_STATUS
+
 	return fmi3OK;
 }
 
@@ -156,42 +272,38 @@ fmi3Status fmi3EnterEventMode(fmi3Instance instance,
                               const fmi3Int32 rootsFound[],
                               size_t nEventIndicators,
                               fmi3Boolean timeEvent) {
-
-	return fmi3Error; // not supported
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3Terminate(fmi3Instance c) {
+fmi3Status fmi3Terminate(fmi3Instance instance) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+    ASSERT_INSTANCE
 
 #ifdef REUSABLE_FUNCTION
-	MODEL_TERMINATE(instance->S);
+	MODEL_TERMINATE(s_instance->S);
 #else
 	MODEL_TERMINATE();
 #endif
 
-	instance->S = NULL;
+    s_instance->S = NULL;
 
 	return fmi3OK;
 }
 
-fmi3Status fmi3Reset(fmi3Instance c) {
+fmi3Status fmi3Reset(fmi3Instance instance) {
 
-    ModelInstance *instance = (ModelInstance *)c;
-    
+    ASSERT_INSTANCE
+
 #ifdef REUSABLE_FUNCTION
-    if (instance->S) {
-        MODEL_TERMINATE(instance->S);
+    if (s_instance->S) {
+        MODEL_TERMINATE(s_instance->S);
     }
     
-    instance->S = MODEL();
-    MODEL_INITIALIZE(instance->S);
+    s_instance->S = MODEL();
 #else
-    if (instance->S) {
+    if (s_instance->S) {
         MODEL_TERMINATE();
     }
-    
-    MODEL_INITIALIZE();
 #endif
 
 	return fmi3OK;
@@ -256,70 +368,95 @@ static fmi3Status getVariables(ModelInstance *instance,
 	return fmi3OK;
 }
 
-fmi3Status fmi3GetFloat32(fmi3Instance c,
+fmi3Status fmi3GetFloat32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Float32 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_SINGLE, sizeof(REAL32_T));
+
+    ASSERT_INSTANCE
+
+	return getVariables(s_instance, vr, nvr, value, nValues, SS_SINGLE, sizeof(REAL32_T));
 }
 
-fmi3Status fmi3GetFloat64(fmi3Instance c,
+fmi3Status fmi3GetFloat64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Float64 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_DOUBLE, sizeof(REAL64_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_DOUBLE, sizeof(REAL64_T));
 }
 
-fmi3Status fmi3GetInt8(fmi3Instance c,
+fmi3Status fmi3GetInt8(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Int8 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT8, sizeof(INT8_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_INT8, sizeof(INT8_T));
 }
 
-fmi3Status fmi3GetUInt8(fmi3Instance c,
+fmi3Status fmi3GetUInt8(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3UInt8 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT8, sizeof(UINT8_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_UINT8, sizeof(UINT8_T));
 }
 
-fmi3Status fmi3GetInt16(fmi3Instance c,
+fmi3Status fmi3GetInt16(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Int16 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT16, sizeof(INT16_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_INT16, sizeof(INT16_T));
 }
 
-fmi3Status fmi3GetUInt16(fmi3Instance c,
+fmi3Status fmi3GetUInt16(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3UInt16 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT16, sizeof(UINT16_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_UINT16, sizeof(UINT16_T));
 }
 
-fmi3Status fmi3GetInt32(fmi3Instance c,
+fmi3Status fmi3GetInt32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Int32 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT32, sizeof(INT32_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_INT32, sizeof(INT32_T));
 }
 
-fmi3Status fmi3GetUInt32(fmi3Instance c,
+fmi3Status fmi3GetUInt32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3UInt32 value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT32, sizeof(UINT32_T));
+
+    ASSERT_INSTANCE
+
+    return getVariables(s_instance, vr, nvr, value, nValues, SS_UINT32, sizeof(UINT32_T));
 }
 
-fmi3Status fmi3GetInt64(fmi3Instance c,
+fmi3Status fmi3GetInt64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Int64 value[], size_t nValues) {
-	NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetUInt64(fmi3Instance c,
+fmi3Status fmi3GetUInt64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3UInt64 value[], size_t nValues) {
-	NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetBoolean(fmi3Instance c,
+fmi3Status fmi3GetBoolean(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	fmi3Boolean value[], size_t nValues) {
-	return getVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_BOOLEAN, sizeof(BOOLEAN_T));
+    ASSERT_INSTANCE
+	return getVariables(s_instance, vr, nvr, value, nValues, SS_BOOLEAN, sizeof(BOOLEAN_T));
 }
 
 fmi3Status fmi3GetString(fmi3Instance instance,
@@ -327,13 +464,13 @@ fmi3Status fmi3GetString(fmi3Instance instance,
     size_t nValueReferences,
     fmi3String values[],
     size_t nValues) { 
-    NOT_IMPLEMENTED 
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetBinary(fmi3Instance c,
+fmi3Status fmi3GetBinary(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	size_t size[], fmi3Binary value[], size_t nValues) {
-	NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 fmi3Status fmi3GetClock(fmi3Instance instance,
@@ -386,79 +523,104 @@ static fmi3Status setVariables(ModelInstance *instance,
 	return fmi3OK;
 }
 
-fmi3Status fmi3SetFloat32(fmi3Instance c,
+fmi3Status fmi3SetFloat32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Float32 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_SINGLE, sizeof(REAL32_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_SINGLE, sizeof(REAL32_T));
 }
 
-fmi3Status fmi3SetFloat64(fmi3Instance c,
+fmi3Status fmi3SetFloat64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Float64 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_DOUBLE, sizeof(REAL64_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_DOUBLE, sizeof(REAL64_T));
 }
 
-fmi3Status fmi3SetInt8(fmi3Instance c,
+fmi3Status fmi3SetInt8(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Int8 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT8, sizeof(INT8_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_INT8, sizeof(INT8_T));
 }
 
-fmi3Status fmi3SetUInt8(fmi3Instance c,
+fmi3Status fmi3SetUInt8(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3UInt8 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT8, sizeof(UINT8_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_UINT8, sizeof(UINT8_T));
 }
 
-fmi3Status fmi3SetInt16(fmi3Instance c,
+fmi3Status fmi3SetInt16(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Int16 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT16, sizeof(INT16_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_INT16, sizeof(INT16_T));
 }
 
-fmi3Status fmi3SetUInt16(fmi3Instance c,
+fmi3Status fmi3SetUInt16(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3UInt16 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT16, sizeof(UINT16_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_UINT16, sizeof(UINT16_T));
 }
 
-fmi3Status fmi3SetInt32(fmi3Instance c,
+fmi3Status fmi3SetInt32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Int32 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_INT32, sizeof(INT32_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_INT32, sizeof(INT32_T));
 }
 
-fmi3Status fmi3SetUInt32(fmi3Instance c,
+fmi3Status fmi3SetUInt32(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3UInt32 value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_UINT32, sizeof(UINT32_T));
+
+    ASSERT_INSTANCE
+
+    return setVariables(s_instance, vr, nvr, value, nValues, SS_UINT32, sizeof(UINT32_T));
 }
 
-fmi3Status fmi3SetInt64(fmi3Instance c,
+fmi3Status fmi3SetInt64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Int64 value[], size_t nValues) {
-	NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3SetUInt64(fmi3Instance c,
+fmi3Status fmi3SetUInt64(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3UInt64 value[], size_t nValues) {
-	NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3SetBoolean(fmi3Instance c,
+fmi3Status fmi3SetBoolean(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3Boolean value[], size_t nValues) {
-	return setVariables((ModelInstance *)c, vr, nvr, value, nValues, SS_BOOLEAN, sizeof(BOOLEAN_T));
+    ASSERT_INSTANCE
+	return setVariables(s_instance, vr, nvr, value, nValues, SS_BOOLEAN, sizeof(BOOLEAN_T));
 }
 
-fmi3Status fmi3SetString(fmi3Instance c,
+fmi3Status fmi3SetString(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const fmi3String value[], size_t nValues) { 
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3SetBinary(fmi3Instance c,
+fmi3Status fmi3SetBinary(fmi3Instance instance,
 	const fmi3ValueReference vr[], size_t nvr,
 	const size_t size[], const fmi3Binary value[], size_t nValues) {
     NOT_IMPLEMENTED
@@ -499,6 +661,7 @@ fmi3Status fmi3SetFMUState(fmi3Instance instance, fmi3FMUState  FMUState) {
 }
 
 fmi3Status fmi3FreeFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
+    ASSERT_INSTANCE
     NOT_IMPLEMENTED
 }
 
@@ -549,10 +712,12 @@ fmi3Status fmi3GetAdjointDerivative(fmi3Instance instance,
 
 /* Entering and exiting the Configuration or Reconfiguration Mode */
 fmi3Status fmi3EnterConfigurationMode(fmi3Instance instance) {
+    ASSERT_INSTANCE
     return fmi3OK;
 }
 
 fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
+    ASSERT_INSTANCE
     return fmi3OK;
 }
 
@@ -627,11 +792,11 @@ fmi3Status fmi3UpdateDiscreteStates(fmi3Instance instance,
 Types for Functions for Model Exchange
 ****************************************************/
 
-fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance c) { 
+fmi3Status fmi3EnterContinuousTimeMode(fmi3Instance instance) { 
     NOT_IMPLEMENTED 
 }
 
-fmi3Status fmi3CompletedIntegratorStep(fmi3Instance c,
+fmi3Status fmi3CompletedIntegratorStep(fmi3Instance instance,
 	fmi3Boolean   noSetFMUStatePriorToCurrentPoint,
 	fmi3Boolean*  enterEventMode,
 	fmi3Boolean*  terminateSimulation) { 
@@ -639,28 +804,28 @@ fmi3Status fmi3CompletedIntegratorStep(fmi3Instance c,
 }
 
 /* Providing independent variables and re-initialization of caching */
-fmi3Status fmi3SetTime(fmi3Instance c, fmi3Float64 time) { 
+fmi3Status fmi3SetTime(fmi3Instance instance, fmi3Float64 time) { 
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3SetContinuousStates(fmi3Instance c, const fmi3Float64 x[], size_t nx) { 
+fmi3Status fmi3SetContinuousStates(fmi3Instance instance, const fmi3Float64 x[], size_t nx) { 
     NOT_IMPLEMENTED 
 }
 
 /* Evaluation of the model equations */
-fmi3Status fmi3GetContinuousStateDerivatives(fmi3Instance c, fmi3Float64 derivatives[], size_t nx) {
+fmi3Status fmi3GetContinuousStateDerivatives(fmi3Instance instance, fmi3Float64 derivatives[], size_t nx) {
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetEventIndicators(fmi3Instance c, fmi3Float64 eventIndicators[], size_t ni) {
+fmi3Status fmi3GetEventIndicators(fmi3Instance instance, fmi3Float64 eventIndicators[], size_t ni) {
     NOT_IMPLEMENTED 
 }
 
-fmi3Status fmi3GetContinuousStates(fmi3Instance c, fmi3Float64 x[], size_t nx) { 
+fmi3Status fmi3GetContinuousStates(fmi3Instance instance, fmi3Float64 x[], size_t nx) { 
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance c, fmi3Float64 x_nominal[], size_t nx) { 
+fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance instance, fmi3Float64 x_nominal[], size_t nx) { 
     NOT_IMPLEMENTED 
 }
 
@@ -684,7 +849,7 @@ fmi3Status fmi3EnterStepMode(fmi3Instance instance) {
     NOT_IMPLEMENTED 
 }
 
-fmi3Status fmi3GetOutputDerivatives(fmi3Instance c,
+fmi3Status fmi3GetOutputDerivatives(fmi3Instance instance,
 	const fmi3ValueReference vr[],
 	size_t nvr,
 	const fmi3Int32 order[],
@@ -693,7 +858,7 @@ fmi3Status fmi3GetOutputDerivatives(fmi3Instance c,
     NOT_IMPLEMENTED 
 }
 
-fmi3Status fmi3DoStep(fmi3Instance c,
+fmi3Status fmi3DoStep(fmi3Instance instance,
                       fmi3Float64 currentCommunicationPoint,
                       fmi3Float64 communicationStepSize,
                       fmi3Boolean noSetFMUStatePriorToCurrentPoint,
@@ -702,27 +867,32 @@ fmi3Status fmi3DoStep(fmi3Instance c,
                       fmi3Boolean* earlyReturn,
                       fmi3Float64* lastSuccessfulTime) {
 
-	ModelInstance *instance = (ModelInstance *)c;
+    ASSERT_INSTANCE
 
-	time_T tNext = currentCommunicationPoint + communicationStepSize;
+    UNUSED(noSetFMUStatePriorToCurrentPoint);
+
+    time_T tNext = currentCommunicationPoint + communicationStepSize;
 
 #ifdef rtmGetT
-	while (rtmGetT(instance->S) + STEP_SIZE < tNext + DBL_EPSILON)
-#endif
-	{
-        
-#ifdef REUSABLE_FUNCTION
-		MODEL_STEP(instance->S);
-#else
-        MODEL_STEP();
-#endif
-		const char *errorStatus = rtmGetErrorStatus(instance->S);
-		if (errorStatus) {
-			instance->logger(instance->componentEnvironment, instance->instanceName, fmi3Error, "error", errorStatus);
-			return fmi3Error;
-		}
+    double epsilon = (1.0 + fabs(rtmGetT(s_instance->S))) * 2 * DBL_EPSILON;
 
-	}
+    while (rtmGetT(s_instance->S) < tNext + epsilon)
+#endif
+    {
+        doFixedStep(s_instance->S);
+
+        CHECK_ERROR_STATUS
+    }
+
+    *eventEncountered    = fmi3False;
+    *terminateSimulation = fmi3False;
+    *earlyReturn         = fmi3False;
+
+#ifdef rtmGetT
+    *lastSuccessfulTime = rtmGetT(s_instance->S);
+#else
+    *lastSuccessfulTime = tNext;
+#endif
 
 	return fmi3OK;
 }

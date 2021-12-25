@@ -31,9 +31,7 @@
 
   <CoSimulation
     modelIdentifier="%<OrigName>"
-  %if !reusableFunction
     canBeInstantiatedOnlyOncePerProcess="true"
-  %endif
     canHandleVariableCommunicationStepSize="true">
   %if SourceCodeFMU
     %assign simscapeBlocks = FEVAL("find_system", modelName, "BlockType", "SimscapeBlock")
