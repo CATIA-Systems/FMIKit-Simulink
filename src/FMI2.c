@@ -25,6 +25,8 @@
 
 static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2String instanceName, fmi2Status status, fmi2String category, fmi2String message, ...) {
 
+    if (!componentEnvironment) return;
+
     FMIInstance *instance = componentEnvironment;
 
     char buf[FMI_MAX_MESSAGE_LENGTH];
@@ -34,6 +36,8 @@ static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2St
     va_start(args, message);
     vsnprintf(buf, FMI_MAX_MESSAGE_LENGTH, message, args);
     va_end(args);
+
+    if (!instance->logMessage) return;
 
     instance->logMessage(instance, status, category, buf);
 }
@@ -45,15 +49,15 @@ static void cb_logMessage2(fmi2ComponentEnvironment componentEnvironment, fmi2St
 #define LOAD_SYMBOL(f) \
     instance->fmi2Functions->fmi2 ## f = (fmi2 ## f ## TYPE*)GetProcAddress(instance->libraryHandle, "fmi2" #f); \
     if (!instance->fmi2Functions->fmi2 ## f) { \
-        instance->logMessage(instance, FMIError, "error", "Symbol fmi2" #f " is missing in shared library."); \
-        goto fail; \
+        instance->logMessage(instance, FMIFatal, "fatal", "Symbol fmi2" #f " is missing in shared library."); \
+        return fmi2Fatal; \
     }
 #else
 #define LOAD_SYMBOL(f) \
     instance->fmi2Functions->fmi2 ## f = (fmi2 ## f ## TYPE*)dlsym(instance->libraryHandle, "fmi2" #f); \
     if (!instance->fmi2Functions->fmi2 ## f) { \
-        instance->logMessage(instance, FMIError, "error", "Symbol fmi2" #f " is missing in shared library."); \
-        goto fail; \
+        instance->logMessage(instance, FMIFatal, "fatal", "Symbol fmi2" #f " is missing in shared library."); \
+        return fmi2Fatal; \
     }
 #endif
 
@@ -200,7 +204,6 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
 #endif
     }
 
-
 #endif
 
     instance->fmi2Functions->callbacks.logger               = cb_logMessage2;
@@ -218,14 +221,14 @@ fmi2Status FMI2Instantiate(FMIInstance *instance, const char *fmuResourceLocatio
             instance->name, fmuType, fmuGUID, fmuResourceLocation, f->logger, f->allocateMemory, f->freeMemory, f->stepFinished, f->componentEnvironment, visible, loggingOn);
     }
 
-    if (!instance->component) goto fail;
+    if (!instance->component) {
+        return fmi2Error;
+    }
 
+    instance->interfaceType = (FMIInterfaceType)fmuType;
     instance->state = FMI2InstantiatedState;
 
     return fmi2OK;
-
-fail:
-    return fmi2Error;
 }
 
 void FMI2FreeInstance(FMIInstance *instance) {
@@ -380,6 +383,7 @@ fmi2Status FMI2CompletedIntegratorStep(FMIInstance *instance,
 
 /* Providing independent variables and re-initialization of caching */
 fmi2Status FMI2SetTime(FMIInstance *instance, fmi2Real time) {
+    instance->time = time;
     CALL_ARGS(SetTime, "time=%.16g", time)
 }
 
@@ -467,7 +471,7 @@ fmi2Status FMI2CancelStep(FMIInstance *instance) {
 fmi2Status FMI2GetStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Status* value) {
     fmi2Status status = instance->fmi2Functions->fmi2GetStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
-        instance->logFunctionCall(instance, status, "fmi2GetStatus(s=%s, value=%d)", s, *value);
+        instance->logFunctionCall(instance, status, "fmi2GetStatus(s=%d, value=%d)", s, *value);
     }
     return status;
 }
@@ -475,7 +479,7 @@ fmi2Status FMI2GetStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Stat
 fmi2Status FMI2GetRealStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Real* value) {
     fmi2Status status = instance->fmi2Functions->fmi2GetRealStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
-        instance->logFunctionCall(instance, status, "fmi2GetRealStatus(s=%s, value=%.16g)", s, *value);
+        instance->logFunctionCall(instance, status, "fmi2GetRealStatus(s=%d, value=%.16g)", s, *value);
     }
     return status;
 }
@@ -483,7 +487,7 @@ fmi2Status FMI2GetRealStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2
 fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Integer* value) {
     fmi2Status status = instance->fmi2Functions->fmi2GetIntegerStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
-        instance->logFunctionCall(instance, status, "fmi2GetIntegerStatus(s=%s, value=%d)", s, *value);
+        instance->logFunctionCall(instance, status, "fmi2GetIntegerStatus(s=%d, value=%d)", s, *value);
     }
     return status;
 }
@@ -491,7 +495,7 @@ fmi2Status FMI2GetIntegerStatus(FMIInstance *instance, const fmi2StatusKind s, f
 fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2Boolean* value) {
     fmi2Status status = instance->fmi2Functions->fmi2GetBooleanStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
-        instance->logFunctionCall(instance, status, "fmi2GetBooleanStatus(s=%s, value=%d)", s, *value);
+        instance->logFunctionCall(instance, status, "fmi2GetBooleanStatus(s=%d, value=%d)", s, *value);
     }
     return status;
 }
@@ -499,7 +503,7 @@ fmi2Status FMI2GetBooleanStatus(FMIInstance *instance, const fmi2StatusKind s, f
 fmi2Status FMI2GetStringStatus(FMIInstance *instance, const fmi2StatusKind s, fmi2String* value) {
     fmi2Status status = instance->fmi2Functions->fmi2GetStringStatus(instance->component, s, value);
     if (instance->logFunctionCall) {
-        instance->logFunctionCall(instance, status, "fmi2GetStringStatus(s=%s, value=%s)", s, *value);
+        instance->logFunctionCall(instance, status, "fmi2GetStringStatus(s=%d, value=%s)", s, *value);
     }
     return status;
 }
