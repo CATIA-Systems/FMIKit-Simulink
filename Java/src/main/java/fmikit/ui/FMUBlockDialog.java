@@ -1464,10 +1464,12 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // advanced
+        String relativeTolerance = "0";
+
         if (userData != null) {
-            txtRelativeTolerance.setText(userData.relativeTolerance);
-        } else if (modelDescription.defaultExperiment != null && modelDescription.defaultExperiment.tolerance != null) {
-            txtRelativeTolerance.setText(modelDescription.defaultExperiment.tolerance);
+            relativeTolerance = userData.relativeTolerance;
+        } else if (modelDescription.defaultExperiment != null && modelDescription.defaultExperiment.tolerance != null && !modelDescription.defaultExperiment.tolerance.trim().isEmpty()) {
+            relativeTolerance = modelDescription.defaultExperiment.tolerance;
         }
 
         // update the platforms
