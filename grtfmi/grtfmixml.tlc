@@ -1,12 +1,15 @@
 %% Generate modelDescription.xml
-%openfile xmlfile = "modelDescription.xml"
+%openfile xmlfile1 = "modelDescription1.xml"
+%openfile xmlfile2 = "modelDescription2.xml"
 %openfile incfile = "fmiwrapper.inc"
 %with CompiledModel
   %assign reusableFunction = ISFIELD(ConfigSet, "CodeInterfacePackaging") && ConfigSet.CodeInterfacePackaging == "Reusable function"
   %selectfile STDOUT
 ### Writing modelDescription.xml
 
-  %selectfile xmlfile
+  %assign ::units = []
+
+  %selectfile xmlfile1
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   %if FMIVersion == "2"
@@ -56,17 +59,7 @@
     %endif
   %endif
   </CoSimulation>
-
-  %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
-  <UnitDefinitions>
-    %foreach unitIdx = Units.NumUnits
-      %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
-      %if !ISEMPTY(unitExpr)
-    <Unit name="%<unitExpr>"/>
-      %endif
-    %endforeach
-  </UnitDefinitions>
-  %endif
+  %selectfile xmlfile2
   %if ISFIELD(CompiledModel, "DataTypes") && DataTypes.NumDataTypes > 1
     %assign enumerationDataTypes = []
     %foreach dataTypeIdx = DataTypes.NumDataTypes
@@ -160,7 +153,7 @@ typedef struct {
 
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
-  %selectfile xmlfile
+  %selectfile xmlfile2
   %if FMIVersion == "3"
 
     <!-- Independent Variable -->
@@ -200,11 +193,11 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endif
     %endforeach
   %endwith
-  %selectfile xmlfile
+  %selectfile xmlfile2
   %% Inputs
   %with ExternalInputs
     %if NumExternalInputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
@@ -226,7 +219,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   %% Outputs
   %with ExternalOutputs
     %if NumExternalOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Outputs -->
       %foreach portid = NumExternalOutputs
@@ -255,7 +248,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   %% Block Outputs
   %with ::CompiledModel.BlockOutputs
     %if IncludeBlockOutputs && NumExternalBlockOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- External Block Outputs -->
       %foreach blockoutputid = NumExternalBlockOutputs
@@ -271,7 +264,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endforeach
     %endif
     %if IncludeBlockOutputs && NumGlobalBlockOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Global Block Outputs -->
       %foreach blockoutputid = NumGlobalBlockOutputs
@@ -309,7 +302,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
 
 %assign nModelVariables = vr - 1
 #define N_MODEL_VARIABLES %<nModelVariables>
-  %selectfile xmlfile
+  %selectfile xmlfile2
 
   </ModelVariables>
 
@@ -338,7 +331,24 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   </ModelStructure>
 
 </fmiModelDescription>
-%endwith
+  %if SIZE(::units, 1) > 0
+    %assign ::units = FEVAL("grtfmi_unique", ::units)
+    %selectfile xmlfile1
 
+  <UnitDefinitions>
+    %foreach unitIdx = SIZE(::units, 1)
+    <Unit name="%<units[unitIdx]>"/>
+    %endforeach
+  </UnitDefinitions>
+  %endif
+%endwith
 %closefile incfile
+%closefile xmlfile1
+%closefile xmlfile2
+
+%openfile xmlfile = "modelDescription.xml"
+%selectfile xmlfile
+%assign buildDir = FEVAL("grtfmi_build_directory")
+%include "%<buildDir>/modelDescription1.xml"
+%include "%<buildDir>/modelDescription2.xml"
 %closefile xmlfile

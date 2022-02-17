@@ -80,13 +80,14 @@
       %endif
       %if ISFIELD(port, "UnitIdx") && EXISTS("Units")
         %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
-      %% %elseif ISFIELD(port, "BlockName")
-      %%  %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
+      %elseif ISFIELD(port, "BlockName")
+        %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
       %else
         %assign unit = ""
       %endif
       %if TYPE(unit) == "String" && !ISEMPTY(unit) && unit != "inherit"
         %assign attributes = "%<attributes> unit=\"%<unit>\""
+        %assign ::units = ::units + unit
       %endif
   %endswitch
   %return attributes
@@ -195,7 +196,7 @@
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = 0;
     modelVariables[%<vr-1>].address = %<dataName>%<dataSubs>);
-      %selectfile xmlfile
+      %selectfile xmlfile2
     <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
       <%<fmiType>%<startAttr>%<typeAttr>/>
     </ScalarVariable>
@@ -229,7 +230,7 @@
   %if nRows == 0 || nCols == 0
     %return vr
   %endif
-  %selectfile xmlfile
+  %selectfile xmlfile2
   %if ISFIELD(record, "Value")
     %assign startValue = FEVAL("grtfmi_start_value", record.Value)
     %assign variableAttr = "%<variableAttr> start=\"%<startValue>\""
