@@ -120,6 +120,16 @@
   rtwoptions(i).tlcvariable   = 'CMakeGenerator';
   rtwoptions(i).tooltip       = 'CMake generator to build the shared library';
 
+  if ispc
+    i = i + 1;
+    rtwoptions(i).prompt        = 'CMake generator platform';
+    rtwoptions(i).type          = 'Popup';
+    rtwoptions(i).default       = 'x64';
+    rtwoptions(i).popupstrings  = 'Win32|x64';
+    rtwoptions(i).tlcvariable   = 'CMakeGeneratorPlatform';
+    rtwoptions(i).tooltip       = 'CMake generator platform to build the shared library';
+  end
+
   i = i + 1;
   rtwoptions(i).prompt        = 'Toolset';
   rtwoptions(i).type          = 'Edit';
