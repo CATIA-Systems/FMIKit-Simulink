@@ -113,6 +113,11 @@ include   = strrep(include, '\', '/');
 sources   = strrep(sources, '\', '/');
 libraries = strrep(libraries, '\', '/');
 
+% remove duplicates
+include   = unique(include);
+sources   = unique(sources);
+libraries = unique(libraries);
+
 if nargout == 3
    varargout = {include, sources, libraries};
 else
