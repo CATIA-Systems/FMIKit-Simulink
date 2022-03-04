@@ -191,13 +191,18 @@ public class ModelDescriptionReader {
 
 			String dialogParameter = new String(chars);
 
+			// stay under MATLAB's variable length limit of 63 characters
+			if (dialogParameter.length() > 55) {
+				dialogParameter = dialogParameter.substring(0, 55);
+			}
+
 			// make name unique
 			if (dialogParameters.contains(dialogParameter)) {
 				int i = 2;
-				while (dialogParameters.contains(dialogParameter + Integer.toString(i))) {
+				while (dialogParameters.contains(dialogParameter + "_" + Integer.toString(i))) {
 					i++;
 				}
-				dialogParameter = dialogParameter + Integer.toString(i);
+				dialogParameter = dialogParameter + "_"  + Integer.toString(i);
 			}
 
 			variable.dialogParameter = dialogParameter;
