@@ -54,29 +54,36 @@ static void *loadSymbol(FMIInstance *instance, const char *prefix, const char *n
 }
 
 #define LOAD_SYMBOL(f) \
+do { \
     instance->fmi1Functions->fmi1 ## f = (fmi1 ## f ## TYPE*)loadSymbol(instance, modelIdentifier, "_fmi" #f); \
     if (!instance->fmi1Functions->fmi1 ## f) { \
         status = fmi1Error; \
         goto fail; \
-    }
+    } \
+} while (0)
 
 #define CALL(f) \
+do { \
     currentInstance = instance; \
     fmi1Status status = instance->fmi1Functions->fmi1 ## f (instance->component); \
     if (instance->logFunctionCall) { \
         instance->logFunctionCall(instance, status, "fmi" #f "()"); \
     } \
-    return status;
+    return status; \
+} while (0)
 
 #define CALL_ARGS(f, m, ...) \
+do { \
     currentInstance = instance; \
     fmi1Status status = instance->fmi1Functions->fmi1 ## f (instance->component, __VA_ARGS__); \
     if (instance->logFunctionCall) { \
         instance->logFunctionCall(instance, status, "fmi" #f "(" m ")", __VA_ARGS__); \
     } \
-    return status;
+    return status; \
+} while (0)
 
 #define CALL_ARRAY(s, t) \
+do { \
     currentInstance = instance; \
     fmi1Status status = instance->fmi1Functions->fmi1 ## s ## t(instance->component, vr, nvr, value); \
     if (instance->logFunctionCall) { \
@@ -84,46 +91,47 @@ static void *loadSymbol(FMIInstance *instance, const char *prefix, const char *n
         FMIValuesToString(instance, nvr, value, FMI ## t ## Type); \
         instance->logFunctionCall(instance, status, "fmi" #s #t "(vr=%s, nvr=%zu, value=%s)", instance->buf1, nvr, instance->buf2); \
     } \
-    return status;
+    return status; \
+} while (0)
 
 /***************************************************
  Common Functions for FMI 1.0
 ****************************************************/
 
 fmi1Status    FMI1SetReal(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, const fmi1Real    value[]) {
-    CALL_ARRAY(Set, Real)
+    CALL_ARRAY(Set, Real);
 }
 
 fmi1Status    FMI1SetInteger(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, const fmi1Integer value[]) {
-    CALL_ARRAY(Set, Integer)
+    CALL_ARRAY(Set, Integer);
 }
 
 fmi1Status    FMI1SetBoolean(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, const fmi1Boolean value[]) {
-    CALL_ARRAY(Set, Boolean)
+    CALL_ARRAY(Set, Boolean);
 }
 
 fmi1Status    FMI1SetString(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, const fmi1String  value[]) {
-    CALL_ARRAY(Set, String)
+    CALL_ARRAY(Set, String);
 }
 
 fmi1Status    FMI1GetReal(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, fmi1Real    value[]) {
-    CALL_ARRAY(Get, Real)
+    CALL_ARRAY(Get, Real);
 }
 
 fmi1Status    FMI1GetInteger(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, fmi1Integer value[]) {
-    CALL_ARRAY(Get, Integer)
+    CALL_ARRAY(Get, Integer);
 }
 
 fmi1Status    FMI1GetBoolean(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, fmi1Boolean value[]) {
-    CALL_ARRAY(Get, Boolean)
+    CALL_ARRAY(Get, Boolean);
 }
 
 fmi1Status    FMI1GetString(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, fmi1String  value[]) {
-    CALL_ARRAY(Get, String)
+    CALL_ARRAY(Get, String);
 }
 
 fmi1Status    FMI1SetDebugLogging(FMIInstance *instance, fmi1Boolean loggingOn) {
-    CALL_ARGS(SetDebugLogging, "loggingOn=%d", loggingOn)
+    CALL_ARGS(SetDebugLogging, "loggingOn=%d", loggingOn);
 }
 
 
@@ -164,34 +172,34 @@ fmi1Status FMI1InstantiateModel(FMIInstance *instance, fmi1String modelIdentifie
     /***************************************************
      Common Functions for FMI 1.0
     ****************************************************/
-    LOAD_SYMBOL(SetReal)
-    LOAD_SYMBOL(SetInteger)
-    LOAD_SYMBOL(SetBoolean)
-    LOAD_SYMBOL(SetString)
-    LOAD_SYMBOL(GetReal)
-    LOAD_SYMBOL(GetInteger)
-    LOAD_SYMBOL(GetBoolean)
-    LOAD_SYMBOL(GetString)
-    LOAD_SYMBOL(SetDebugLogging)
+    LOAD_SYMBOL(SetReal);
+    LOAD_SYMBOL(SetInteger);
+    LOAD_SYMBOL(SetBoolean);
+    LOAD_SYMBOL(SetString);
+    LOAD_SYMBOL(GetReal);
+    LOAD_SYMBOL(GetInteger);
+    LOAD_SYMBOL(GetBoolean);
+    LOAD_SYMBOL(GetString);
+    LOAD_SYMBOL(SetDebugLogging);
 
     /***************************************************
         FMI 1.0 for Model Exchange Functions
     ****************************************************/
-    LOAD_SYMBOL(GetModelTypesPlatform)
-    LOAD_SYMBOL(GetVersion)
-    LOAD_SYMBOL(InstantiateModel)
-    LOAD_SYMBOL(FreeModelInstance)
-    LOAD_SYMBOL(SetTime)
-    LOAD_SYMBOL(SetContinuousStates)
-    LOAD_SYMBOL(CompletedIntegratorStep)
-    LOAD_SYMBOL(Initialize)
-    LOAD_SYMBOL(GetDerivatives)
-    LOAD_SYMBOL(GetEventIndicators)
-    LOAD_SYMBOL(EventUpdate)
-    LOAD_SYMBOL(GetContinuousStates)
-    LOAD_SYMBOL(GetNominalContinuousStates)
-    LOAD_SYMBOL(GetStateValueReferences)
-    LOAD_SYMBOL(Terminate)
+    LOAD_SYMBOL(GetModelTypesPlatform);
+    LOAD_SYMBOL(GetVersion);
+    LOAD_SYMBOL(InstantiateModel);
+    LOAD_SYMBOL(FreeModelInstance);
+    LOAD_SYMBOL(SetTime);
+    LOAD_SYMBOL(SetContinuousStates);
+    LOAD_SYMBOL(CompletedIntegratorStep);
+    LOAD_SYMBOL(Initialize);
+    LOAD_SYMBOL(GetDerivatives);
+    LOAD_SYMBOL(GetEventIndicators);
+    LOAD_SYMBOL(EventUpdate);
+    LOAD_SYMBOL(GetContinuousStates);
+    LOAD_SYMBOL(GetNominalContinuousStates);
+    LOAD_SYMBOL(GetStateValueReferences);
+    LOAD_SYMBOL(Terminate);
 
     instance->fmi1Functions->callbacks.logger         = cb_logMessage1;
     instance->fmi1Functions->callbacks.allocateMemory = calloc;
@@ -224,7 +232,7 @@ void FMI1FreeModelInstance(FMIInstance *instance) {
 }
 
 fmi1Status    FMI1SetTime(FMIInstance *instance, fmi1Real time) {
-    CALL_ARGS(SetTime, "time=%.16g", time)
+    CALL_ARGS(SetTime, "time=%.16g", time);
 }
 
 fmi1Status    FMI1SetContinuousStates(FMIInstance *instance, const fmi1Real x[], size_t nx) {
@@ -322,7 +330,7 @@ fmi1Status    FMI1GetStateValueReferences(FMIInstance *instance, fmi1ValueRefere
 }
 
 fmi1Status FMI1Terminate(FMIInstance *instance) {
-    CALL(Terminate)
+    CALL(Terminate);
 }
 
 /***************************************************
@@ -354,34 +362,34 @@ fmi1Status FMI1InstantiateSlave(FMIInstance *instance, fmi1String modelIdentifie
     /***************************************************
      Common Functions for FMI 1.0
     ****************************************************/
-    LOAD_SYMBOL(SetReal)
-    LOAD_SYMBOL(SetInteger)
-    LOAD_SYMBOL(SetBoolean)
-    LOAD_SYMBOL(SetString)
-    LOAD_SYMBOL(GetReal)
-    LOAD_SYMBOL(GetInteger)
-    LOAD_SYMBOL(GetBoolean)
-    LOAD_SYMBOL(GetString)
-    LOAD_SYMBOL(SetDebugLogging)
+    LOAD_SYMBOL(SetReal);
+    LOAD_SYMBOL(SetInteger);
+    LOAD_SYMBOL(SetBoolean);
+    LOAD_SYMBOL(SetString);
+    LOAD_SYMBOL(GetReal);
+    LOAD_SYMBOL(GetInteger);
+    LOAD_SYMBOL(GetBoolean);
+    LOAD_SYMBOL(GetString);
+    LOAD_SYMBOL(SetDebugLogging);
 
     /***************************************************
      FMI 1.0 for Co-Simulation Functions
     ****************************************************/
-    LOAD_SYMBOL(GetTypesPlatform)
-    LOAD_SYMBOL(InstantiateSlave)
-    LOAD_SYMBOL(InitializeSlave)
-    LOAD_SYMBOL(TerminateSlave)
-    LOAD_SYMBOL(ResetSlave)
-    LOAD_SYMBOL(FreeSlaveInstance)
-    LOAD_SYMBOL(SetRealInputDerivatives)
-    LOAD_SYMBOL(GetRealOutputDerivatives)
-    LOAD_SYMBOL(CancelStep)
-    LOAD_SYMBOL(DoStep)
-    LOAD_SYMBOL(GetStatus)
-    LOAD_SYMBOL(GetRealStatus)
-    LOAD_SYMBOL(GetIntegerStatus)
-    LOAD_SYMBOL(GetBooleanStatus)
-    LOAD_SYMBOL(GetStringStatus)
+    LOAD_SYMBOL(GetTypesPlatform);
+    LOAD_SYMBOL(InstantiateSlave);
+    LOAD_SYMBOL(InitializeSlave);
+    LOAD_SYMBOL(TerminateSlave);
+    LOAD_SYMBOL(ResetSlave);
+    LOAD_SYMBOL(FreeSlaveInstance);
+    LOAD_SYMBOL(SetRealInputDerivatives);
+    LOAD_SYMBOL(GetRealOutputDerivatives);
+    LOAD_SYMBOL(CancelStep);
+    LOAD_SYMBOL(DoStep);
+    LOAD_SYMBOL(GetStatus);
+    LOAD_SYMBOL(GetRealStatus);
+    LOAD_SYMBOL(GetIntegerStatus);
+    LOAD_SYMBOL(GetBooleanStatus);
+    LOAD_SYMBOL(GetStringStatus);
 
     instance->fmi1Functions->callbacks.logger         = cb_logMessage1;
     instance->fmi1Functions->callbacks.allocateMemory = calloc;
@@ -407,11 +415,11 @@ fmi1Status    FMI1InitializeSlave(FMIInstance *instance, fmi1Real tStart, fmi1Bo
 }
 
 fmi1Status    FMI1TerminateSlave(FMIInstance *instance) {
-    CALL(TerminateSlave)
+    CALL(TerminateSlave);
 }
 
 fmi1Status    FMI1ResetSlave(FMIInstance *instance) {
-    CALL(ResetSlave)
+    CALL(ResetSlave);
 }
 
 void FMI1FreeSlaveInstance(FMIInstance *instance) {
@@ -430,11 +438,11 @@ fmi1Status    FMI1SetRealInputDerivatives(FMIInstance *instance, const fmi1Value
 }
 
 fmi1Status    FMI1GetRealOutputDerivatives(FMIInstance *instance, const fmi1ValueReference vr[], size_t nvr, const fmi1Integer order[], fmi1Real value[]) {
-    CALL_ARGS(GetRealOutputDerivatives, "vr=0x%p, nvr=%zu, order=0x%p, value=0x%p", vr, nvr, order, value)
+    CALL_ARGS(GetRealOutputDerivatives, "vr=0x%p, nvr=%zu, order=0x%p, value=0x%p", vr, nvr, order, value);
 }
 
 fmi1Status    FMI1CancelStep(FMIInstance *instance) {
-    CALL(CancelStep)
+    CALL(CancelStep);
 }
 
 fmi1Status    FMI1DoStep(FMIInstance *instance, fmi1Real currentCommunicationPoint, fmi1Real communicationStepSize, fmi1Boolean newStep) {
@@ -444,27 +452,27 @@ fmi1Status    FMI1DoStep(FMIInstance *instance, fmi1Real currentCommunicationPoi
     instance->time = currentCommunicationPoint + communicationStepSize;
 
     CALL_ARGS(DoStep, "currentCommunicationPoint=%.16g, communicationStepSize=%.16g, newStep=%d",
-        currentCommunicationPoint, communicationStepSize, newStep)
+        currentCommunicationPoint, communicationStepSize, newStep);
 }
 
 fmi1Status FMI1GetStatus(FMIInstance *instance, const fmi1StatusKind s, fmi1Status* value) {
-    CALL_ARGS(GetStatus, "s=%d, value=0x%p", s, value)
+    CALL_ARGS(GetStatus, "s=%d, value=0x%p", s, value);
 }
 
 fmi1Status FMI1GetRealStatus(FMIInstance *instance, const fmi1StatusKind s, fmi1Real* value) {
-    CALL_ARGS(GetRealStatus, "s=%d, value=0x%p", s, value)
+    CALL_ARGS(GetRealStatus, "s=%d, value=0x%p", s, value);
 }
 
 fmi1Status FMI1GetIntegerStatus(FMIInstance *instance, const fmi1StatusKind s, fmi1Integer* value) {
-    CALL_ARGS(GetIntegerStatus, "s=%d, value=0x%p", s, value)
+    CALL_ARGS(GetIntegerStatus, "s=%d, value=0x%p", s, value);
 }
 
 fmi1Status FMI1GetBooleanStatus(FMIInstance *instance, const fmi1StatusKind s, fmi1Boolean* value) {
-    CALL_ARGS(GetBooleanStatus, "s=%d, value=0x%p", s, value)
+    CALL_ARGS(GetBooleanStatus, "s=%d, value=0x%p", s, value);
 }
 
 fmi1Status FMI1GetStringStatus(FMIInstance *instance, const fmi1StatusKind s, fmi1String* value) {
-    CALL_ARGS(GetStringStatus, "s=%d, value=0x%p", s, value)
+    CALL_ARGS(GetStringStatus, "s=%d, value=0x%p", s, value);
 }
 
 #undef LOAD_SYMBOL

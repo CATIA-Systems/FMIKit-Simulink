@@ -4,11 +4,11 @@
 #include "fmi3PlatformTypes.h"
 
 /*
-This header file defines the data and function types of FMI 3.0-beta.3.
+This header file defines the data and function types of FMI 3.0-beta.5.
 It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
-              2012-2021 Modelica Association Project "FMI"
+              2012-2022 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -77,6 +77,14 @@ typedef enum {
     fmi3IntervalChanged
 } fmi3IntervalQualifier;
 /* end::IntervalQualifier[] */
+
+/* tag::EventQualifier[] */
+typedef enum {
+    fmi3EventFalse,
+    fmi3EventTrue,
+    fmi3EventUnknown
+} fmi3EventQualifier;
+/* end::EventQualifier[] */
 
 /* tag::CallbackLogMessage[] */
 typedef void  (*fmi3LogMessageCallback) (fmi3InstanceEnvironment instanceEnvironment,
@@ -183,11 +191,11 @@ typedef fmi3Status fmi3ExitInitializationModeTYPE(fmi3Instance instance);
 
 /* tag::EnterEventMode[] */
 typedef fmi3Status fmi3EnterEventModeTYPE(fmi3Instance instance,
-                                          fmi3Boolean stepEvent,
-                                          fmi3Boolean stateEvent,
+                                          fmi3EventQualifier stepEvent,
+                                          fmi3EventQualifier stateEvent,
                                           const fmi3Int32 rootsFound[],
                                           size_t nEventIndicators,
-                                          fmi3Boolean timeEvent);
+                                          fmi3EventQualifier timeEvent);
 /* end::EnterEventMode[] */
 
 /* tag::Terminate[] */
@@ -417,12 +425,12 @@ typedef fmi3Status fmi3SerializeFMUStateTYPE     (fmi3Instance instance,
                                                   size_t size);
 /* end::SerializeFMUState[] */
 
-/* tag::DeSerializeFMUState[] */
-typedef fmi3Status fmi3DeSerializeFMUStateTYPE   (fmi3Instance instance,
+/* tag::DeserializeFMUState[] */
+typedef fmi3Status fmi3DeserializeFMUStateTYPE   (fmi3Instance instance,
                                                   const fmi3Byte serializedState[],
                                                   size_t size,
                                                   fmi3FMUState* FMUState);
-/* end::DeSerializeFMUState[] */
+/* end::DeserializeFMUState[] */
 
 /* Getting partial derivatives */
 /* tag::GetDirectionalDerivative[] */
@@ -471,7 +479,7 @@ typedef fmi3Status fmi3GetIntervalDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3GetIntervalFractionTYPE(fmi3Instance instance,
                                                const fmi3ValueReference valueReferences[],
                                                size_t nValueReferences,
-                                               fmi3UInt64 intervalCounters[],
+                                               fmi3UInt64 counters[],
                                                fmi3UInt64 resolutions[],
                                                fmi3IntervalQualifier qualifiers[]);
 /* end::GetIntervalFraction[] */
@@ -487,7 +495,7 @@ typedef fmi3Status fmi3GetShiftDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3GetShiftFractionTYPE(fmi3Instance instance,
                                             const fmi3ValueReference valueReferences[],
                                             size_t nValueReferences,
-                                            fmi3UInt64 shiftCounters[],
+                                            fmi3UInt64 counters[],
                                             fmi3UInt64 resolutions[]);
 /* end::GetShiftFraction[] */
 
@@ -502,9 +510,24 @@ typedef fmi3Status fmi3SetIntervalDecimalTYPE(fmi3Instance instance,
 typedef fmi3Status fmi3SetIntervalFractionTYPE(fmi3Instance instance,
                                                const fmi3ValueReference valueReferences[],
                                                size_t nValueReferences,
-                                               const fmi3UInt64 intervalCounters[],
+                                               const fmi3UInt64 counters[],
                                                const fmi3UInt64 resolutions[]);
 /* end::SetIntervalFraction[] */
+
+/* tag::SetShiftDecimal[] */
+typedef fmi3Status fmi3SetShiftDecimalTYPE(fmi3Instance instance,
+                                           const fmi3ValueReference valueReferences[],
+                                           size_t nValueReferences,
+                                           const fmi3Float64 shifts[]);
+/* end::SetShiftDecimal[] */
+
+/* tag::SetShiftFraction[] */
+typedef fmi3Status fmi3SetShiftFractionTYPE(fmi3Instance instance,
+                                            const fmi3ValueReference valueReferences[],
+                                            size_t nValueReferences,
+                                            const fmi3UInt64 counters[],
+                                            const fmi3UInt64 resolutions[]);
+/* end::SetShiftFraction[] */
 
 /* tag::EvaluateDiscreteStates[] */
 typedef fmi3Status fmi3EvaluateDiscreteStatesTYPE(fmi3Instance instance);

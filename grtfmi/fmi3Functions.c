@@ -265,11 +265,11 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
 }
 
 fmi3Status fmi3EnterEventMode(fmi3Instance instance,
-                              fmi3Boolean stepEvent,
-                              fmi3Boolean stateEvent,
+                              fmi3EventQualifier stepEvent,
+                              fmi3EventQualifier stateEvent,
                               const fmi3Int32 rootsFound[],
                               size_t nEventIndicators,
-                              fmi3Boolean timeEvent) {
+                              fmi3EventQualifier timeEvent) {
     NOT_IMPLEMENTED
 }
 
@@ -726,7 +726,7 @@ fmi3Status fmi3SerializeFMUState(fmi3Instance instance,
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3DeSerializeFMUState(fmi3Instance instance,
+fmi3Status fmi3DeserializeFMUState(fmi3Instance instance,
     const fmi3Byte serializedState[],
     size_t size,
     fmi3FMUState* FMUState) {
@@ -780,7 +780,7 @@ fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,
 fmi3Status fmi3GetIntervalFraction(fmi3Instance instance,
     const fmi3ValueReference valueReferences[],
     size_t nValueReferences,
-    fmi3UInt64 intervalCounters[],
+    fmi3UInt64 counters[],
     fmi3UInt64 resolutions[],
     fmi3IntervalQualifier qualifiers[]) {
     NOT_IMPLEMENTED
@@ -796,7 +796,7 @@ fmi3Status fmi3GetShiftDecimal(fmi3Instance instance,
 fmi3Status fmi3GetShiftFraction(fmi3Instance instance,
     const fmi3ValueReference valueReferences[],
     size_t nValueReferences,
-    fmi3UInt64 shiftCounters[],
+    fmi3UInt64 counters[],
     fmi3UInt64 resolutions[]) {
     NOT_IMPLEMENTED
 }
@@ -811,7 +811,22 @@ fmi3Status fmi3SetIntervalDecimal(fmi3Instance instance,
 fmi3Status fmi3SetIntervalFraction(fmi3Instance instance,
     const fmi3ValueReference valueReferences[],
     size_t nValueReferences,
-    const fmi3UInt64 intervalCounters[],
+    const fmi3UInt64 counters[],
+    const fmi3UInt64 resolutions[]) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetShiftDecimal(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    const fmi3Float64 shifts[]) {
+    NOT_IMPLEMENTED
+}
+
+fmi3Status fmi3SetShiftFraction(fmi3Instance instance,
+    const fmi3ValueReference valueReferences[],
+    size_t nValueReferences,
+    const fmi3UInt64 counters[],
     const fmi3UInt64 resolutions[]) {
     NOT_IMPLEMENTED
 }
