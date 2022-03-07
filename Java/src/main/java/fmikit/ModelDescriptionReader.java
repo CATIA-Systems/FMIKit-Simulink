@@ -80,7 +80,8 @@ public class ModelDescriptionReader {
 		}
 
 		URL schemaUrl = null;
-		ModelDescriptionHandler handler;
+		ModelDescriptionHandler handler = null;
+		ModelDescription modelDescription = null;
 
 		if ("1.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi1/fmiModelDescription.xsd");
@@ -88,26 +89,22 @@ public class ModelDescriptionReader {
 		} else if ("2.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi2/fmi2ModelDescription.xsd");
 			handler = new FMI2ModelDescriptionHandler();
-		} else if ("3.0-beta.3".equals(fmiVersionHandler.fmiVersion)) {
-			return readModelDescription3(filename);
+		} else if ("3.0-beta.5".equals(fmiVersionHandler.fmiVersion)) {
+			modelDescription = readModelDescription3(filename);
 		} else {
 			throw new Exception("Unsupported FMI version");
 		}
 
-		SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-
-		Schema schema = schemaFactory.newSchema(schemaUrl);
-
-		factory.setSchema(schema);
-		factory.setNamespaceAware(true);
-
-		SAXParser saxParser = factory.newSAXParser();
-
-		saxParser.parse(createInputSource(), handler);
-
-		messages = handler.getMessages();
-
-		ModelDescription modelDescription = handler.getModelDescription();
+		if (modelDescription == null) {
+			SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			Schema schema = schemaFactory.newSchema(schemaUrl);
+			factory.setSchema(schema);
+			factory.setNamespaceAware(true);
+			SAXParser saxParser = factory.newSAXParser();
+			saxParser.parse(createInputSource(), handler);
+			messages = handler.getMessages();
+			modelDescription = handler.getModelDescription();
+		}
 
 		if ("1.0".equals(modelDescription.fmiVersion)) {
 
@@ -152,7 +149,7 @@ public class ModelDescriptionReader {
 				
 			}
 
-		} else {
+		} else if ("2.0".equals(modelDescription.fmiVersion)) {
 
 			modelDescription.numberOfContinuousStates = modelDescription.modelStructure.derivatives.size();
 
