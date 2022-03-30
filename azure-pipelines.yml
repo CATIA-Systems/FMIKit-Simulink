@@ -5,7 +5,7 @@ jobs:
 - job: win32
   displayName: 'Windows (32-bit)'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
 
   steps:
 
@@ -20,7 +20,7 @@ jobs:
       destinationFolder: ThirdParty/R2012b
 
   - script: |
-      cmake -G "Visual Studio 15 2017" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake -G "Visual Studio 17 2022" -A Win32 -B build -DMATLAB_DIR=ThirdParty/R2012b .
       cmake --build build --config Release
     displayName: Build generic S-function
 
@@ -32,7 +32,7 @@ jobs:
 - job: win64
   displayName: 'Windows (64-bit)'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
 
   steps:
 
@@ -47,7 +47,7 @@ jobs:
       destinationFolder: ThirdParty/R2012b
 
   - script: |
-      cmake -G "Visual Studio 15 2017 Win64" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake -G "Visual Studio 17 2022" -A x64 -B build -DMATLAB_DIR=ThirdParty/R2012b .
       cmake --build build --config Release
     displayName: Build generic S-function
 
