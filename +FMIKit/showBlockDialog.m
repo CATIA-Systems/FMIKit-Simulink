@@ -26,7 +26,7 @@ if ~isempty(userData)
     
     userData = userDataFromStruct(userData);
     
-    mask = Simulink.Mask.get(gcb);
+    mask = Simulink.Mask.get(block);
     
     for i = 1:numel(mask.Parameters)
         p = mask.Parameters(i);
