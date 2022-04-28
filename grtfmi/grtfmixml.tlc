@@ -3,7 +3,6 @@
 %openfile xmlfile2 = "modelDescription2.xml"
 %openfile incfile = "fmiwrapper.inc"
 %with CompiledModel
-  %assign reusableFunction = ISFIELD(ConfigSet, "CodeInterfacePackaging") && ConfigSet.CodeInterfacePackaging == "Reusable function"
   %selectfile STDOUT
 ### Writing modelDescription.xml
 
@@ -137,20 +136,16 @@ typedef struct {
 #define NUM_SAMPLE_TIMES %<NumSampleTimes>
 #define FIRST_TASK_ID    %<FixedStepOpts.TID01EQ>
 
-/* R2019a defines the block parameters as extern */
+/* since R2019a the block parameters are defined as extern */
 #ifndef rtmGetDefaultParam
 #define rtmGetDefaultParam(S) (&%<tParameters>)
 #endif
 
-%if reusableFunction
-#define REUSABLE_FUNCTION
-%else
 /* Definitions for non-reusable models */
 #define RT_MDL_INSTANCE     %<tSimStruct>
 #define rtmGetU(S)          (&%<tInput>)
 #define rtmGetY(S)          (&%<tOutput>)
 #define rtmGetBlockIO(S)    (&%<tBlockIO>)
-%endif
 
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters

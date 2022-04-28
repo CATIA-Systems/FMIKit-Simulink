@@ -74,20 +74,6 @@ static void doFixedStep(RT_MDL_TYPE *S) {
 
 #if NUM_TASKS > 1 // multitasking
 
-#ifdef REUSABLE_FUNCTION
-    // step the model for the base sample time
-    MODEL_STEP(S, 0);
-
-    // step the model for any other sample times (subrates)
-    for (int i = FIRST_TASK_ID + 1; i < NUM_SAMPLE_TIMES; i++) {
-        if (rtmStepTask(S, i)) {
-            MODEL_STEP(S, i);
-        }
-        if (++rtmTaskCounter(S, i) == rtmCounterLimit(S, i)) {
-            rtmTaskCounter(S, i) = 0;
-        }
-    }
-#else
     // step the model for the base sample time
     MODEL_STEP(0);
 
@@ -100,17 +86,12 @@ static void doFixedStep(RT_MDL_TYPE *S) {
             rtmTaskCounter(S, i) = 0;
         }
     }
-#endif
 
-#else // multitasking
+#else // singletasking
 
-#ifdef REUSABLE_FUNCTION
-    MODEL_STEP(S);
-#else
     MODEL_STEP();
-#endif
 
-#endif // multitasking
+#endif
 }
 
 /***************************************************
@@ -184,11 +165,7 @@ fmi3Instance fmi3InstantiateCoSimulation(
     s_instance->logger = logMessage;
     s_instance->componentEnvironment = instanceEnvironment;
 
-#ifdef REUSABLE_FUNCTION
-    s_instance->S = MODEL();
-#else
     s_instance->S = RT_MDL_INSTANCE;
-#endif
 
 	initializeModelVariables(s_instance->S, s_instance->modelVariables);
 
@@ -241,12 +218,7 @@ fmi3Status fmi3EnterInitializationMode(fmi3Instance instance,
         return fmi3Error;
     }
 
-
-#ifdef REUSABLE_FUNCTION
-    MODEL_INITIALIZE(s_instance->S);
-#else
     MODEL_INITIALIZE();
-#endif
 
     CHECK_ERROR_STATUS
 
@@ -272,11 +244,7 @@ fmi3Status fmi3Terminate(fmi3Instance instance) {
 
     ASSERT_INSTANCE
 
-#ifdef REUSABLE_FUNCTION
-	MODEL_TERMINATE(s_instance->S);
-#else
 	MODEL_TERMINATE();
-#endif
 
     s_instance->S = NULL;
 
@@ -287,17 +255,9 @@ fmi3Status fmi3Reset(fmi3Instance instance) {
 
     ASSERT_INSTANCE
 
-#ifdef REUSABLE_FUNCTION
-    if (s_instance->S) {
-        MODEL_TERMINATE(s_instance->S);
-    }
-    
-    s_instance->S = MODEL();
-#else
     if (s_instance->S) {
         MODEL_TERMINATE();
     }
-#endif
 
 	return fmi3OK;
 }
