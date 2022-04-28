@@ -10,18 +10,14 @@
   %selectfile xmlfile
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
-  %if FMIVersion == "2"
   fmiVersion="2.0"
   guid="%<GUID>"
-  %else
-  fmiVersion="3.0-alpha.X"
-  instantiationToken="%<GUID>"
-  %endif
   modelName="%<OrigName>"
+  %assign FMIKitVersion = FEVAL("FMIKit.version")
   %if FMIType == "CoSimulation"
-  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  generationTool="Simulink %<Version> with FMI Kit %<FMIKitVersion> (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %else
-  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc)"
+  generationTool="Simulink %<Version> with FMI Kit %<FMIKitVersion> (rtwsfcnfmi.tlc)"
   %endif
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
