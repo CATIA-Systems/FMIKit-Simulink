@@ -264,12 +264,7 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
 	return fmi3OK;
 }
 
-fmi3Status fmi3EnterEventMode(fmi3Instance instance,
-                              fmi3EventQualifier stepEvent,
-                              fmi3EventQualifier stateEvent,
-                              const fmi3Int32 rootsFound[],
-                              size_t nEventIndicators,
-                              fmi3EventQualifier timeEvent) {
+fmi3Status fmi3EnterEventMode(fmi3Instance instance) {
     NOT_IMPLEMENTED
 }
 

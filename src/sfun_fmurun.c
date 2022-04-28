@@ -915,7 +915,7 @@ static void update(SimStruct *S, bool inputEvent) {
 		
 		} else {
 
-            CHECK_STATUS(FMI3EnterEventMode(instance, (fmi3EventQualifier)stepEvent, (fmi3EventQualifier)stateEvent, rootsFound, nz(S), (fmi3EventQualifier)timeEvent));
+            CHECK_STATUS(FMI3EnterEventMode(instance));
 
             CHECK_ERROR(setInput(S, true, true, &inputEvent));
 

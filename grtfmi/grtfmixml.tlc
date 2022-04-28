@@ -16,7 +16,7 @@
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-beta.5"
+  fmiVersion="3.0-rc.2"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
