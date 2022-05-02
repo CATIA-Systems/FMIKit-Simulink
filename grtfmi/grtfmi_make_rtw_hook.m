@@ -52,7 +52,7 @@ source_code_fmu     = get_param(modelName, 'SourceCodeFMU');
 fmi_version         = get_param(modelName, 'FMIVersion');
 
 % copy extracted nested FMUs
-nested_fmus = find_system(modelName, 'FunctionName', 'sfun_fmurun');
+nested_fmus = find_system(modelName, 'LookUnderMasks', 'All', 'FunctionName', 'sfun_fmurun');
 
 if ~isempty(nested_fmus)
     disp('### Copy nested FMUs')
