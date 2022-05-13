@@ -56,6 +56,13 @@ if isempty(which('fmikit.ui.FMUBlockDialog'))
     msg = true;
 end
 
+% check fmikit.jar version
+jarVersion = char(fmikit.ui.FMUBlockDialog.FMI_KIT_VERSION);
+if ~strcmp(jarVersion, FMIKit.version)
+    error(['Wrong fmikit.jar version. Expected ' FMIKit.version ...
+      ' but was ' jarVersion '.'])
+end
+
 % delete re-saved block library
 close_system('FMIKit_blocks', 0);
 library_file = fullfile(folder, 'FMIKit_blocks.slx');
@@ -90,8 +97,7 @@ if isempty(which('fmikit_demo_BouncingBall'))
 end
 
 if msg
-    disp(['Initializing FMI Kit ' [num2str(FMIKit.majorVersion) '.' ...
-        num2str(FMIKit.minorVersion) '.' num2str(FMIKit.patchVersion)]])
+    disp(['Initializing FMI Kit ' FMIKit.version])
         
     % check MATLAB version
     rel = version('-release');

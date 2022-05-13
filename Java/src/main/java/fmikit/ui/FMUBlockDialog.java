@@ -78,7 +78,7 @@ public class FMUBlockDialog extends JDialog {
     private JCheckBox resettableCheckBox;
 
     public static boolean debugLogging = false;
-    public static final String FMI_KIT_VERSION = "2.7";
+    public static final String FMI_KIT_VERSION = "3.0-beta.1";
     public static final int MODEL_EXCHANGE = 0;
     public static final int CO_SIMULATION = 1;
     public static HashMap<Double, FMUBlockDialog> dialogs = new HashMap<Double, FMUBlockDialog>();
@@ -648,8 +648,8 @@ public class FMUBlockDialog extends JDialog {
         this.userData = userData;
 
         // check the format version
-        if (!userData.fmiKitVersion.startsWith(FMI_KIT_VERSION)) {
-            throw new RuntimeException("Wrong FMI Kit version. Expected " + FMI_KIT_VERSION + " but was " + userData.fmiKitVersion);
+        if (!FMI_KIT_VERSION.equals(userData.fmiKitVersion)) {
+            throw new RuntimeException("UserData has the wrong format version. Expected " + FMI_KIT_VERSION + " but was " + userData.fmiKitVersion);
         }
 
         // Overview tab
