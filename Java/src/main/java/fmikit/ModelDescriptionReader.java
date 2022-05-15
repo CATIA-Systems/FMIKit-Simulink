@@ -89,10 +89,10 @@ public class ModelDescriptionReader {
 		} else if ("2.0".equals(fmiVersionHandler.fmiVersion)) {
 			schemaUrl = ModelDescription.class.getResource("/schema/fmi2/fmi2ModelDescription.xsd");
 			handler = new FMI2ModelDescriptionHandler();
-		} else if ("3.0-rc.2".equals(fmiVersionHandler.fmiVersion)) {
+		} else if (fmiVersionHandler.fmiVersion.startsWith("3.")) {
 			modelDescription = readModelDescription3(filename);
 		} else {
-			throw new Exception("Unsupported FMI version");
+			throw new Exception("FMI version \"" + fmiVersionHandler.fmiVersion + "\" is not supported.");
 		}
 
 		if (modelDescription == null) {
