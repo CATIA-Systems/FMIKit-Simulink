@@ -104,7 +104,7 @@
 
 %assign CGTypIndices = []
 
-size_t getCGTypeSize(int typeIndex) {
+size_t getCGTypeSize(DTypeId typeIndex) {
 
   switch (typeIndex) {
   %foreach dataTypeIdx = DataTypes.NumDataTypes
@@ -339,7 +339,7 @@ typedef struct {
     void* address;
 } ModelVariable;
 
-size_t getCGTypeSize(int typeIndex);
+size_t getCGTypeSize(DTypeId typeIndex);
 
 void initializeModelVariables(SimStruct* S, ModelVariable modelVariables[]);
 
