@@ -192,6 +192,8 @@ add_library (${MODEL_NAME} SHARED
   ${SOURCES}
 )
 
+set_property(TARGET ${MODEL_NAME} PROPERTY C_STANDARD 99)
+
 target_include_directories (${MODEL_NAME} PUBLIC
   ../include
   ${CUSTOM_INCLUDE}
