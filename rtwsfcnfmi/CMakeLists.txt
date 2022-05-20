@@ -41,8 +41,6 @@ endif ()
 
 add_library(${SOLVER} STATIC ${SOLVER_SOURCES})
 
-set_property(TARGET ${MODEL_NAME} PROPERTY C_STANDARD 99)
-
 target_compile_definitions(${SOLVER} PRIVATE
 	_CRT_SECURE_NO_WARNINGS
 	NRT
@@ -80,6 +78,8 @@ add_library(${MODEL_NAME} SHARED
   ${MODEL_SOURCES}
   ${CUSTOM_SOURCE}
 )
+
+set_property(TARGET ${MODEL_NAME} PROPERTY C_STANDARD 99)
 
 target_include_directories(${MODEL_NAME} PRIVATE
   ../include
