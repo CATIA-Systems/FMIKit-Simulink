@@ -25,7 +25,7 @@ Use `grtfmi.tlc` unless you...
 
 **Supported compilers**
 
-`Windows`: Visual Studio 2013 and later
+`Windows`: Visual Studio 2015 and later
 
 `Linux`: GCC
 
@@ -117,12 +117,8 @@ It is recommended to set the **Tasking mode** to **SingleTasking**.
 
 ### Limitations and Trouble-Shooting
 
-- On Windows, the package supports Visual Studio 2008 (9.0) and later compilers as supported with the respective MATLAB releases.
-
-- On Linux, the package should support the versions of gcc supported with the respective MATLAB releases.
-
 - The FMU is compiled with dynamic loading of the C run-time on Windows.
-This may require installation of corresponding Visual Studio redistributables on the target platform.
+This may require installation of corresponding Visual Studio redistributables on the target system.
 
 - The option `Include block hierarchy in variable names` could in very rare cases give rise to name conflicts in the XML variable names.
 For example, any special characters in Simulink block names will be converted to underscore which may lead to name conflicts.

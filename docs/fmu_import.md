@@ -26,13 +26,13 @@ The start value, unit and description of the variable (if provided) are displaye
 
 To change the start value of a variable click into the respective field in the **Start** column and enter an expression that evaluates to the respective type of variable. Changed start values are indicated by **bold** text. To reset the start value to its default simply clear the **Start** field.
 
-| Icon | Variable Type | Example
-|------|---------------|--------
-| ![](images/real.png) | Real | `2*pi`
-| ![](images/integer.png) | Integer | `-11`
-| ![](images/boolean.png) | Boolean | `true`
-| ![](images/enumeration.png) | Enumeration | `3`
-| ![](images/string.png) | String | `'C:\Temp\Resources'`
+| Variable Type | Example
+|---------------|--------
+| Float         | `2*pi`
+| Integer       | `-11`
+| Boolean       | `true`
+| Enumeration   | `3`
+| String        | `'C:\Temp\Resources'`
 
 To get the start value for the variable `step` for the current block in MATLAB enter
 
