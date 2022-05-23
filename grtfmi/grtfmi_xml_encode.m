@@ -17,3 +17,5 @@ for j = 1:numel(nonascii)
 end
 
 escaped = string;
+
+end
