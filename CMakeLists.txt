@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.2)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING INTERNAL FORCE)
 
-set (CMAKE_CXX_STANDARD 11)
-
 project (FMIKit)
 
 if (MSVC)
@@ -33,21 +31,21 @@ else ()
 endif ()
 
 add_library(sfun_fmurun SHARED
-  include/fmi1.h
+  include/fmi1Functions.h
   include/fmi2Functions.h
   include/fmi2FunctionTypes.h
   include/fmi2TypesPlatform.h
-  include/FMU.h
-  include/FMU1.h
-  include/FMU2.h
-  sfun_fmurun.cpp
-  src/FMU.cpp
-  src/FMU1.cpp
-  src/FMU2.cpp
+  include/fmi3Functions.h
+  include/fmi3FunctionTypes.h
+  include/fmi3PlatformTypes.h
+  include/FMI.h
+  include/FMI1.h
+  include/FMI2.h
+  include/FMI3.h
+  src/sfun_fmurun.c
 )
 
 SET_TARGET_PROPERTIES(sfun_fmurun PROPERTIES PREFIX "")
-
 
 if (WIN32)
   target_compile_definitions(sfun_fmurun PUBLIC
@@ -63,7 +61,8 @@ target_include_directories(sfun_fmurun PUBLIC
 	${MATLAB_DIR}/extern/include
 	${MATLAB_DIR}/simulink/include
 	include
-	coder
+	src
+    .
 )
 
 if (WIN32)
@@ -82,3 +81,5 @@ add_custom_command(TARGET sfun_fmurun POST_BUILD COMMAND ${CMAKE_COMMAND} -E cop
   "$<TARGET_FILE:sfun_fmurun>"
   "${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+# add_custom_command(TARGET sfun_fmurun POST_BUILD COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/merge_sfun.py)

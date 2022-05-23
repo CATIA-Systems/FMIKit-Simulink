@@ -1,7 +1,7 @@
 %% SYSTLC: FMU based on RTW S-Function (Functional Mock-up Unit) \
 %%    TMF: none MAKE: make_rtw EXTMODE: no_ext_comm
 
-%% 
+%%
 %% TLC file for generation of S-function with FMI
 %%
 %%  Customized version of rtwsfcn.tlc in MATLAB distribution.
@@ -32,8 +32,6 @@
 %assign GUID = FEVAL("grtfmi_generate_guid")
 %include "sfcnmei.tlc"
 
-%assign SourceCodeFMU = 0
-%assign VisibleParameters = ""
 %include "rtwsfcnfmilib.tlc"
 %include "rtwsfcnfmixml.tlc"
 
@@ -47,7 +45,7 @@
   i = 1;
   rtwoptions(i).prompt        = 'S-Function Target';
   rtwoptions(i).type          = 'Category';
-  rtwoptions(i).enable        = 'on';  
+  rtwoptions(i).enable        = 'on';
   rtwoptions(i).default       = 2;   % number of items under this category
                                      % excluding this one.
   rtwoptions(i).popupstrings  = '';
@@ -57,7 +55,7 @@
   rtwoptions(i).opencallback  = '';
   rtwoptions(i).closecallback = '';
   rtwoptions(i).makevariable  = '';
-				      
+
   i = i + 1;
   rtwoptions(i).prompt         = 'Create new model';
   rtwoptions(i).type           = 'Checkbox';
@@ -77,8 +75,8 @@
   i = i + 1;
   rtwoptions(i).prompt        = 'FMI';
   rtwoptions(i).type          = 'Category';
-  rtwoptions(i).enable        = 'on';  
-  rtwoptions(i).default       = 7;    % number of items under this category
+  rtwoptions(i).enable        = 'on';
+  rtwoptions(i).default       = 8;    % number of items under this category
                                       % excluding this one.
   rtwoptions(i).popupstrings  = '';
   rtwoptions(i).tlcvariable   = '';
@@ -86,7 +84,7 @@
   rtwoptions(i).callback      = '';
   rtwoptions(i).opencallback  = '';
   rtwoptions(i).closecallback = '';
-  
+
   i = i + 1;
   rtwoptions(i).prompt         = 'FMI version:';
   rtwoptions(i).type           = 'Popup';
@@ -103,6 +101,13 @@
   rtwoptions(i).tlcvariable    = 'FMIType';
   rtwoptions(i).popupstrings   = 'ModelExchange|CoSimulation';
   rtwoptions(i).tooltip        = 'Specify FMI type for the export (Model Exchange or Co-Simulation)';
+
+  i = i + 1;
+  rtwoptions(i).prompt        = 'Visible parameters';
+  rtwoptions(i).type          = 'Edit';
+  rtwoptions(i).default       = '';
+  rtwoptions(i).tlcvariable   = 'VisibleParameters';
+  rtwoptions(i).tooltip       = 'Parameters to include in the model description (leave empty to include all)';
 
   i = i + 1;
   rtwoptions(i).prompt         = 'Model author';
@@ -159,7 +164,7 @@ end
   rtwoptions(i).enable        = 'on';
   rtwoptions(i).default       = 4;   % number of items under this category
                                      % excluding this one.
-  rtwoptions(i).popupstrings  = '';  % At the first item, user has to 
+  rtwoptions(i).popupstrings  = '';  % At the first item, user has to
   rtwoptions(i).tlcvariable   = '';  % initialize all supported fields
   rtwoptions(i).tooltip       = '';
   rtwoptions(i).callback      = '';
@@ -175,27 +180,20 @@ end
   rtwoptions(i).prompt        = 'CMake generator';
   rtwoptions(i).type          = 'Popup';
   rtwoptions(i).default       = grtfmi_cmake_default_generator();
-  rtwoptions(i).popupstrings  = ['Visual Studio 16 2019|' ...
-                                'Visual Studio 15 2017|' ...
-                                'Visual Studio 15 2017 Win64|' ...
-                                'Visual Studio 14 2015|' ...
-                                'Visual Studio 14 2015 Win64|' ...
-                                'Visual Studio 12 2013|' ...
-                                'Visual Studio 12 2013 Win64|' ...
-                                'Visual Studio 11 2012|' ...
-                                'Visual Studio 11 2012 Win64|' ...
-                                'Visual Studio 10 2010|' ...
-                                'Visual Studio 10 2010 Win64|' ...
-                                'Visual Studio 9 2008|' ...
-                                'Visual Studio 9 2008 Win64|' ...
-                                'NMake Makefiles|' ...
-                                'NMake Makefiles JOM|' ...
-                                'MSYS Makefiles|' ...
-                                'MinGW Makefiles|' ...
-                                'Unix Makefiles|' ...
-                                'Xcode'];
+  rtwoptions(i).popupstrings  = grtfmi_cmake_generators();
+
   rtwoptions(i).tlcvariable   = 'CMakeGenerator';
   rtwoptions(i).tooltip       = 'CMake generator to build the shared library';
+
+  if ispc
+    i = i + 1;
+    rtwoptions(i).prompt        = 'CMake generator platform';
+    rtwoptions(i).type          = 'Popup';
+    rtwoptions(i).default       = 'x64';
+    rtwoptions(i).popupstrings  = 'Win32|x64';
+    rtwoptions(i).tlcvariable   = 'CMakeGeneratorPlatform';
+    rtwoptions(i).tooltip       = 'CMake generator platform to build the shared library';
+  end
 
   i = i + 1;
   rtwoptions(i).prompt        = 'Toolset';
@@ -239,11 +237,11 @@ end
   %----------------------------------------%
   % Configure RTW code generation settings %
   %----------------------------------------%
-  
+
   rtwgensettings.BuildDirSuffix = '_sfcn_rtw_fmi';
   rtwgensettings.UsingMalloc    = 'yes';
   rtwgensettings.Version        = '1';
   rtwgensettings.SelectCallback = 'rtwsfcnfmi_selectcallback(hDlg, hSrc)';
-  
+
   END_RTW_OPTIONS
  %/

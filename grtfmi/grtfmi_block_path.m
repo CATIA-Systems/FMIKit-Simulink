@@ -25,24 +25,9 @@ for i = 2:numel(segments)
   
   segment = segments{i};
   
-  segment = strrep(segment, '//', '/');
-  segment = strrep(segment, '&', '&amp;');
-  segment = strrep(segment, '<', '&lt;');
-  segment = strrep(segment, '>', '&gt;');
-  segment = strrep(segment, char(hex2dec('D')), ' '); % carriage return
-  segment = strrep(segment, char(hex2dec('A')), ' '); % line feed
-  segment = strrep(segment, char(hex2dec('9')), ' '); % tab
-  
-  % escape non-ASCII characters
-  nonascii = segment(segment > 127);
-  for j = 1:numel(nonascii)
-    c = nonascii(j);
-    segment = strrep(segment, c, ['&#x' dec2hex(c) ';']); 
-  end
-  
   % add apostrophes if the segment contains spaces
   if regexp(segment, '\s')
-    segment = ['&#39;' segment '&#39;']; %#ok<AGROW>
+    segment = ['''' segment '''']; %#ok<AGROW>
   end
   
   if isempty(variable_name)

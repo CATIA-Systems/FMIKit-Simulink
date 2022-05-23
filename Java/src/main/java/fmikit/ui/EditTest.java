@@ -6,12 +6,13 @@
 package fmikit.ui;
 
 import java.awt.EventQueue;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.UIManager;
 
 import fmikit.ui.UserData.Port;
+import fmikit.ui.UserData.DialogParameter;
 
 @SuppressWarnings("all")
 public class EditTest {
@@ -38,8 +39,8 @@ public class EditTest {
 					userData.unzipDirectory = "C:\\Temp\\BooleanNetwork1";
 					userData.runAsKind = 1;
 					userData.sampleTime = "-1";
-					userData.startValues = new HashMap<String, String>();
-					userData.startValues.put("f", "55");
+					userData.startValues = new ArrayList<DialogParameter>();
+					userData.startValues.add(new DialogParameter("f", "f", "55"));
 
                     userData.inputPorts.add(new Port("a", "b"));
                     userData.outputPorts.add(new Port("Losses", "Losses"));

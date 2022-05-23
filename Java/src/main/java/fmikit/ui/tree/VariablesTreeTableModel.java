@@ -5,18 +5,16 @@
 
 package fmikit.ui.tree;
 
-import java.util.Map;
+import fmikit.ScalarVariable;
+import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-
-import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
-
-import fmikit.ScalarVariable;
+import java.util.Map;
 
 public class VariablesTreeTableModel extends AbstractTreeTableModel {
 
-	public static final String[] COLUMN_NAMES = { "Name", "Start", "Unit", "Description" };
+	public static final String[] COLUMN_NAMES = { "Name", "Start", "Unit", "Description"};
 
 	public static final int NAME_COLUMN = 0;
 	public static final int START_COLUMN = 1;
@@ -34,11 +32,10 @@ public class VariablesTreeTableModel extends AbstractTreeTableModel {
 	public int getColumnCount() {
 		return COLUMN_NAMES.length;
 	}
-	
+
 	@Override
 	public Object getValueAt(Object node, int column) {
-		Object userObject = ((DefaultMutableTreeNode) node).getUserObject();
-		return userObject;
+		return ((DefaultMutableTreeNode) node).getUserObject();
 	}
 
 	public Object getChild(Object object, int index) {
@@ -58,18 +55,34 @@ public class VariablesTreeTableModel extends AbstractTreeTableModel {
 	}
 	
 	public boolean isCellEditable(Object node, int column) {
+
 		Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-		return userObject instanceof ScalarVariable && column == START_COLUMN;
+
+		if (userObject instanceof ScalarVariable && column == START_COLUMN) {
+			return true;
+		}
+
+		return false;
 	}
 	
 	public void setValueAt(Object value, Object node, int column) {
-		ScalarVariable sv = (ScalarVariable) ((DefaultMutableTreeNode) node).getUserObject();
-		String text = (String) value;
-		
-		if ("".equals(text)) {
-			startValues.remove(sv.name);
-		} else {
-			startValues.put(sv.name, text);			
+
+		Object userObject = ((DefaultMutableTreeNode) node).getUserObject();
+
+		if (!(userObject instanceof ScalarVariable)) {
+			return;
+		}
+
+		ScalarVariable sv = (ScalarVariable) userObject;
+
+		if (column == START_COLUMN) {
+			String text = (String) value;
+
+			if ("".equals(text)) {
+				startValues.remove(sv.name);
+			} else {
+				startValues.put(sv.name, text);
+			}
 		}
 	}
 

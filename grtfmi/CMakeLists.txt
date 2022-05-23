@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.22)
 
 set(MODEL_NAME "" CACHE STRING "Model name")
 set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install directory")
@@ -14,6 +14,9 @@ set_property(CACHE FMI_VERSION PROPERTY STRINGS 2 3)
 set(COMPILER_OPTIMIZATION_LEVEL "Disabled" CACHE STRING "Compiler optimization level")
 set_property(CACHE COMPILER_OPTIMIZATION_LEVEL PROPERTY STRINGS "Disabled" "Minimize size" "Maximize speed" "Full optimization" "Custom")
 set(COMPILER_OPTIMIZATION_FLAGS "/Ox" CACHE STRING "Custom compiler optimization flags")
+
+# link statically against the Visual C runtime
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 get_filename_component(CURRENT_DIR ${RTW_DIR} DIRECTORY)
 
@@ -71,12 +74,6 @@ endif ()
 if (MSVC)
   # set configuration types
   set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING INTERNAL FORCE)
-
-  # link statically against the Visual C runtime
-  string(REPLACE "/MD"  "/MT"  CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE}")
-  string(REPLACE "/MD"  "/MT"  CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  string(REPLACE "/MDd" "/MTd" CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG}")
-  string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
 
   message("CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
 
@@ -192,6 +189,8 @@ add_library (${MODEL_NAME} SHARED
   ${SOURCES}
 )
 
+set_property(TARGET ${MODEL_NAME} PROPERTY C_STANDARD 99)
+
 target_include_directories (${MODEL_NAME} PUBLIC
   ../include
   ${CUSTOM_INCLUDE}
@@ -234,6 +233,14 @@ add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E c
   ${RTW_DIR}/modelDescription.xml
   ${FMU_BUILD_DIR}/modelDescription.xml
 )
+
+# buildDescription.xml
+if (EXISTS ${RTW_DIR}/buildDescription.xml)
+  add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+    ${RTW_DIR}/buildDescription.xml
+    ${FMU_BUILD_DIR}/sources/buildDescription.xml
+  )
+endif ()
 
 # shared library
 add_custom_command(TARGET ${MODEL_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy

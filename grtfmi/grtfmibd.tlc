@@ -1,0 +1,20 @@
+%% Generate buildDescription.xml
+%openfile bdfile = "buildDescription.xml"
+%selectfile STDOUT
+### Writing buildDescription.xml
+%selectfile bdfile
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiBuildDescription fmiVersion="3.0">
+
+  <BuildConfiguration modelIdentifier="%<CompiledModel.OrigName>">
+    <SourceFileSet>
+      <SourceFile name="fmi3Functions.c"/>
+%foreach i = SIZE(sourceFiles, 1)
+  %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
+        <SourceFile name="%<sourceFile>"/>
+%endforeach
+    </SourceFileSet>
+  </BuildConfiguration>
+
+</fmiBuildDescription>
+%closefile bdfile

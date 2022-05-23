@@ -28,8 +28,14 @@
   %endswitch
 %endfunction
 
-%function GetFMI3Type(typeName) void
-  %switch typeName
+%function GetFMI3Type(record) void
+  %assign dataTypeId   = LibGetRecordDataTypeId(record)
+  %assign dataType     = ::CompiledModel.DataTypes.DataType[dataTypeId]
+  %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
+  %if ISFIELD(dataType, "Enumeration")
+    %return "Enumeration"
+  %endif
+  %switch dataTypeName
     %case "real_T"
       %return "Float64"
     %case "real32_T"
@@ -72,7 +78,7 @@
       %if !ISEMPTY(outmax)
         %assign attributes = "%<attributes> max=\"%<outmax>\""
       %endif
-      %if ISFIELD(port, "UnitIdx")
+      %if ISFIELD(port, "UnitIdx") && EXISTS("Units")
         %assign unit = Units.Unit[port.UnitIdx].ASCIIEscapedUnitExpr
       %elseif ISFIELD(port, "BlockName")
         %assign unit = FEVAL("get_param", "%<port.BlockName>", "Unit")
@@ -81,6 +87,7 @@
       %endif
       %if TYPE(unit) == "String" && !ISEMPTY(unit) && unit != "inherit"
         %assign attributes = "%<attributes> unit=\"%<unit>\""
+        %assign ::units = ::units + unit
       %endif
   %endswitch
   %return attributes
@@ -104,6 +111,7 @@
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
   %assign fmiType      = GetFMIType(record)
   %assign dtypeID      = LibGetRecordContainerDataTypeId(record) 
+  %assign dataType     = ::CompiledModel.DataTypes.DataType[dtypeID]
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
   %assign nRows        = dims[0]
@@ -116,12 +124,18 @@
     %return vr
   %endif
   %if ISEMPTY(fmiType)
-    %assign dataType = ::CompiledModel.DataTypes.DataType[dtypeID]
-    %if ISFIELD(dataType, "Elements") && width == 1
+    %if ISFIELD(dataType, "Elements")
       %% Bus
-      %foreach elementIdx = dataType.NumElements
-        %assign element = dataType.Elements[elementIdx]
-        %assign vr = VariableFMI2(element, "%<variableName>.%<element.Name>", "%<dataName>.%<element.Name>", vr, variableAttr, typeAttr)
+      %foreach arrIdx = width
+        %foreach elementIdx = dataType.NumElements
+          %if width == 1
+            %assign subs = ""
+          %else
+            %assign subs = "[%<arrIdx>]"
+          %endif
+          %assign element = dataType.Elements[elementIdx]
+          %assign vr = VariableFMI2(element, "%<variableName>%<subs>.%<element.Name>", "%<dataName>%<subs>.%<element.Name>", vr, variableAttr, typeAttr)
+        %endforeach
       %endforeach
     %else
       %return vr
@@ -182,7 +196,7 @@
     modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
     modelVariables[%<vr-1>].size    = 0;
     modelVariables[%<vr-1>].address = %<dataName>%<dataSubs>);
-      %selectfile xmlfile
+      %selectfile xmlfile2
     <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
       <%<fmiType>%<startAttr>%<typeAttr>/>
     </ScalarVariable>
@@ -197,7 +211,7 @@
 %function VariableFMI3(record, variableName, dataName, vr, variableAttr, typeAttr) Output
   %assign variableName = FEVAL("grtfmi_xml_encode", variableName)
   %assign dataTypeName = SLibGetRecordDataTypeName(record, "")
-  %assign fmiType      = GetFMI3Type(dataTypeName)
+  %assign fmiType      = GetFMI3Type(record)
   %assign dtypeID      = LibGetRecordDataTypeId(record)
   %assign dims         = LibGetRecordDimensions(record)
   %assign width        = LibGetRecordWidth(record)
@@ -216,10 +230,14 @@
   %if nRows == 0 || nCols == 0
     %return vr
   %endif
-  %selectfile xmlfile
+  %selectfile xmlfile2
   %if ISFIELD(record, "Value")
     %assign startValue = FEVAL("grtfmi_start_value", record.Value)
     %assign variableAttr = "%<variableAttr> start=\"%<startValue>\""
+  %endif
+  %if fmiType == "Enumeration"
+    %assign dtypeID = 6
+    %assign variableAttr = " declaredType=\"%<dataType.DTName>\"%<variableAttr>"
   %endif
   %if width == 1
     <%<fmiType> name="%<variableName>" valueReference="%<vr>"%<variableAttr>/>

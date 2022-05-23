@@ -2,12 +2,51 @@ function applyDialog(dialog)
 
 %#ok<*AGROW>
 
+block = dialog.blockHandle;
+
+% break the library link
+set_param(block, 'LinkStatus', 'none');
+
+mask = Simulink.Mask.get(block);
+
+mask.removeAllParameters();
+
+userData = dialog.getUserData();
+
+% add dialog parameters
+for i = 0:userData.startValues.size()-1
+    p = userData.startValues.get(i);
+    mask.addParameter(...
+      'Name', char(p.name), ...
+      'Prompt', char(p.prompt), ...
+      'Value', char(p.value));
+end
+
 % set the user data
 userData = userDataToStruct(dialog.getUserData());
-set_param(dialog.blockHandle, 'UserData', userData, 'UserDataPersistent', 'on');
+set_param(block, 'UserData', userData, 'UserDataPersistent', 'on');
 
 % set the S-function parameters
-FMIKit.setSFunctionParameters(dialog.blockHandle)
+FMIKit.setSFunctionParameters(block)
+
+% draw the port labels
+display = '';
+
+ports = get_param(block, 'Ports');
+
+for i = 1:min(numel(userData.inputPorts), ports(1))
+    display = [display 'port_label(''input'', ' num2str(i) ', ''' userData.inputPorts(i).label ''');' sprintf('\n')];
+end
+
+if FMIKit.isResettable(gcb)
+    display = [display 'port_label(''input'', ' num2str(ports(1)) ', ''reset'');' sprintf('\n')];
+end
+
+for i = 1:min(numel(userData.outputPorts), ports(2))
+    display = [display 'port_label(''output'', ' num2str(i) ', ''' userData.outputPorts(i).label ''');' sprintf('\n')];
+end
+
+mask.Display = display;
 
 if userData.useSourceCode
 
@@ -28,7 +67,7 @@ if userData.useSourceCode
     % mex_args{end+1} = '-g';
     
     % custom inlcude directories
-    include_dirs = get_param(gcs, 'SimUserIncludeDirs');
+    include_dirs = get_param(bdroot, 'SimUserIncludeDirs');
     include_dirs = split_paths(include_dirs);
     for i = 1:numel(include_dirs)
         mex_args{end+1} = ['-I"' include_dirs{i} '"'];
@@ -40,7 +79,7 @@ if userData.useSourceCode
     end
 
     % custom libraries
-    libraries = get_param(gcs, 'SimUserLibraries');
+    libraries = get_param(bdroot, 'SimUserLibraries');
     libraries = split_paths(libraries);
     for i = 1:numel(libraries)
         [library_path, library_name, ~] = fileparts(libraries{i});

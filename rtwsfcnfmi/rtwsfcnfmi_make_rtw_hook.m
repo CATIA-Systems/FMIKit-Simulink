@@ -69,7 +69,7 @@ switch hookMethod
             matlab_version = 'MATLAB_R2020a_';  % R2020a and later
         end
         
-        solver = buildOpts.solver;
+        solver = get_param(modelName, 'Solver');
         if ~strcmp(solver, {'ode1', 'ode2', 'ode3', 'ode4', 'ode5', 'ode8', 'ode14x'})
             solver = 'ode1';  % use ode1 for model exchange
         end
@@ -109,14 +109,19 @@ switch hookMethod
         fclose(fid);
         
         disp('### Generating project')
-        
-        if ~isempty(toolset)
-            toolset_option = [' -T "' toolset '"'];
-        else
-            toolset_option = '';
+
+        cmake_options = [' -G "' generator '"'];
+
+        if ispc
+            generator_platform = get_param(modelName, 'CMakeGeneratorPlatform');
+            cmake_options = [cmake_options ' -A ' generator_platform];
         end
-        
-        status = system(['"' command '" -G "' generator '"' toolset_option ' "' strrep(rtwsfcnfmi_dir, '\', '/') '"']);
+
+        if ~isempty(toolset)
+            cmake_options = [cmake_options ' -T "' toolset '"'];
+        end
+
+        status = system(['"' command '"' cmake_options ' "' strrep(rtwsfcnfmi_dir, '\', '/') '"']);
         assert(status == 0, 'Failed to run CMake generator');
 
         disp('### Building FMU')

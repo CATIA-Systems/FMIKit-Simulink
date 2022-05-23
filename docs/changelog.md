@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.0
+
+- FMI 3.0 support for FMU import and FMU export with grtfmi.tlc
+- New FMU import framework and improved FMU block dialog
+- Improved CMake based FMU export for both grtfmi.tlc and rtwfscnfmi.tlc
+
 ## v2.9
 
 This release resolves issues with the FMU export:

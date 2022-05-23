@@ -1,23 +1,26 @@
-%% Starting generation of modelDescription.xml
-%openfile xmlfile = "modelDescription.xml"
+%% Generate modelDescription.xml
+%openfile xmlfile1 = "modelDescription1.xml"
+%openfile xmlfile2 = "modelDescription2.xml"
 %openfile incfile = "fmiwrapper.inc"
 %with CompiledModel
-  %assign reusableFunction = ISFIELD(ConfigSet, "CodeInterfacePackaging") && ConfigSet.CodeInterfacePackaging == "Reusable function"
   %selectfile STDOUT
 ### Writing modelDescription.xml
 
-  %selectfile xmlfile
+  %assign ::units = []
+
+  %selectfile xmlfile1
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   %if FMIVersion == "2"
   fmiVersion="2.0"
   guid="%<GUID>"
   %else
-  fmiVersion="3.0-alpha.5"
+  fmiVersion="3.0"
   instantiationToken="%<GUID>"
   %endif
   modelName="%<OrigName>"
-  generationTool="Simulink %<Version> with FMI Kit 2.9 (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  %assign FMIKitVersion = FEVAL("FMIKit.version")
+  generationTool="Simulink %<Version> with FMI Kit %<FMIKitVersion> (grtfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
   %assign description = FEVAL("get_param", "%<OrigName>", "Description")
@@ -31,9 +34,7 @@
 
   <CoSimulation
     modelIdentifier="%<OrigName>"
-  %if !reusableFunction
     canBeInstantiatedOnlyOncePerProcess="true"
-  %endif
     canHandleVariableCommunicationStepSize="true">
   %if SourceCodeFMU
     %assign simscapeBlocks = FEVAL("find_system", modelName, "BlockType", "SimscapeBlock")
@@ -58,29 +59,7 @@
     %endif
   %endif
   </CoSimulation>
-  %if FMIVersion == "3" && SourceCodeFMU
-
-  <BuildConfiguration modelIdentifier="%<OrigName>">
-    <SourceFileSet>
-      <SourceFile name="fmi3Functions.c"/>
-    %foreach i = SIZE(sourceFiles, 1)
-      %assign sourceFile = FEVAL("grtfmi_filename", sourceFiles[i])
-      <SourceFile name="%<sourceFile>"/>
-    %endforeach
-    </SourceFileSet>
-  </BuildConfiguration>
-  %endif
-  %if ISFIELD(CompiledModel, "Units") && Units.NumUnits > 1
-
-  <UnitDefinitions>
-    %foreach unitIdx = Units.NumUnits
-      %assign unitExpr = Units.Unit[unitIdx].ASCIIEscapedUnitExpr
-      %if !ISEMPTY(unitExpr)
-    <Unit name="%<unitExpr>"/>
-      %endif
-    %endforeach
-  </UnitDefinitions>
-  %endif
+  %selectfile xmlfile2
   %if ISFIELD(CompiledModel, "DataTypes") && DataTypes.NumDataTypes > 1
     %assign enumerationDataTypes = []
     %foreach dataTypeIdx = DataTypes.NumDataTypes
@@ -92,7 +71,7 @@
     %if !ISEMPTY(enumerationDataTypes)
 
   <TypeDefinitions>
-      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 0)
+      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 1)
         %assign dataType = enumerationDataTypes[dataTypeIdx]
         %if FMIVersion == "2"
     <SimpleType name="%<dataType.DTName>">
@@ -104,12 +83,12 @@
       </Enumeration>
     </SimpleType>
         %else
-    <Enumeration name="%<dataType.DTName>">
+    <EnumerationType name="%<dataType.DTName>">
           %foreach enumerationIdx = SIZE(dataType.Enumeration, 1)
             %assign enumeration = dataType.Enumeration[enumerationIdx]
       <Item name="%<enumeration.String>" value="%<enumeration.Value>"/>
           %endforeach
-    </Enumeration>
+    </EnumerationType>
         %endif
       %endforeach
   </TypeDefinitions>
@@ -127,6 +106,8 @@
   %assign vr = 1
   %assign outputIndices = []
   %selectfile incfile
+#include "simstruc_types.h"
+
 #include "%<OrigName>.h"
 #include "%<OrigName>_private.h"
 
@@ -155,24 +136,25 @@ typedef struct {
 #define NUM_SAMPLE_TIMES %<NumSampleTimes>
 #define FIRST_TASK_ID    %<FixedStepOpts.TID01EQ>
 
-/* R2019a defines the block parameters as extern */
+/* since R2019a the block parameters are defined as extern */
 #ifndef rtmGetDefaultParam
 #define rtmGetDefaultParam(S) (&%<tParameters>)
 #endif
 
-%if reusableFunction
-#define REUSABLE_FUNCTION
-%else
 /* Definitions for non-reusable models */
 #define RT_MDL_INSTANCE     %<tSimStruct>
 #define rtmGetU(S)          (&%<tInput>)
 #define rtmGetY(S)          (&%<tOutput>)
 #define rtmGetBlockIO(S)    (&%<tBlockIO>)
-%endif
 
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
-  %selectfile xmlfile
+  %selectfile xmlfile2
+  %if FMIVersion == "3"
+
+    <!-- Independent Variable -->
+    <Float64 name="time2" valueReference="0" causality="independent" variability="continuous"/>
+  %endif
 
     <!-- Parameters -->
   %with ModelParameters
@@ -207,11 +189,11 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endif
     %endforeach
   %endwith
-  %selectfile xmlfile
+  %selectfile xmlfile2
   %% Inputs
   %with ExternalInputs
     %if NumExternalInputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Inputs -->
       %foreach portid = NumExternalInputs
@@ -233,7 +215,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   %% Outputs
   %with ExternalOutputs
     %if NumExternalOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Outputs -->
       %foreach portid = NumExternalOutputs
@@ -262,7 +244,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
   %% Block Outputs
   %with ::CompiledModel.BlockOutputs
     %if IncludeBlockOutputs && NumExternalBlockOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- External Block Outputs -->
       %foreach blockoutputid = NumExternalBlockOutputs
@@ -278,7 +260,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       %endforeach
     %endif
     %if IncludeBlockOutputs && NumGlobalBlockOutputs > 0
-      %selectfile xmlfile
+      %selectfile xmlfile2
 
     <!-- Global Block Outputs -->
       %foreach blockoutputid = NumGlobalBlockOutputs
@@ -316,7 +298,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
 
 %assign nModelVariables = vr - 1
 #define N_MODEL_VARIABLES %<nModelVariables>
-  %selectfile xmlfile
+  %selectfile xmlfile2
 
   </ModelVariables>
 
@@ -328,16 +310,41 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
       <Unknown index="%<outputIndices[iOutputIndex]>"/>
       %endforeach
     </Outputs>
+    <InitialUnknowns>
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
+      <Unknown index="%<outputIndices[iOutputIndex]>"/>
+      %endforeach
+    </InitialUnknowns>
     %else
       %foreach iOutputIndex = SIZE(outputIndices, 1)
     <Output valueReference="%<outputIndices[iOutputIndex]>"/>
+      %endforeach
+      %foreach iOutputIndex = SIZE(outputIndices, 1)
+    <InitialUnknown valueReference="%<outputIndices[iOutputIndex]>"/>
       %endforeach
     %endif
   %endif
   </ModelStructure>
 
 </fmiModelDescription>
-%endwith
+  %if SIZE(::units, 1) > 0
+    %assign ::units = FEVAL("grtfmi_unique", ::units)
+    %selectfile xmlfile1
 
+  <UnitDefinitions>
+    %foreach unitIdx = SIZE(::units, 1)
+    <Unit name="%<units[unitIdx]>"/>
+    %endforeach
+  </UnitDefinitions>
+  %endif
+%endwith
 %closefile incfile
+%closefile xmlfile1
+%closefile xmlfile2
+
+%openfile xmlfile = "modelDescription.xml"
+%selectfile xmlfile
+%assign buildDir = FEVAL("grtfmi_build_directory")
+%include "%<buildDir>/modelDescription1.xml"
+%include "%<buildDir>/modelDescription2.xml"
 %closefile xmlfile

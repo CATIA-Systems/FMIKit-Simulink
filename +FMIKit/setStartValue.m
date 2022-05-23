@@ -23,12 +23,15 @@ function setStartValue(block, varargin)
 %
 % sets the variables table[1,1] = 1 ... table[2,3] = 6.
 
-assert(strcmp(get_param(block, 'ReferenceBlock'), 'FMIKit_blocks/FMU'), 'Block is not an FMU')
-assert(numel(varargin) > 1 && mod(numel(varargin), 2) == 0, 'Wrong number of arguments')    
+userData = getUserData(block);
+
+assert(~isempty(userData), 'Block is not an FMU');
+
+assert(numel(varargin) > 1 && mod(numel(varargin), 2) == 0, 'Wrong number of arguments');
 
 for i = 1:2:numel(varargin)   
-    assert(ischar(varargin{i}),  'Variable name must be a string')
-    assert(ndims(varargin{i+1}) < 3, 'Start value cannot have more than 2 dimensions')        
+    assert(ischar(varargin{i}),  'Variable name must be a string');
+    assert(ndims(varargin{i+1}) < 3, 'Start value cannot have more than 2 dimensions');
 end
 
 dialog = FMIKit.showBlockDialog(block, false);

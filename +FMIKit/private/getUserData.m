@@ -6,60 +6,17 @@ if isempty(userData)
     return
 end
 
-if any(strcmp(userData.fmiKitVersion, {'2.4', '2.6'}))
+mask = Simulink.Mask.get(block);
 
-    disp(['Updating ' getfullname(block) ' that was imported with an older version of FMI Kit.'])
+userData.startValues = containers.Map;
 
-    userData.fmiKitVersion = '2.7';
-    set_param(block, 'UserData', userData);
-
-    % re-import the FMU
-    dialog = FMIKit.showBlockDialog(block, false);
-    dialog.loadFMU(false);
-    applyDialog(dialog);
-
-    model = bdroot(block);
-    set_param(model, 'Dirty', 'on');
-
-    disp('Save the model to apply the changes.')
-
-    userData = get_param(block, 'UserData');
-
+for i = 1:numel(mask.Parameters)
+    parameter = mask.Parameters(i);
+    userData.startValues(parameter.Prompt) = parameter.Value;
 end
 
-if ~isfield(userData, 'relativeTolerance')
-    disp(['Adding userData.relativeTolerance to ' getfullname(block)])
-    userData.relativeTolerance = '0';
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
-end
-
-if ~isfield(userData, 'logFMICalls')
-    disp(['Adding userData.logFMICalls to ' getfullname(block)])
-    userData.logFMICalls = false;
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
-end
-
-if ~isfield(userData, 'logLevel')
-    disp(['Adding userData.logLevel to ' getfullname(block)])
-    userData.logLevel = 0;
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
-end
-
-if ~isfield(userData, 'logFile')
-    disp(['Adding userData.logFile to ' getfullname(block)])
-    userData.logFile = '';
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
-end
-
-if ~isfield(userData, 'logToFile')
-    disp(['Adding userData.logToFile to ' getfullname(block)])
-    userData.logToFile = false;
-    set_param(block, 'UserData', userData, 'UserDataPersistent', 'on')
-    save_system
+if ~strcmp(userData.fmiKitVersion, FMIKit.version)
+    error([getfullname(block) ' was imported with an incompatible version of FMI Kit. Please re-import the FMU.']);
 end
 
 end

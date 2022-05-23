@@ -10,18 +10,14 @@
   %selectfile xmlfile
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
-  %if FMIVersion == "2"
   fmiVersion="2.0"
   guid="%<GUID>"
-  %else
-  fmiVersion="3.0-alpha.X"
-  instantiationToken="%<GUID>"
-  %endif
   modelName="%<OrigName>"
+  %assign FMIKitVersion = FEVAL("FMIKit.version")
   %if FMIType == "CoSimulation"
-  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
+  generationTool="Simulink %<Version> with FMI Kit %<FMIKitVersion> (rtwsfcnfmi.tlc, %<Solver>, %<FundamentalStepSize> s)"
   %else
-  generationTool="Simulink %<Version> with FMI Kit 2.9 (rtwsfcnfmi.tlc)"
+  generationTool="Simulink %<Version> with FMI Kit %<FMIKitVersion> (rtwsfcnfmi.tlc)"
   %endif
   %assign XMLdate = FEVAL("grtfmi_xml_datetime")
   generationDateAndTime="%<XMLdate>"
@@ -63,7 +59,7 @@
     %if !ISEMPTY(enumerationDataTypes)
 
   <TypeDefinitions>
-      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 0)
+      %foreach dataTypeIdx = SIZE(enumerationDataTypes, 1)
         %assign dataType = enumerationDataTypes[dataTypeIdx]
         %if FMIVersion == "2"
     <SimpleType name="%<dataType.DTName>">
@@ -108,12 +104,12 @@
 
 %assign CGTypIndices = []
 
-size_t getCGTypeSize(int typeIndex) {
+size_t getCGTypeSize(DTypeId typeIndex) {
 
   switch (typeIndex) {
   %foreach dataTypeIdx = DataTypes.NumDataTypes
     %assign dataType = DataTypes.DataType[dataTypeIdx]
-    %if FEVAL("ismember", dataType.CGTypeIdx, CGTypIndices)
+    %if !ISFIELD(dataType, "CGTypeIdx") || FEVAL("ismember", dataType.CGTypeIdx, CGTypIndices)
       %continue
     %endif
     case %<dataType.CGTypeIdx>: return %<dataType.Size>; /* %<dataType.Name> */
@@ -343,7 +339,7 @@ typedef struct {
     void* address;
 } ModelVariable;
 
-size_t getCGTypeSize(int typeIndex);
+size_t getCGTypeSize(DTypeId typeIndex);
 
 void initializeModelVariables(SimStruct* S, ModelVariable modelVariables[]);
 

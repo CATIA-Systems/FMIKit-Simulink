@@ -19,10 +19,12 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.URL;
-import java.util.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.*;
 
 
 public class FMUBlockDialog extends JDialog {
@@ -45,11 +47,11 @@ public class FMUBlockDialog extends JDialog {
     private JLabel lblEventIndicators;
     private JLabel lblVariables;
     public JButton btnApply;
-    private JButton btnMoveUp;
-    private JButton btnMoveDown;
-    private JButton button3;
+    private JButton moveUpButton;
+    private JButton moveDownButton;
+    private JButton editButton;
     private JButton removeOutputPortButton;
-    private JButton btnResetOutputs;
+    private JButton resetOutputsButton;
     private JButton addOutputButton;
     private JTree variablesTree;
     private JTree outportsTree;
@@ -69,9 +71,14 @@ public class FMUBlockDialog extends JDialog {
     public JButton btnHelp;
     public JLabel lblDocumentation;
     private JLabel lblModelImage;
+    private JButton treeTableExpandAllButton;
+    private JButton treeTableCollapseAllButton;
+    private JButton variablesTreeExpandAllButton;
+    private JButton variablesTreeCollapseAllButton;
+    private JCheckBox resettableCheckBox;
 
     public static boolean debugLogging = false;
-    public static final String FMI_KIT_VERSION = "2.7";
+    public static final String FMI_KIT_VERSION = "3.0";
     public static final int MODEL_EXCHANGE = 0;
     public static final int CO_SIMULATION = 1;
     public static HashMap<Double, FMUBlockDialog> dialogs = new HashMap<Double, FMUBlockDialog>();
@@ -84,12 +91,32 @@ public class FMUBlockDialog extends JDialog {
     public double blockHandle;
     public File htmlFile;
 
-    private ImageIcon outportIcon = new ImageIcon(getClass().getResource("/icons/outport.png"));
+    private ImageIcon outportIcon = Util.getIcon("outport");
 
 
     public FMUBlockDialog() {
 
-        setMinimumSize(new Dimension(850, 650));
+        if (Util.isHiDPI()) {
+            setMinimumSize(new Dimension(1200, 900));
+            treeTable.setRowHeight(34);
+            variablesTree.setRowHeight(34);
+            outportsTree.setRowHeight(34);
+
+            Util.resizeButton(treeTableExpandAllButton);
+            Util.resizeButton(treeTableCollapseAllButton);
+
+            Util.resizeButton(variablesTreeExpandAllButton);
+            Util.resizeButton(variablesTreeCollapseAllButton);
+
+            Util.resizeButton(moveUpButton);
+            Util.resizeButton(moveDownButton);
+            Util.resizeButton(editButton);
+            Util.resizeButton(removeOutputPortButton);
+            Util.resizeButton(resetOutputsButton);
+
+        } else {
+            setMinimumSize(new Dimension(850, 650));
+        }
 
         setContentPane(contentPane);
 
@@ -120,13 +147,13 @@ public class FMUBlockDialog extends JDialog {
         });
 
         // call onCancel() on ESCAPE
-        contentPane.registerKeyboardAction(new ActionListener() {
+        getRootPane().registerKeyboardAction(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
                 dispose();
             }
 
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         // TODO: center the window on screen
         setBounds(200, 200, 852, 619);
@@ -155,7 +182,7 @@ public class FMUBlockDialog extends JDialog {
             }
         });
 
-        button3.addActionListener(new ActionListener() {
+        editButton.addActionListener(new ActionListener() {
 
             //@Override
             public void actionPerformed(ActionEvent e) {
@@ -183,6 +210,36 @@ public class FMUBlockDialog extends JDialog {
                 txtLogFile.setEnabled(chckbxLogToFile.isSelected());
             }
         });
+
+        treeTableExpandAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                treeTable.expandAll();
+            }
+        });
+
+        treeTableCollapseAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                treeTable.collapseAll();
+            }
+        });
+
+
+        variablesTreeExpandAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Util.setTreeExpandedState(variablesTree, true);
+            }
+        });
+
+        variablesTreeCollapseAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Util.setTreeExpandedState(variablesTree, false);
+            }
+        });
+
     }
 
     public void showAsync() {
@@ -277,7 +334,10 @@ public class FMUBlockDialog extends JDialog {
         dialog.setVisible(true);
         dialog.btnApply.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                // Util.setTreeExpandedState(dialog.treeTable.ex, true);
+                dialog.treeTable.expandAll();
                 System.out.println(dialog.getSFunctionParameters());
+                System.out.println(dialog.getSourceFiles());
             }
         });
         //System.exit(0);
@@ -376,7 +436,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnMoveUp.addActionListener(new ActionListener() {
+        moveUpButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
                 TreePath selectionPath = outportsTree.getSelectionPath();
@@ -396,7 +456,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnMoveDown.addActionListener(new ActionListener() {
+        moveDownButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
 
@@ -417,7 +477,7 @@ public class FMUBlockDialog extends JDialog {
 
         });
 
-        btnResetOutputs.addActionListener(new ActionListener() {
+        resetOutputsButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent event) {
                 if (modelDescription == null) return;
@@ -523,6 +583,7 @@ public class FMUBlockDialog extends JDialog {
         userData.logToFile = chckbxLogToFile.isSelected();
         userData.sampleTime = txtSampleTime.getText();
         userData.relativeTolerance = txtRelativeTolerance.getText();
+        userData.resettable = resettableCheckBox.isSelected();
 
         if (modelDescription != null) {
 
@@ -559,7 +620,11 @@ public class FMUBlockDialog extends JDialog {
             userData.outputPorts.add(outputPort);
         }
 
-        userData.startValues = new HashMap<String, String>(startValues);
+        for (ScalarVariable variable : modelDescription.scalarVariables) {
+            if (startValues.containsKey(variable.name)) {
+                userData.startValues.add(new UserData.DialogParameter(variable.dialogParameter, variable.name, startValues.get(variable.name)));
+            }
+        }
 
         userData.useSourceCode = chckbxUseSourceCode.isSelected();
 
@@ -583,15 +648,17 @@ public class FMUBlockDialog extends JDialog {
         this.userData = userData;
 
         // check the format version
-        if (!userData.fmiKitVersion.startsWith(FMI_KIT_VERSION)) {
-            throw new RuntimeException("Wrong FMI Kit version. Expected " + FMI_KIT_VERSION + " but was " + userData.fmiKitVersion);
+        if (!FMI_KIT_VERSION.equals(userData.fmiKitVersion)) {
+            throw new RuntimeException("UserData has the wrong format version. Expected " + FMI_KIT_VERSION + " but was " + userData.fmiKitVersion);
         }
 
         // Overview tab
         txtFMUPath.setText(userData.fmuFile);
         cmbbxRunAsKind.setSelectedIndex(userData.runAsKind);
 
-        startValues.putAll(userData.startValues);
+        for (UserData.DialogParameter s : userData.startValues) {
+            startValues.put(s.prompt, s.value);
+        }
 
         // Advanced tab
         txtUnzipDirectory.setText(userData.unzipDirectory);
@@ -604,12 +671,13 @@ public class FMUBlockDialog extends JDialog {
         chckbxDebugLogging.setSelected(userData.debugLogging);
         chckbxLogFMICalls.setSelected(userData.logFMICalls);
         chckbxUseSourceCode.setSelected(userData.useSourceCode);
+        resettableCheckBox.setSelected(userData.resettable);
 
         // TODO: restore outports?
     }
 
     public String getModelIdentifier() {
-        return getImplemenation().modelIdentifier;
+        return getImplementation().modelIdentifier;
     }
 
     public List<List<ScalarVariable>> getInputPorts() {
@@ -618,6 +686,10 @@ public class FMUBlockDialog extends JDialog {
         ScalarVariable previousVariable = null;
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
+
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type)) {
+                continue;
+            }
 
             if ("input".equals(variable.causality)) {
 
@@ -716,7 +788,7 @@ public class FMUBlockDialog extends JDialog {
 
             for (ScalarVariable inputVariable : inputPort) {
 
-                if (allDependencies.contains(inputVariable)) {
+                if ("tunable".equals(inputVariable.variability) || allDependencies.contains(inputVariable)) {
                     directFeedThrough = true;
                     break;
                 }
@@ -731,39 +803,49 @@ public class FMUBlockDialog extends JDialog {
 
     public String getSFunctionParameters() {
 
-        // start values
+        final boolean isFMI1 = "1.0".equals(modelDescription.fmiVersion);
+        final boolean isFMI2 = "2.0".equals(modelDescription.fmiVersion);
+        final boolean isFMI3 = !(isFMI1 || isFMI2);
+
+        // structural parameters
+        ArrayList<Integer> structuralParameterTypes = new ArrayList<Integer>();
+        ArrayList<String> structuralParameterVRs = new ArrayList<String>();
+        ArrayList<String> structuralParameterValues = new ArrayList<String>();
+
+        // scalar start values
+        ArrayList<Integer> scalarStartSizes = new ArrayList<Integer>();
         ArrayList<Integer> scalarStartTypes = new ArrayList<Integer>();
         ArrayList<String> scalarStartVRs = new ArrayList<String>();
         ArrayList<String> scalarStartValues = new ArrayList<String>();
 
+        // string start values
+        ArrayList<Integer> stringStartSizes = new ArrayList<Integer>();
         ArrayList<String> stringStartVRs = new ArrayList<String>();
         ArrayList<String> stringStartValues = new ArrayList<String>();
 
         for (ScalarVariable variable : modelDescription.scalarVariables) {
 
-            String startValue = variable.startValue;
-
-            if (startValues.containsKey(variable.name)) {
-                startValue = startValues.get(variable.name);
-            } else {
+            if (!startValues.containsKey(variable.name)) {
                 continue;
             }
 
-            String valueReference = variable.valueReference;
-            int type = Util.typeEnumForName(variable.type);
+            int variableSize = getVariableSize(variable);
+            String startValue = startValues.get(variable.name);
 
-            // start values
-            if (startValue != null) {
-                if ("String".equals(variable.type)) {
-                    stringStartVRs.add(valueReference);
-                    stringStartValues.add("'" + startValue + "'");
-                } else {
-                    scalarStartTypes.add(type);
-                    scalarStartVRs.add(valueReference);
-                    scalarStartValues.add(startValue);
-                }
+            if ("structuralParameter".equals(variable.causality)) {
+                structuralParameterTypes.add(Util.typeEnumForVariable(variable));
+                structuralParameterVRs.add(variable.valueReference);
+                structuralParameterValues.add(startValue);
+            } else if ("String".equals(variable.type)) {
+                stringStartSizes.add(variableSize);
+                stringStartVRs.add(variable.valueReference);
+                stringStartValues.add("'" + startValue + "'");
+            } else {
+                scalarStartSizes.add(variableSize);
+                scalarStartTypes.add(Util.typeEnumForVariable(variable));
+                scalarStartVRs.add(variable.valueReference);
+                scalarStartValues.add(startValue);
             }
-
         }
 
         // input ports
@@ -775,9 +857,19 @@ public class FMUBlockDialog extends JDialog {
 
         for (List<ScalarVariable> inputPort : inputPorts) {
 
-            inputPortWidths.add(inputPort.size());
+            ScalarVariable firstVariable = inputPort.get(0);
 
-            inputPortTypes.add(Util.typeEnumForName(inputPort.get(0).type));
+            int inputPortWidth;
+
+            if (isFMI1 || isFMI2) {
+                inputPortWidth = inputPort.size();
+            } else {
+                inputPortWidth = getVariableSize(firstVariable);
+            }
+
+            inputPortWidths.add(inputPortWidth);
+
+            inputPortTypes.add(Util.typeEnumForVariable(firstVariable));
 
             for (ScalarVariable variable : inputPort) {
                 inputPortVariableVRs.add(variable.valueReference);
@@ -792,48 +884,58 @@ public class FMUBlockDialog extends JDialog {
 
         for (List<ScalarVariable> outputPort : outputPorts) {
 
-            outportWidths.add(outputPort.size());
+            ScalarVariable firstVariable = outputPort.get(0);
+            int portWidth;
 
-            outportPortTypes.add(Util.typeEnumForName(outputPort.get(0).type));
+            if (isFMI1 || isFMI2) {
+                portWidth = outputPort.size();
+            } else {
+                portWidth = getVariableSize(firstVariable);
+            }
+
+            outportWidths.add(portWidth);
+
+            outportPortTypes.add(Util.typeEnumForVariable(firstVariable));
 
             for (ScalarVariable variable : outputPort) {
                 outputPortVariableVRs.add(variable.valueReference);
             }
         }
 
-        boolean generic = !chckbxUseSourceCode.isSelected();
         int runAsKind = cmbbxRunAsKind.getSelectedIndex();
         boolean isModelExchange = runAsKind == 0;
 
         ArrayList<String> params = new ArrayList<String>();
 
-        if (generic) {
-            params.add("'" + modelDescription.fmiVersion + "'");
-            params.add(Integer.toString(runAsKind));
-            params.add("'" + modelDescription.guid + "'");
-            params.add("'" + getModelIdentifier() + "'");
-        }
+        // FMI version
+        params.add(modelDescription.fmiVersion.substring(0, 3));
 
+        // interface type
+        params.add(Integer.toString(runAsKind));
+
+        // GUID
+        params.add("'" + modelDescription.guid + "'");
+
+        // model identifier
+        params.add("'" + getModelIdentifier() + "'");
+
+        // unzip directory
         params.add("FMIKit.getUnzipDirectory(gcb)");
 
-        if (generic) {
-            // debug logging
-            params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
+        // debug logging
+        params.add(chckbxDebugLogging.isSelected() ? "1" : "0");
 
-            // log FMI calls
-            params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
-        }
+        // log FMI calls
+        params.add(chckbxLogFMICalls.isSelected() ? "1" : "0");
 
         // log level
         params.add(Integer.toString(cmbbxLogLevel.getSelectedIndex()));
 
-        if (generic) {
-            // log file
-            if (chckbxLogToFile.isSelected()) {
-                params.add("'" + txtLogFile.getText() + "'");
-            } else {
-                params.add("''");
-            }
+        // log file
+        if (chckbxLogToFile.isSelected()) {
+            params.add("'" + txtLogFile.getText() + "'");
+        } else {
+            params.add("''");
         }
 
         // relative tolerance
@@ -849,18 +951,11 @@ public class FMUBlockDialog extends JDialog {
         // offset time
         params.add("0");
 
-        if (generic) {
-            params.add(Integer.toString(modelDescription.numberOfContinuousStates));
-            params.add(Integer.toString(modelDescription.numberOfEventIndicators));
-        }
+        params.add(Integer.toString(modelDescription.numberOfContinuousStates));
+        params.add(Integer.toString(modelDescription.numberOfEventIndicators));
 
-        // start values
-        params.add("[" + Util.join(scalarStartTypes, " ") + "]");
-        params.add("[" + Util.join(scalarStartVRs, " ") + "]");
-        params.add("[" + Util.join(scalarStartValues, " ") + "]");
-
-        params.add("[" + Util.join(stringStartVRs, " ") + "]");
-        params.add("char({" + Util.join(stringStartValues, " ") + "})");
+        // resettable
+        params.add(resettableCheckBox.isSelected() ? "1" : "0");
 
         List<Boolean> inputPortDirectFeedThrough = getInputPortDirectFeedThrough(inputPorts, outputPorts);
 
@@ -869,35 +964,83 @@ public class FMUBlockDialog extends JDialog {
             inputPortDirectFeedThroughDouble.add(value ? 1.0 : 0.0);
         }
 
-        if (generic) {
+        // input port widths
+        params.add("[" + Util.join(inputPortWidths, " ") + "]");
 
-            // input port widths
-            params.add("[" + Util.join(inputPortWidths, " ") + "]");
+        // input port direct feed through
+        if (isModelExchange) {
+            params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
+        } else {
+            params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
+        }
 
-            // input port direct feed through
-            if (isModelExchange) {
-                params.add("[" + Util.join(inputPortDirectFeedThroughDouble, " ") + "]");
-            } else {
-                params.add("[" + Util.join(Collections.nCopies(inputPorts.size(), "0"), " ") + "]");
+        // input port types
+        params.add("[" + Util.join(inputPortTypes, " ") + "]");
+
+        // input port variable VRs
+        params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
+
+        // output port widths
+        params.add("[" + Util.join(outportWidths, " ") + "]");
+
+        // output port types
+        params.add("[" + Util.join(outportPortTypes, " ") + "]");
+
+        // output port variable VRs
+        params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
+
+        // parameters
+        for (ScalarVariable variable : modelDescription.scalarVariables) {
+
+            final boolean isStructural = "structuralParameter".equals(variable.causality);
+            final boolean isTunable = "tunable".equals(variable.variability);
+            final boolean isStartValue = startValues.containsKey(variable.name);
+
+            if (isStartValue) {
+
+                // structural
+                params.add(isStructural ? "1" : "0");
+
+                // tunable
+                params.add(isTunable ? "1" : "0");
+
+                // variable type
+                params.add(Integer.toString(Util.typeEnumForVariable(variable)));
+
+                // value reference
+                params.add(variable.valueReference);
+
+                // value
+                params.add(variable.dialogParameter);
             }
-
-            // input port types
-            params.add("[" + Util.join(inputPortTypes, " ") + "]");
-
-            // input port variable VRs
-            params.add("[" + Util.join(inputPortVariableVRs, " ") + "]");
-
-            // output port widths
-            params.add("[" + Util.join(outportWidths, " ") + "]");
-
-            // output port types
-            params.add("[" + Util.join(outportPortTypes, " ") + "]");
-
-            // output port variable VRs
-            params.add("[" + Util.join(outputPortVariableVRs, " ") + "]");
         }
 
         return Util.join(params, " ");
+    }
+
+    /**
+     * Calculate the variable size for an array variable in FMI 3.0
+     */
+    private int getVariableSize(ScalarVariable variable) {
+
+        int size = 1;
+
+        for (Object object : variable.dimensions) {
+            int dimension;
+            if (object instanceof Integer) {
+                dimension = (Integer) object;
+            } else {
+                ScalarVariable dimensionVariable = (ScalarVariable) object;
+                if (startValues.containsKey(dimensionVariable.name)) {
+                    dimension = Integer.parseInt(startValues.get(dimensionVariable.name));
+                } else {
+                    dimension = Integer.parseInt(dimensionVariable.startValue);
+                }
+            }
+            size *= dimension;
+        }
+
+        return size;
     }
 
     /**
@@ -951,19 +1094,23 @@ public class FMUBlockDialog extends JDialog {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
         DefaultMutableTreeNode lastOutport = null;
 
-        for (ScalarVariable sv : scalarVariables) {
-            if ("output".equals(sv.causality)) {
-                if (sv.name.endsWith("]")) {
-                    String name = sv.name.substring(0, sv.name.lastIndexOf("["));
+        for (ScalarVariable variable : scalarVariables) {
+
+            if ("Binary".equals(variable.type) || "Clock".equals(variable.type) || "String".equals(variable.type))
+                continue;
+
+            if ("output".equals(variable.causality)) {
+                if (variable.name.endsWith("]")) {
+                    String name = variable.name.substring(0, variable.name.lastIndexOf("["));
                     if (lastOutport == null || !name.equals(lastOutport.getUserObject())) {
                         lastOutport = new DefaultMutableTreeNode(name);
                         root.add(lastOutport);
                     }
-                    lastOutport.add(new DefaultMutableTreeNode(sv));
+                    lastOutport.add(new DefaultMutableTreeNode(variable));
                 } else {
-                    DefaultMutableTreeNode outputPortNode = new DefaultMutableTreeNode(sv.name);
+                    DefaultMutableTreeNode outputPortNode = new DefaultMutableTreeNode(variable.name);
                     root.add(outputPortNode);
-                    outputPortNode.add(new DefaultMutableTreeNode(sv));
+                    outputPortNode.add(new DefaultMutableTreeNode(variable));
                 }
             }
         }
@@ -1075,23 +1222,6 @@ public class FMUBlockDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
             FMUBlockDialog.logError("The FMU could not be unzipped. " + e.getMessage());
             return;
-        }
-
-        // show model.png
-        try {
-            File modelImageFile = new File(unzipdir, "model.png").getCanonicalFile();
-            BufferedImage modelImage = ImageIO.read(modelImageFile);
-            ImageIcon modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
-            lblModelImage.setEnabled(true);
-            lblModelImage.setIcon(modelImageIcon);
-            lblModelImage.setText(null);
-            String url = modelImageFile.toURI().toURL().toString();
-            lblModelImage.setToolTipText("<html><img src=\"" + url + "\"/></html>");
-        } catch (IOException e) {
-            lblModelImage.setEnabled(false);
-            lblModelImage.setIcon(null);
-            lblModelImage.setText("no image available");
-            lblModelImage.setToolTipText(null);
         }
 
         loadModelDescription();
@@ -1244,10 +1374,18 @@ public class FMUBlockDialog extends JDialog {
         treeTable.setTreeTableModel(myTreeTableModel);
 
         treeTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(200);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(50);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(50);
-        treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(473);
+
+        if (Util.isHiDPI()) {
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(280);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(70);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(70);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(670);
+        } else {
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.NAME_COLUMN).setPreferredWidth(200);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setPreferredWidth(50);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.UNIT_COLUMN).setPreferredWidth(50);
+            treeTable.getColumnModel().getColumn(VariablesTreeTableModel.DESCRIPTION_COLUMN).setPreferredWidth(473);
+        }
 
         treeTable.setTreeCellRenderer(new NameTreeCellRenderer());
         treeTable.getColumnModel().getColumn(VariablesTreeTableModel.START_COLUMN).setCellRenderer(new StartTableCellRenderer(startValues));
@@ -1326,10 +1464,12 @@ public class FMUBlockDialog extends JDialog {
         }
 
         // advanced
+        String relativeTolerance = "0";
+
         if (userData != null) {
-            txtRelativeTolerance.setText(userData.relativeTolerance);
-        } else if (modelDescription.defaultExperiment != null && modelDescription.defaultExperiment.tolerance != null) {
-            txtRelativeTolerance.setText(modelDescription.defaultExperiment.tolerance);
+            relativeTolerance = userData.relativeTolerance;
+        } else if (modelDescription.defaultExperiment != null && modelDescription.defaultExperiment.tolerance != null && !modelDescription.defaultExperiment.tolerance.trim().isEmpty()) {
+            relativeTolerance = modelDescription.defaultExperiment.tolerance;
         }
 
         // update the platforms
@@ -1338,13 +1478,30 @@ public class FMUBlockDialog extends JDialog {
         // enable the dialog buttons
         btnApply.setEnabled(true);
         btnOK.setEnabled(true);
+
+        // show model.png
+        try {
+            File modelImageFile = new File(getUnzipDirectory(), "model.png").getCanonicalFile();
+            BufferedImage modelImage = ImageIO.read(modelImageFile);
+            ImageIcon modelImageIcon = scaleImage(new ImageIcon(modelImage), 270, 270);
+            lblModelImage.setEnabled(true);
+            lblModelImage.setIcon(modelImageIcon);
+            lblModelImage.setText(null);
+            String url = modelImageFile.toURI().toURL().toString();
+            lblModelImage.setToolTipText("<html><img src=\"" + url + "\"/></html>");
+        } catch (IOException e) {
+            lblModelImage.setEnabled(false);
+            lblModelImage.setIcon(null);
+            lblModelImage.setText("no image available");
+            lblModelImage.setToolTipText(null);
+        }
     }
 
     public boolean canUseSourceCode() {
-        return !getImplemenation().sourceFiles.isEmpty();
+        return !getImplementation().sourceFiles.isEmpty();
     }
 
-    private Implementation getImplemenation() {
+    private Implementation getImplementation() {
         return cmbbxRunAsKind.getSelectedIndex() == MODEL_EXCHANGE ? modelDescription.modelExchange : modelDescription.coSimulation;
     }
 
@@ -1360,92 +1517,59 @@ public class FMUBlockDialog extends JDialog {
         }
     }
 
-    public void generateSourceSFunction() throws FileNotFoundException, UnsupportedEncodingException {
+    public void generateSourceSFunction() throws FileNotFoundException {
 
-        String fmiVersion = modelDescription.fmiVersion.substring(0, 1);
+        Implementation implementation = getImplementation();
 
-        Implementation implemenation = getImplemenation();
-        boolean isModelExchange = implemenation instanceof ModelExchange;
-
-        String modelIdentifier = implemenation.modelIdentifier;
-        String kind = isModelExchange ? "me" : "cs";
-
-        // input ports
-        ArrayList<Integer> inputPortWidths = new ArrayList<Integer>();
-        ArrayList<Integer> inputPortTypes = new ArrayList<Integer>();
-        ArrayList<Integer> inputPortFeedThrough = new ArrayList<Integer>();
-        ArrayList<String> inputVariableVRs = new ArrayList<String>();
-
-        List<List<ScalarVariable>> inputPorts = getInputPorts();
-        List<List<ScalarVariable>> outputPorts = getOutputPorts();
-        List<Boolean> inputPortDirectFeedThrough = getInputPortDirectFeedThrough(inputPorts, outputPorts);
-
-        for (List<ScalarVariable> inputPort : inputPorts) {
-            ScalarVariable first = inputPort.get(0);
-            inputPortWidths.add(inputPort.size());
-            inputPortTypes.add(Util.typeEnumForName(first.type));
-            for (ScalarVariable v : inputPort) {
-                inputVariableVRs.add(v.valueReference);
-            }
-        }
-
-        for (Boolean v : inputPortDirectFeedThrough) {
-            inputPortFeedThrough.add(v && isModelExchange ? 1 : 0);
-        }
-
-        // output ports
-        ArrayList<Integer> outputPortWidths = new ArrayList<Integer>();
-        ArrayList<Integer> outputPortTypes = new ArrayList<Integer>();
-        ArrayList<String> outputPortVariableVRs = new ArrayList<String>();
-
-        for (List<ScalarVariable> outputPort : outputPorts) {
-            ScalarVariable first = outputPort.get(0);
-            outputPortWidths.add(outputPort.size());
-            outputPortTypes.add(Util.typeEnumForName(first.type));
-            for (ScalarVariable v : outputPort) {
-                outputPortVariableVRs.add(v.valueReference);
-            }
-        }
+        String modelIdentifier = implementation.modelIdentifier;
 
         PrintWriter w = new PrintWriter(mdlDirectory + File.separator + "sfun_" + modelIdentifier + ".c");
 
-        w.println("#define MODEL_IDENTIFIER " + modelIdentifier);
-        w.println("#define MODEL_GUID \"" + modelDescription.guid + "\"");
-        w.println();
+        final String fmiMajorVersion = modelDescription.fmiVersion.substring(0, 1);
 
-        w.println("#define NX " + modelDescription.numberOfContinuousStates);
-        w.println("#define NZ " + modelDescription.numberOfEventIndicators);
-        w.println();
+        w.println("#define FMI_VERSION " + fmiMajorVersion);
 
-        w.println("#define NU " + inputPortWidths.size());
-        w.println("#define N_INPUT_VARIABLES " + inputVariableVRs.size());
-        if (inputPortWidths.size() > 0) {
-            w.println("#define INPUT_PORT_WIDTHS " + Util.join(inputPortWidths, ", "));
-            w.println("#define INPUT_PORT_TYPES " + Util.join(inputPortTypes, ", "));
-            w.println("#define INPUT_PORT_FEED_THROUGH " + Util.join(inputPortFeedThrough, ", "));
-            w.println("#define INPUT_VARIABLE_VRS " + Util.join(inputVariableVRs, ", "));
+        if (cmbbxRunAsKind.getSelectedIndex() == MODEL_EXCHANGE) {
+            w.println("#define MODEL_EXCHANGE");
+        } else {
+            w.println("#define CO_SIMULATION");
         }
-        w.println();
 
-        w.println("#define NY " + outputPortWidths.size());
-        if (outputPortWidths.size() > 0) {
-            w.println("#define OUTPUT_PORT_WIDTHS " + Util.join(outputPortWidths, ", "));
-            w.println("#define OUTPUT_PORT_TYPES " + Util.join(outputPortTypes, ", "));
-            w.println("#define N_OUTPUT_VARIABLES " + outputPortVariableVRs.size());
-            w.println("#define OUTPUT_VARIABLE_VRS " + Util.join(outputPortVariableVRs, ", "));
-        }
-        w.println();
+        w.println("#define FMI" + fmiMajorVersion + "_FUNCTION_PREFIX " + modelIdentifier + "_");
 
         w.println("#define S_FUNCTION_NAME sfun_" + modelIdentifier);
-        w.println("#define FMI2_FUNCTION_PREFIX " + modelIdentifier + "_");
         w.println();
-        w.println("#include \"sfun_fmu_fmi" + fmiVersion + "_" + kind + ".c\"");
+        w.println("#include \"sfun_fmurun.c\"");
 
         w.close();
     }
 
     public List<String> getSourceFiles() {
-        return getImplemenation().sourceFiles;
+
+        ArrayList<String> sourceFiles = new ArrayList<String>();
+
+        Implementation implementation = getImplementation();
+
+        for (String sourceFile : implementation.sourceFiles) {
+
+            if ("all.c".equals(sourceFile)) {
+
+                final File oldFile = new File(Util.joinPath(getUnzipDirectory(), "sources", "all.c"));
+                final String newFilename = "all_" + implementation.modelIdentifier + ".c";
+                final File newFile = new File(Util.joinPath(getUnzipDirectory(), "sources", newFilename));
+
+                // rename all.c to avoid name clashes
+                if (oldFile.exists() && !newFile.exists()) {
+                    oldFile.renameTo(newFile);
+                }
+
+                sourceFile = newFilename;
+            }
+
+            sourceFiles.add(sourceFile);
+        }
+
+        return sourceFiles;
     }
 
     public DefaultMutableTreeNode restoreOutportTree() {
@@ -1664,99 +1788,127 @@ public class FMUBlockDialog extends JDialog {
         lblGenerationDate = new JLabel();
         panel4.add(lblGenerationDate, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel8 = new JPanel();
-        panel8.setLayout(new GridLayoutManager(1, 1, new Insets(10, 10, 10, 10), -1, -1));
+        panel8.setLayout(new GridLayoutManager(2, 1, new Insets(10, 10, 10, 10), -1, -1));
         panel8.setOpaque(false);
         tabbedPane.addTab("Variables", panel8);
         final JScrollPane scrollPane1 = new JScrollPane();
-        panel8.add(scrollPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel8.add(scrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         treeTable = new JXTreeTable();
         treeTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         scrollPane1.setViewportView(treeTable);
         final JPanel panel9 = new JPanel();
-        panel9.setLayout(new GridLayoutManager(2, 3, new Insets(10, 10, 10, 10), -1, -1));
+        panel9.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
         panel9.setOpaque(false);
-        tabbedPane.addTab("Outputs", panel9);
+        panel8.add(panel9, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        treeTableExpandAllButton = new JButton();
+        treeTableExpandAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/expand.png")));
+        treeTableExpandAllButton.setToolTipText("Expand all");
+        panel9.add(treeTableExpandAllButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final Spacer spacer3 = new Spacer();
+        panel9.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        treeTableCollapseAllButton = new JButton();
+        treeTableCollapseAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/collapse.png")));
+        treeTableCollapseAllButton.setToolTipText("Collapse all");
+        panel9.add(treeTableCollapseAllButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel10 = new JPanel();
+        panel10.setLayout(new GridLayoutManager(2, 3, new Insets(10, 10, 10, 10), -1, -1));
+        panel10.setOpaque(false);
+        tabbedPane.addTab("Outputs", panel10);
         final JScrollPane scrollPane2 = new JScrollPane();
-        panel9.add(scrollPane2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel10.add(scrollPane2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         variablesTree = new JTree();
         variablesTree.setRootVisible(false);
         variablesTree.setShowsRootHandles(true);
         scrollPane2.setViewportView(variablesTree);
-        final JPanel panel10 = new JPanel();
-        panel10.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
-        panel10.setOpaque(false);
-        panel9.add(panel10, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JPanel panel11 = new JPanel();
+        panel11.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+        panel11.setOpaque(false);
+        panel10.add(panel11, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         addOutputButton = new JButton();
         addOutputButton.setHorizontalAlignment(2);
-        addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
+        addOutputButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addOutputButton.setText("Vector");
-        panel10.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer3 = new Spacer();
-        panel10.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel11.add(addOutputButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer4 = new Spacer();
-        panel10.add(spacer4, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel11.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        final Spacer spacer5 = new Spacer();
+        panel11.add(spacer5, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         addScalarOutputPortButton = new JButton();
         addScalarOutputPortButton.setHorizontalAlignment(2);
-        addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/plus.png")));
+        addScalarOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/add.png")));
         addScalarOutputPortButton.setText("Scalar");
-        panel10.add(addScalarOutputPortButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel11.add(addScalarOutputPortButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JScrollPane scrollPane3 = new JScrollPane();
-        panel9.add(scrollPane3, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel10.add(scrollPane3, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         outportsTree = new JTree();
         outportsTree.setRootVisible(false);
         outportsTree.setShowsRootHandles(true);
         scrollPane3.setViewportView(outportsTree);
-        final JPanel panel11 = new JPanel();
-        panel11.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), 5, -1));
-        panel11.setOpaque(false);
-        panel9.add(panel11, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        final Spacer spacer5 = new Spacer();
-        panel11.add(spacer5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-        btnMoveUp = new JButton();
-        btnMoveUp.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-up.png")));
-        btnMoveUp.setText("");
-        panel11.add(btnMoveUp, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        btnMoveDown = new JButton();
-        btnMoveDown.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-down.png")));
-        btnMoveDown.setText("");
-        panel11.add(btnMoveDown, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        button3 = new JButton();
-        button3.setIcon(new ImageIcon(getClass().getResource("/icons/pencil.png")));
-        button3.setText("");
-        panel11.add(button3, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        removeOutputPortButton = new JButton();
-        removeOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/minus.png")));
-        removeOutputPortButton.setText("");
-        panel11.add(removeOutputPortButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
-        btnResetOutputs = new JButton();
-        btnResetOutputs.setIcon(new ImageIcon(getClass().getResource("/icons/repeat.png")));
-        btnResetOutputs.setText("");
-        panel11.add(btnResetOutputs, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
         final JPanel panel12 = new JPanel();
-        panel12.setLayout(new GridLayoutManager(10, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel12.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), 5, -1));
         panel12.setOpaque(false);
-        tabbedPane.addTab("Advanced", panel12);
-        txtUnzipDirectory = new JTextField();
-        panel12.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        panel10.add(panel12, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         final Spacer spacer6 = new Spacer();
-        panel12.add(spacer6, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        panel12.add(spacer6, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        moveUpButton = new JButton();
+        moveUpButton.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-up.png")));
+        moveUpButton.setText("");
+        panel12.add(moveUpButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        moveDownButton = new JButton();
+        moveDownButton.setIcon(new ImageIcon(getClass().getResource("/icons/arrow-down.png")));
+        moveDownButton.setText("");
+        panel12.add(moveDownButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        editButton = new JButton();
+        editButton.setIcon(new ImageIcon(getClass().getResource("/icons/edit.png")));
+        editButton.setText("");
+        panel12.add(editButton, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        removeOutputPortButton = new JButton();
+        removeOutputPortButton.setIcon(new ImageIcon(getClass().getResource("/icons/remove.png")));
+        removeOutputPortButton.setText("");
+        panel12.add(removeOutputPortButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        resetOutputsButton = new JButton();
+        resetOutputsButton.setIcon(new ImageIcon(getClass().getResource("/icons/reload.png")));
+        resetOutputsButton.setText("");
+        panel12.add(resetOutputsButton, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel13 = new JPanel();
+        panel13.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel13.setOpaque(false);
+        panel10.add(panel13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        variablesTreeExpandAllButton = new JButton();
+        variablesTreeExpandAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/expand.png")));
+        variablesTreeExpandAllButton.setToolTipText("Expand all");
+        panel13.add(variablesTreeExpandAllButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final Spacer spacer7 = new Spacer();
+        panel13.add(spacer7, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        variablesTreeCollapseAllButton = new JButton();
+        variablesTreeCollapseAllButton.setIcon(new ImageIcon(getClass().getResource("/icons/collapse.png")));
+        variablesTreeCollapseAllButton.setToolTipText("Collapse all");
+        panel13.add(variablesTreeCollapseAllButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(22, 22), new Dimension(22, 22), new Dimension(22, 22), 0, false));
+        final JPanel panel14 = new JPanel();
+        panel14.setLayout(new GridLayoutManager(11, 2, new Insets(15, 15, 15, 15), 15, 12));
+        panel14.setOpaque(false);
+        tabbedPane.addTab("Advanced", panel14);
+        txtUnzipDirectory = new JTextField();
+        panel14.add(txtUnzipDirectory, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final Spacer spacer8 = new Spacer();
+        panel14.add(spacer8, new GridConstraints(10, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label13 = new JLabel();
         label13.setText("Unzip directory:");
-        panel12.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label13, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label14 = new JLabel();
         label14.setText("Sample time:");
-        panel12.add(label14, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label14, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         txtSampleTime = new JTextField();
         txtSampleTime.setText("-1");
-        panel12.add(txtSampleTime, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
+        panel14.add(txtSampleTime, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
         chckbxUseSourceCode = new JCheckBox();
         chckbxUseSourceCode.setOpaque(false);
         chckbxUseSourceCode.setText("Use source code");
-        panel12.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JPanel panel13 = new JPanel();
-        panel13.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-        panel13.setOpaque(false);
-        panel12.add(panel13, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        panel14.add(chckbxUseSourceCode, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JPanel panel15 = new JPanel();
+        panel15.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel15.setOpaque(false);
+        panel14.add(panel15, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         cmbbxLogLevel = new JComboBox();
         final DefaultComboBoxModel defaultComboBoxModel2 = new DefaultComboBoxModel();
         defaultComboBoxModel2.addElement("Info");
@@ -1766,37 +1918,41 @@ public class FMUBlockDialog extends JDialog {
         defaultComboBoxModel2.addElement("Fatal");
         defaultComboBoxModel2.addElement("None");
         cmbbxLogLevel.setModel(defaultComboBoxModel2);
-        panel13.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer7 = new Spacer();
-        panel13.add(spacer7, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        panel15.add(cmbbxLogLevel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer9 = new Spacer();
+        panel15.add(spacer9, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
         chckbxDebugLogging = new JCheckBox();
         chckbxDebugLogging.setOpaque(false);
         chckbxDebugLogging.setText("Enable debug logging");
-        panel12.add(chckbxDebugLogging, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxDebugLogging, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label15 = new JLabel();
         label15.setText("Log level:");
-        panel12.add(label15, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label15, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label16 = new JLabel();
         label16.setText("Relative tolerance:");
-        panel12.add(label16, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label16, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         txtRelativeTolerance = new JTextField();
         txtRelativeTolerance.setText("0");
-        panel12.add(txtRelativeTolerance, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
+        panel14.add(txtRelativeTolerance, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(120, -1), null, 0, false));
         txtLogFile = new JTextField();
         txtLogFile.setEnabled(false);
         txtLogFile.setText("");
-        panel12.add(txtLogFile, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        panel14.add(txtLogFile, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final JLabel label17 = new JLabel();
         label17.setText("Log file:");
-        panel12.add(label17, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(label17, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         chckbxLogToFile = new JCheckBox();
         chckbxLogToFile.setOpaque(false);
         chckbxLogToFile.setText("Log to file");
-        panel12.add(chckbxLogToFile, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxLogToFile, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         chckbxLogFMICalls = new JCheckBox();
         chckbxLogFMICalls.setOpaque(false);
         chckbxLogFMICalls.setText("Log FMI calls");
-        panel12.add(chckbxLogFMICalls, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel14.add(chckbxLogFMICalls, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        resettableCheckBox = new JCheckBox();
+        resettableCheckBox.setOpaque(false);
+        resettableCheckBox.setText("Resettable");
+        panel14.add(resettableCheckBox, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

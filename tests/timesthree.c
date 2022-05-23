@@ -25,10 +25,11 @@
 #include "simstruc.h"
 #include "stdio.h"
 
+#include "multiply.h"
+
 /*================*
  * Build checking *
  *================*/
-
 
 /* Function: mdlInitializeSizes ===============================================
  * Abstract:
@@ -88,7 +89,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
          * To find out see an example about how to handle complex signal in 
          * S-function, see sdotproduct.c for details.
          */
-        *y++ = 3.0 *(*uPtrs[i]); 
+        *y++ = multiply(3.0, *uPtrs[i]); 
         ssPrintf("Multiplying!");
     }
    }

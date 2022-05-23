@@ -5,7 +5,7 @@ jobs:
 - job: win32
   displayName: 'Windows (32-bit)'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
 
   steps:
 
@@ -20,7 +20,7 @@ jobs:
       destinationFolder: ThirdParty/R2012b
 
   - script: |
-      cmake -G "Visual Studio 15 2017" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake -G "Visual Studio 17 2022" -A Win32 -B build -DMATLAB_DIR=ThirdParty/R2012b .
       cmake --build build --config Release
     displayName: Build generic S-function
 
@@ -32,7 +32,7 @@ jobs:
 - job: win64
   displayName: 'Windows (64-bit)'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
 
   steps:
 
@@ -47,7 +47,7 @@ jobs:
       destinationFolder: ThirdParty/R2012b
 
   - script: |
-      cmake -G "Visual Studio 15 2017 Win64" -B build -DMATLAB_DIR=ThirdParty/R2012b .
+      cmake -G "Visual Studio 17 2022" -A x64 -B build -DMATLAB_DIR=ThirdParty/R2012b .
       cmake --build build --config Release
     displayName: Build generic S-function
 
@@ -91,7 +91,7 @@ jobs:
   - win32
   - win64
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-18.04'
 
   steps:
 
@@ -141,29 +141,39 @@ jobs:
       python docs/md2html.py
     displayName: Generate HTML documentation
 
+  - script: |
+      python merge_sfun.py
+    displayName: Merge S-function source
+
   - task: Maven@3
     inputs:
       mavenPomFile: Java/pom.xml
       goals: install
 
   - script: |
-      cp -r +FMIKit                dist/+FMIKit
-      cp -r examples               dist/examples
-      cp -r grtfmi                 dist/grtfmi
-      cp -r html                   dist/html
-      cp -r include                dist/include
-      cp -r src                    dist/src
-      cp -r rtwsfcnfmi             dist/rtwsfcnfmi
-      cp FMIKit_blocks_R2012b.slx  dist
-      cp fmikit.jar                dist
-      cp forms_rt.jar              dist
-      cp info.xml                  dist
-      cp LICENSE.txt               dist
-      cp README.md                 dist
-      cp sfun_fmurun.mexa64        dist
-      cp sfun_fmurun.cpp           dist
-      cp slblocks.m                dist
-      cp swingx-1.6.jar            dist
+      cp -r +FMIKit                  dist/+FMIKit
+      cp -r examples                 dist/examples
+      cp -r grtfmi                   dist/grtfmi
+      cp -r html                     dist/html
+      mkdir dist/include
+      cp include/fmi2Functions.h     dist/include
+      cp include/fmi2FunctionTypes.h dist/include
+      cp include/fmi2TypesPlatform.h dist/include
+      cp include/fmi3Functions.h     dist/include
+      cp include/fmi3FunctionTypes.h dist/include
+      cp include/fmi3PlatformTypes.h dist/include
+      cp -r rtwsfcnfmi               dist/rtwsfcnfmi
+      cp FMIKit_blocks_R2012b.slx    dist
+      cp fmikit.jar                  dist
+      cp FMU_bare.png                dist
+      cp forms_rt.jar                dist
+      cp info.xml                    dist
+      cp LICENSE.txt                 dist
+      cp README.md                   dist
+      cp sfun_fmurun.mexa64          dist
+      cp sfun_fmurun.c               dist
+      cp slblocks.m                  dist
+      cp swingx-1.6.jar              dist
       cd dist
       zip -r ../FMIKit-Simulink.zip *
     displayName: Create distribution archive

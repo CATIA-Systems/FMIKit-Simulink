@@ -40,11 +40,16 @@ if ispc
         return
     end
     
-    command = fullfile(getenv('PROGRAMFILES(X86)'), 'CMake', 'bin', 'cmake.exe');
-    [status, ~] = system(command);
+    vswhere = fullfile(getenv('PROGRAMFILES(X86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+    [status, installationPath] = system(['"' vswhere '"  -latest -property installationPath']);
     if status == 0
-        return
+      command = fullfile(strtrim(installationPath), 'Common7', 'IDE', 'CommonExtensions', 'Microsoft', 'CMake', 'CMake', 'bin', 'cmake.exe');
+      [status, ~] = system(command);
+      if status == 0
+          return
+      end
     end
+
 elseif ismac
     command = '/usr/local/bin/cmake';
     [status, ~] = system(command);

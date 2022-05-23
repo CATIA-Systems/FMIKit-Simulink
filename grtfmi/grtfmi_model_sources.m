@@ -5,38 +5,86 @@ if ~strncmp(rtw_dir, pwd, numel(pwd))
     rtw_dir = fullfile(pwd, rtw_dir);
 end
 
-sources = {};
+% remember the current working directory
+start_dir = pwd;
+
+% file extentions for source files and static libaries
+src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
+
+if ispc
+    lib_file_ext = '.lib';
+else
+    lib_file_ext = '.a';
+end
 
 model_file = which(model);
 [filepath,~,~] = fileparts(model_file);
 
-include = {rtw_dir, filepath};
+include   = {rtw_dir, filepath};
+sources   = {};
+libraries = {};
 
 gen_sources = dir(fullfile(rtw_dir, '*.c'));
 
 for i = 1:numel(gen_sources)
-  sources{end+1} = fullfile(rtw_dir, gen_sources(i).name); %#ok<AGROW>
+    sources{end+1} = fullfile(rtw_dir, gen_sources(i).name); %#ok<AGROW>
 end
 
 % S-functions sources
-modules = {};
 sfcns = find_system(model, 'LookUnderMasks', 'on', 'FollowLinks', 'on', 'BlockType', 'S-Function');
-for i = 1:numel(sfcns)
-    block = sfcns{i};
-    modules = [modules get_param(block, 'FunctionName') ...
-      regexp(get_param(block, 'SFunctionModules'), '\s+', 'split')]; %#ok<AGROW>
-end
 
-% add S-function sources
-for i = 1:numel(modules)
-    src_file_ext = {'.c', '.cc', '.cpp', '.cxx', '.c++'};
-    for j = 1:numel(src_file_ext)
-        source_file = which([modules{i} src_file_ext{j}]);
-        if ~isempty(source_file) && ~any(strcmp(sources, source_file))
-            sources{end+1} = source_file; %#ok<AGROW>
-            break
+for i = 1:numel(sfcns)
+    
+    block            = sfcns{i};
+    sfun_name        = get_param(block, 'FunctionName');
+    sfun_mexfile     = which([sfun_name '.' mexext]);
+    [sfun_dir,~,~]   = fileparts(sfun_mexfile);
+    sfun_modules     = [{sfun_name} regexp(get_param(block, 'SFunctionModules'), '\s+', 'split')];
+    include          = {sfun_dir}; 
+    sfun_source_dirs = {sfun_dir};
+    
+    if exist(fullfile(sfun_dir, 'rtwmakecfg.m'), 'file') || exist(fullfile(sfun_dir, 'rtwmakecfg.p'), 'file')
+      
+        cd(sfun_dir);
+        makeInfo = rtwmakecfg();
+        cd(start_dir);
+
+        include          = [include          makeInfo.includePath]; %#ok<AGROW>
+        sfun_source_dirs = [sfun_source_dirs makeInfo.sourcePath];  %#ok<AGROW>
+        
+        % add S-function sources
+        for j = 1:numel(makeInfo.sources)
+            for k = 1:numel(sfun_source_dirs)
+                source_file = fullfile(sfun_source_dirs{k}, makeInfo.sources{j});
+                if exist(source_file, 'file')
+                    sources{end+1} = source_file; %#ok<AGROW>
+                    break
+                end
+            end
         end
+        
+        if isfield(makeInfo, 'library')
+            % add S-function libraries
+            for j = 1:numel(makeInfo.library)
+                libraries = [libraries fullfile(makeInfo.library(j).Location, [makeInfo.library(j).Name lib_file_ext])]; %#ok<AGROW>
+            end        
+        end
+        
     end
+    
+    % add S-function modules
+    for j = 1:numel(sfun_modules)
+        for k = 1:numel(src_file_ext)
+            for l = 1:numel(sfun_source_dirs)
+                source_file = fullfile(sfun_source_dirs{l}, [sfun_modules{j} src_file_ext{k}]);
+                if exist(source_file, 'file')
+                    sources{end+1} = source_file; %#ok<AGROW>
+                    break
+                end
+            end
+        end
+    end 
+    
 end
 
 % referenced models
@@ -56,14 +104,19 @@ for i = 1:numel(referenced_models)
 end
 
 % custom includes, sources and libraries
-include = [include split_path_list(get_param(model, 'CustomInclude'))];
-sources = [sources split_path_list(get_param(model, 'CustomSource'))];
-libraries = split_path_list(get_param(model, 'CustomLibrary'));
+include   = [include   split_path_list(get_param(model, 'CustomInclude'))];
+sources   = [sources   split_path_list(get_param(model, 'CustomSource'))];
+libraries = [libraries split_path_list(get_param(model, 'CustomLibrary'))];
 
 % replace backslashes with forward slashes
 include   = strrep(include, '\', '/');
 sources   = strrep(sources, '\', '/');
 libraries = strrep(libraries, '\', '/');
+
+% remove duplicates
+include   = unique(include);
+sources   = unique(sources);
+libraries = unique(libraries);
 
 if nargout == 3
    varargout = {include, sources, libraries};

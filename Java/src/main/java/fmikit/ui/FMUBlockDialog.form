@@ -396,7 +396,7 @@
                   </component>
                 </children>
               </grid>
-              <grid id="34ae4" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="34ae4" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="10" left="10" bottom="10" right="10"/>
                 <constraints>
                   <tabbedpane title="Variables"/>
@@ -408,7 +408,7 @@
                 <children>
                   <scrollpane id="878a1">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                     <border type="none"/>
@@ -422,6 +422,49 @@
                       </component>
                     </children>
                   </scrollpane>
+                  <grid id="c90e0" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <opaque value="false"/>
+                    </properties>
+                    <border type="none"/>
+                    <children>
+                      <component id="91129" class="javax.swing.JButton" binding="treeTableExpandAllButton">
+                        <constraints>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                            <minimum-size width="22" height="22"/>
+                            <preferred-size width="22" height="22"/>
+                            <maximum-size width="22" height="22"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <icon value="icons/expand.png"/>
+                          <toolTipText value="Expand all"/>
+                        </properties>
+                      </component>
+                      <hspacer id="9f9bb">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                      </hspacer>
+                      <component id="48b1f" class="javax.swing.JButton" binding="treeTableCollapseAllButton">
+                        <constraints>
+                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                            <minimum-size width="22" height="22"/>
+                            <preferred-size width="22" height="22"/>
+                            <maximum-size width="22" height="22"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <icon value="icons/collapse.png"/>
+                          <toolTipText value="Collapse all"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
                 </children>
               </grid>
               <grid id="88dd4" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -466,7 +509,7 @@
                         </constraints>
                         <properties>
                           <horizontalAlignment value="2"/>
-                          <icon value="icons/plus.png"/>
+                          <icon value="icons/add.png"/>
                           <text value="Vector"/>
                         </properties>
                       </component>
@@ -486,7 +529,7 @@
                         </constraints>
                         <properties>
                           <horizontalAlignment value="2"/>
-                          <icon value="icons/plus.png"/>
+                          <icon value="icons/add.png"/>
                           <text value="Scalar"/>
                         </properties>
                       </component>
@@ -523,7 +566,7 @@
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                       </hspacer>
-                      <component id="42786" class="javax.swing.JButton" binding="btnMoveUp">
+                      <component id="42786" class="javax.swing.JButton" binding="moveUpButton">
                         <constraints>
                           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
                             <minimum-size width="22" height="22"/>
@@ -536,7 +579,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="bcd49" class="javax.swing.JButton" binding="btnMoveDown">
+                      <component id="bcd49" class="javax.swing.JButton" binding="moveDownButton">
                         <constraints>
                           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false">
                             <minimum-size width="22" height="22"/>
@@ -549,7 +592,7 @@
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="1d0d2" class="javax.swing.JButton" binding="button3" default-binding="true">
+                      <component id="1d0d2" class="javax.swing.JButton" binding="editButton">
                         <constraints>
                           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
                             <minimum-size width="22" height="22"/>
@@ -558,7 +601,7 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/pencil.png"/>
+                          <icon value="icons/edit.png"/>
                           <text value=""/>
                         </properties>
                       </component>
@@ -571,11 +614,11 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/minus.png"/>
+                          <icon value="icons/remove.png"/>
                           <text value=""/>
                         </properties>
                       </component>
-                      <component id="a948b" class="javax.swing.JButton" binding="btnResetOutputs">
+                      <component id="a948b" class="javax.swing.JButton" binding="resetOutputsButton">
                         <constraints>
                           <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
                             <minimum-size width="22" height="22"/>
@@ -584,15 +627,58 @@
                           </grid>
                         </constraints>
                         <properties>
-                          <icon value="icons/repeat.png"/>
+                          <icon value="icons/reload.png"/>
                           <text value=""/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="ba32e" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <opaque value="false"/>
+                    </properties>
+                    <border type="none"/>
+                    <children>
+                      <component id="f34dd" class="javax.swing.JButton" binding="variablesTreeExpandAllButton">
+                        <constraints>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                            <minimum-size width="22" height="22"/>
+                            <preferred-size width="22" height="22"/>
+                            <maximum-size width="22" height="22"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <icon value="icons/expand.png"/>
+                          <toolTipText value="Expand all"/>
+                        </properties>
+                      </component>
+                      <hspacer id="f01ac">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                      </hspacer>
+                      <component id="ef83a" class="javax.swing.JButton" binding="variablesTreeCollapseAllButton">
+                        <constraints>
+                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                            <minimum-size width="22" height="22"/>
+                            <preferred-size width="22" height="22"/>
+                            <maximum-size width="22" height="22"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <icon value="icons/collapse.png"/>
+                          <toolTipText value="Collapse all"/>
                         </properties>
                       </component>
                     </children>
                   </grid>
                 </children>
               </grid>
-              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
+              <grid id="aa48f" layout-manager="GridLayoutManager" row-count="11" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="15" vgap="12">
                 <margin top="15" left="15" bottom="15" right="15"/>
                 <constraints>
                   <tabbedpane title="Advanced"/>
@@ -612,7 +698,7 @@
                   </component>
                   <vspacer id="8f529">
                     <constraints>
-                      <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
                   <component id="123b1" class="javax.swing.JLabel">
@@ -752,6 +838,15 @@
                     <properties>
                       <opaque value="false"/>
                       <text value="Log FMI calls"/>
+                    </properties>
+                  </component>
+                  <component id="93111" class="javax.swing.JCheckBox" binding="resettableCheckBox">
+                    <constraints>
+                      <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <opaque value="false"/>
+                      <text value="Resettable"/>
                     </properties>
                   </component>
                 </children>
