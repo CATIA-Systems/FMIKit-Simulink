@@ -6,11 +6,9 @@
 
 A Simulink library to import and export [Functional Mock-up Units](https://fmi-standard.org/) that supports...
 
-- FMI 1.0 and 2.0
+- FMI 1.0, 2.0, and 3.0
 - Model Exchange and Co-Simulation
-- Rapid Accelerator mode
-- import of C code FMUs
-- MATLAB R2012b - R2020a
+- MATLAB R2016a - R2022a
 
 ## Quick start
 
@@ -19,10 +17,10 @@ To get started with FMI Kit run the following commands in the MATLAB Command Win
 ```matlab
 % download and extract the distribution archive to the current folder
 unzip(['https://github.com/CATIA-Systems/FMIKit-Simulink/releases/' ...
-  'download/v2.9/FMIKit-Simulink-2.9.zip'], 'FMIKit-Simulink-2.9')
+  'download/v3.0/FMIKit-Simulink-3.0.zip'], 'FMIKit-Simulink-3.0')
 
 % add the folder to the MATLAB path
-addpath(fullfile(pwd, 'FMIKit-Simulink-2.9'))
+addpath(fullfile(pwd, 'FMIKit-Simulink-3.0'))
 
 % initialize FMI Kit
 FMIKit.initialize()
@@ -31,7 +29,7 @@ FMIKit.initialize()
 fmikit_demo_BouncingBall
 
 % open the documentation
-web('FMIKit-Simulink-2.9/html/index.html')
+web('FMIKit-Simulink-3.0/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
@@ -43,5 +41,5 @@ Our partners at [Claytex](https://www.claytex.com/about-us/contact-us/) are read
 
 ## License
 
-Copyright &copy; 2020 Dassault Syst&egrave;mes.
+Copyright &copy; 2022 Dassault Syst&egrave;mes.
 The code is released under the [2-Clause BSD license](LICENSE.txt).
