@@ -172,12 +172,18 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign identifier = param.Identifier
       %else
         %assign varGroupIdx  = FcnSysVarGroupIndex(::CompiledModel.System[sigSrc[0]], "Parameter", sigSrc[1])
-        %assign varGroupName = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name
-        %assign identifier   = varGroupName + "." + param.Identifier
-        %assign variableName = varGroupName + "." + variableName
+        %if varGroupIdx < 0
+          %assign identifier = param.Identifier
+        %else
+          %assign varGroupName = ::CompiledModel.VarGroups.VarGroup[varGroupIdx].Name
+          %assign identifier   = varGroupName + "." + param.Identifier
+          %assign variableName = varGroupName + "." + variableName
+        %endif
       %endif
       %assign variableName = "Parameters." + variableName
-      %if ISFIELD(param, "StorageClass") && param.StorageClass == "ExportedGlobal"
+      %if ISFIELD(param, "RegisteredIdentifier")
+        %assign dataName = "&(%<param.RegisteredIdentifier>"
+      %elseif ISFIELD(param, "StorageClass") && param.StorageClass == "ExportedGlobal"
         %assign dataName = "&(%<identifier>"
       %else
         %assign dataName = "&(rtmGetDefaultParam(S)->%<identifier>"
