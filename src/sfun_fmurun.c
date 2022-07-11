@@ -1535,14 +1535,8 @@ static void mdlInitializeSampleTimes(SimStruct *S) {
 
 	logDebug(S, "mdlInitializeSampleTimes()");
 
-	if (isCS(S)) {
-		ssSetSampleTime(S, 0, sampleTime(S));
-		ssSetOffsetTime(S, 0, offsetTime(S));
-	} else {
-		ssSetSampleTime(S, 0, CONTINUOUS_SAMPLE_TIME);
-		ssSetOffsetTime(S, 0, offsetTime(S));
-	}
-
+	ssSetSampleTime(S, 0, sampleTime(S));
+	ssSetOffsetTime(S, 0, offsetTime(S));
 }
 
 

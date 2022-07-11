@@ -71,7 +71,7 @@ The folder where the FMU is extracted. The path can be absolute or relative to t
 
 ### Sample Time
 
-The sample time for the FMU block (use `-1` for inherited)
+The sample time for the FMU block (use `0` for continuous and `-1` for inherited).
 
 ### Relative Tolerance
 
