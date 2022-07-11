@@ -141,18 +141,28 @@
       %return vr
     %endif
   %else
+    %selectfile incfile
+
+    %if width > 1  %% array
+    for (size_t i = 0; i < %<width>; i++) {
+        modelVariables[%<vr-1> + i].dtypeID = %<dtypeID>;
+        modelVariables[%<vr-1> + i].size    = 0;
+        modelVariables[%<vr-1> + i].address = %<dataName>[i]);
+    }
+    %else  %% scalar
+    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
+    modelVariables[%<vr-1>].size    = 0;
+    modelVariables[%<vr-1>].address = %<dataName>);
+    %endif
     %assign index = 0
     %foreach colid = nCols
     %foreach rowid = nRows
       %if nCols > 1 && nRows > 1
-        %assign dataSubs     = "[%<index>]"
         %assign variableSubs = "[%<rowid>,%<colid>]"
       %elseif width > 1
-        %assign dataSubs     = "[%<index>]"
         %assign variableSubs = "[%<index>]"
       %else
-        %assign dataSubs     = ""
-        %assign variableSubs = "" 
+        %assign variableSubs = ""
       %endif
       %if ISFIELD(record, "Value")
         %assign valueType = TYPE(record.Value)
@@ -192,10 +202,6 @@
         %assign dtypeID = 6
         %assign typeAttr = " declaredType=\"%<dataType.DTName>\"%<typeAttr>"
       %endif
-      %selectfile incfile
-    modelVariables[%<vr-1>].dtypeID = %<dtypeID>;
-    modelVariables[%<vr-1>].size    = 0;
-    modelVariables[%<vr-1>].address = %<dataName>%<dataSubs>);
       %selectfile xmlfile2
     <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
       <%<fmiType>%<startAttr>%<typeAttr>/>
