@@ -21,7 +21,7 @@ end
 
 url = ['https://github.com/Kitware/CMake/releases/download/v3.22.2/' filename]; 
 
-disp(['Donwloading ' url])
+disp(['Downloading ' url])
 archive = websave(filename, url);
 
 disp(['Extracting archive to ' fmikit_folder])
