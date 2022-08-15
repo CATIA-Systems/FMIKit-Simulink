@@ -1,4 +1,4 @@
-function s = grtfmi_xml_from_structure(vr, variableName, record)
+function s = grtfmi_generate_lookup_table(vr, variableName, record)
 % generate XML and C code for a Simulink.LookupTable
 %
 % s.vr   next value reference
