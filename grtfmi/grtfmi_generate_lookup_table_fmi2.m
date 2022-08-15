@@ -1,5 +1,5 @@
-function s = grtfmi_generate_lookup_table(vr, variableName, record)
-% generate XML and C code for a Simulink.LookupTable
+function s = grtfmi_generate_lookup_table_fmi2(vr, variableName, record)
+% generate XML and C code for a Simulink.LookupTable for FMI 2.0
 %
 % s.vr   next value reference
 % s.xml  generated XML
@@ -52,8 +52,8 @@ for i = 1:numel(table.Breakpoints)
 end
 
 s.vr  = int32(vr);
-s.xml = xml;
-s.c   = c;
+s.xml = xml(1:end-1);
+s.c   = c(1:end-1);
 
 end
 
