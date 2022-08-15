@@ -125,6 +125,13 @@
   %endif
   %if ISEMPTY(fmiType)
     %if ISFIELD(dataType, "Elements")
+      %assign s = FEVAL("grtfmi_xml_from_structure", vr, variableName, record)
+      %selectfile xmlfile2
+%<s.xml>
+      %selectfile incfile
+
+%<s.c>
+      %return s.vr
       %% Bus
       %foreach arrIdx = width
         %foreach elementIdx = dataType.NumElements
