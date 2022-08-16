@@ -124,7 +124,15 @@
     %return vr
   %endif
   %if ISEMPTY(fmiType)
-    %if ISFIELD(dataType, "Elements")
+    %if FEVAL("grtfmi_is_lookup_table",  record)
+      %% LookupTable
+      %assign s = FEVAL("grtfmi_generate_lookup_table_fmi2", vr, variableName, record)
+      %selectfile xmlfile2
+%<s.xml>
+      %selectfile incfile
+%<s.c>
+      %return s.vr
+    %elseif ISFIELD(dataType, "Elements")
       %% Bus
       %foreach arrIdx = width
         %foreach elementIdx = dataType.NumElements
@@ -230,8 +238,18 @@
   %if ISFIELD(record, "IsPseudoWorkspaceVar") && record.IsPseudoWorkspaceVar == "yes"
     %return vr
   %endif
-  %if fmiType == ""
-    %return vr
+  %if ISEMPTY(fmiType)
+    %if FEVAL("grtfmi_is_lookup_table",  record)
+      %% LookupTable
+      %assign s = FEVAL("grtfmi_generate_lookup_table_fmi3", vr, variableName, record)
+      %selectfile xmlfile2
+%<s.xml>
+      %selectfile incfile
+%<s.c>
+      %return s.vr
+    %else
+      %return vr
+    %endif
   %endif
   %if nRows == 0 || nCols == 0
     %return vr
