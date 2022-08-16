@@ -156,6 +156,14 @@ FMIKit.loadFMU(gcb, 'Controller.fmu')
 
 loads the FMU `Controller.fmu` into the current FMU block.
 
+### Change the Interface Type
+
+The Interface Type of the FMU block can be changed with
+
+```
+FMIKit.setInterfaceType(gcb, 'CoSimulation');
+```
+
 ### Change the Output Ports
 
 Use `FMIKit.setOutputPorts()` to change the output ports of an FMU block.
