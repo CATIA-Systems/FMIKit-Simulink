@@ -32,6 +32,7 @@ public class StartTableCellRenderer extends DefaultTableCellRenderer {
 				isSelected, hasFocus, row, column);
 
 		if (value instanceof ScalarVariable) {
+
 			ScalarVariable sv = (ScalarVariable) value;
 
 			if (startValues.containsKey(sv.name)) {
@@ -40,7 +41,7 @@ public class StartTableCellRenderer extends DefaultTableCellRenderer {
 				setFont(boldFont);
 				renderer.setText(startValues.get(sv.name));
 			} else {
-				renderer.setText(sv.startValue);
+				renderer.setText("String".equals(sv.type) ? "'" + sv.startValue + "'" : sv.startValue);
 			}
 
 			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
