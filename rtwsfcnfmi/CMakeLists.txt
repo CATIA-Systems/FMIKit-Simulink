@@ -45,6 +45,7 @@ target_compile_definitions(${SOLVER} PRIVATE
 	_CRT_SECURE_NO_WARNINGS
 	NRT
 	RT_MALLOC
+  IS_RSIM
 )
 
 target_include_directories(${SOLVER} PRIVATE
