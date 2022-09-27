@@ -42,9 +42,10 @@ endif ()
 add_library(${SOLVER} STATIC ${SOLVER_SOURCES})
 
 target_compile_definitions(${SOLVER} PRIVATE
-	_CRT_SECURE_NO_WARNINGS
-	NRT
-	RT_MALLOC
+  _CRT_SECURE_NO_WARNINGS
+  NRT
+  RT_MALLOC
+  IS_RSIM  # required only for R2022a
 )
 
 target_include_directories(${SOLVER} PRIVATE
