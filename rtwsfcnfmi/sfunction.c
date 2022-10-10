@@ -14,6 +14,10 @@
 #include "sfunction.h"
 #include "model_interface.h"
 
+// MATLAB versions for conditional compilation
+#define R2020b 908
+#define R2017b 903
+
 Model* currentModel = NULL;
 
 const char* _SFCN_FMI_MATLAB_BIN = NULL;
@@ -207,45 +211,50 @@ Model *InstantiateModel(const char* instanceName, logMessageCallback logMessage,
 		currentModel = model;
 	}
 
-	model->S = CreateSimStructForFMI(model->instanceName);
-	if (model->S == NULL) {
+	SimStruct* S = CreateSimStructForFMI(model->instanceName);
+
+	if (S == NULL) {
 		goto fail;
 	}
 
+	model->S = S;
+
 	/* Register model callback functions in Simstruct */
-	sfcn_fmi_registerMdlCallbacks_(model->S);
+	sfcn_fmi_registerMdlCallbacks_(S);
 
 	/* Initialize sizes and create vectors */
-	sfcnInitializeSizes(model->S);
+	sfcnInitializeSizes(S);
 	allocateSimStructVectors(model);
 
 	/* Create solver data and ZC vector */
-	rt_CreateIntegrationData(model->S);
-	model->S->mdlInfo->solverInfo->zcSignalVector = (real_T*)calloc(SFCN_FMI_ZC_LENGTH + 1, sizeof(real_T));
-	model->S->states.nonsampledZCs = model->S->mdlInfo->solverInfo->zcSignalVector;
+	rt_CreateIntegrationData(S);
+	S->mdlInfo->solverInfo->numContStatesPtr = ssGetNumContStatesPtr(S);
+	S->mdlInfo->solverInfo->zcSignalVector = (real_T*)calloc(SFCN_FMI_ZC_LENGTH + 1, sizeof(real_T));
+	S->states.nonsampledZCs = S->mdlInfo->solverInfo->zcSignalVector;
+	
 	/* Register model callback for ODE solver */
-	sfcn_fmi_registerRTModelCallbacks_(model->S);
+	sfcn_fmi_registerRTModelCallbacks_(S);
 
 	/* Initialize sample times and sample flags */
-	sfcnInitializeSampleTimes(model->S);
+	sfcnInitializeSampleTimes(S);
 	setSampleStartValues(model);
 
 	/* non-finites */
 	rt_InitInfAndNaN(sizeof(real_T));
 	/* Create and initialize global tunable parameters */
-	sfcn_fmi_mxGlobalTunable_(model->S, 1, 0);
+	sfcn_fmi_mxGlobalTunable_(S, 1, 0);
 	/* Call mdlStart */
-	if (ssGetmdlStart(model->S) != NULL) {
-		sfcnStart(model->S);
+	if (ssGetmdlStart(S) != NULL) {
+		sfcnStart(S);
 	}
 
 	/* Allocate model vectors */
 	model->oldZC = (real_T*)calloc(SFCN_FMI_ZC_LENGTH + 1, sizeof(real_T));
-	model->numSampleHits = (int_T*)calloc(model->S->sizes.numSampleTimes + 1, sizeof(int_T));
+	model->numSampleHits = (int_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(int_T));
 //	model->inputDerivatives = (real_T*)calloc(SFCN_FMI_NBR_INPUTS + 1, sizeof(real_T));
 
 	/* Check Simstruct error status and stop requested */
-	if ((ssGetErrorStatus(model->S) != NULL) || (ssGetStopRequested(model->S) != 0)) {
+	if ((ssGetErrorStatus(S) != NULL) || (ssGetStopRequested(S) != 0)) {
 		goto fail;
 	}
 
@@ -277,11 +286,26 @@ fail:
 SimStruct *CreateSimStructForFMI(const char* instanceName)
 {
 	SimStruct *S = (SimStruct*)calloc(1, sizeof(SimStruct));
+	
 	if (S == NULL) {
 		return NULL;
 	}
+	
 	S->mdlInfo = (struct _ssMdlInfo*)calloc(1, sizeof(struct _ssMdlInfo));
+	
 	if (S->mdlInfo == NULL) {
+		return NULL;
+	}
+
+	S->blkInfo.blkInfo2 = (struct _ssBlkInfo2*)calloc(1, sizeof(struct _ssBlkInfo2));
+
+	if (S->blkInfo.blkInfo2 == NULL) {
+		return NULL;
+	}
+
+	S->blkInfo.blkInfo2->mdlInfoSLSize = (struct _ssMdlInfoSLSize*)calloc(1, sizeof(struct _ssMdlInfoSLSize));
+
+	if (S->blkInfo.blkInfo2->mdlInfoSLSize == NULL) {
 		return NULL;
 	}
 
@@ -316,12 +340,8 @@ SimStruct *CreateSimStructForFMI(const char* instanceName)
 	S->blkInfo.block = NULL;   /* Accessed by ssSetOutputPortBusMode in mdlInitializeSizes */
 	S->regDataType.setNumDWorkFcn = setNumDWork_FMI;
 
-#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 	S->states.statesInfo2 = (struct _ssStatesInfo2 *) calloc(1, sizeof(struct _ssStatesInfo2));
-#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 	S->states.statesInfo2->periodicStatesInfo = (ssPeriodicStatesInfo *)calloc(1, sizeof(ssPeriodicStatesInfo));
-#endif
-#endif
 
 	return(S);
 }
@@ -367,14 +387,10 @@ void FreeSimStruct(SimStruct *S) {
 		sfcn_fmi_mxGlobalTunable_(S, 0, 0);
 		free(S->sfcnParams.dlgParams);
 
-#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 		free(S->states.statesInfo2->absTol);
 		free(S->states.statesInfo2->absTolControl);
-#if defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
 		free(S->states.statesInfo2->periodicStatesInfo);
-#endif
 		free(S->states.statesInfo2);
-#endif
 
 		if (S->mdlInfo != NULL) {
 			if (S->mdlInfo->dataTypeAccess != NULL) {
@@ -501,26 +517,26 @@ static size_t getDataTypeSize(SimStruct *S, BuiltInDTypeId dataTypeId) {
 }
 
 void allocateSimStructVectors(Model* m) {
-	int_T i;
-	size_t dtypeSize;
+	
 	SimStruct* S = m->S;
 
-	S->states.contStates          = (real_T*)calloc(S->sizes.numContStates + 1, sizeof(real_T));
-	S->states.dX                  = (real_T*)calloc(S->sizes.numContStates + 1, sizeof(real_T));
-	/* store pointer, since it will be changed to point to ODE integration data */
-	m->dX                         = S->states.dX;
-	S->states.contStateDisabled   = (boolean_T*)calloc(S->sizes.numContStates + 1, sizeof(boolean_T));
-	S->states.discStates          = (real_T*   )calloc(S->sizes.numDiscStates + 1, sizeof(real_T));
-#if defined(MATLAB_R2011a_) || defined(MATLAB_R2015a_) || defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
-	S->states.statesInfo2->absTol        = (real_T* )calloc(S->sizes.numContStates + 1, sizeof(real_T));
-	S->states.statesInfo2->absTolControl = (uint8_T*)calloc(S->sizes.numContStates + 1, sizeof(uint8_T));
-#endif
-	S->stInfo.sampleTimes         = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
-	S->stInfo.offsetTimes         = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
-	S->stInfo.sampleTimeTaskIDs   = (int_T* )calloc(S->sizes.numSampleTimes + 1, sizeof(int_T));
-#if defined(MATLAB_R2020a_)
+	S->states.contStates                    = (real_T*   )calloc(S->sizes.numContStates + 1, sizeof(real_T));
+	S->states.dX                            = (real_T*   )calloc(S->sizes.numContStates + 1, sizeof(real_T));
+	S->states.contStateDisabled             = (boolean_T*)calloc(S->sizes.numContStates + 1, sizeof(boolean_T));
+	S->states.discStates                    = (real_T*   )calloc(S->sizes.numDiscStates + 1, sizeof(real_T));
+	S->states.statesInfo2->absTol           = (real_T*   )calloc(S->sizes.numContStates + 1, sizeof(real_T));
+	S->states.statesInfo2->absTolControl    = (uint8_T*  )calloc(S->sizes.numContStates + 1, sizeof(uint8_T));
+#if MATLAB_VERSION >= R2020b
 	S->states.statesInfo2->jacPerturbBounds = (ssJacobianPerturbationBounds*)calloc(1, sizeof(ssJacobianPerturbationBounds));
 #endif
+	
+	/* store pointer, since it will be changed to point to ODE integration data */
+	m->dX = S->states.dX;
+
+	S->stInfo.sampleTimes       = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
+	S->stInfo.offsetTimes       = (time_T*)calloc(S->sizes.numSampleTimes + 1, sizeof(time_T));
+	S->stInfo.sampleTimeTaskIDs = (int_T* )calloc(S->sizes.numSampleTimes + 1, sizeof(int_T));
+
 	/* allocate per-task sample hit matrix */
 	S->mdlInfo->sampleHits        = (int_T* )calloc(S->sizes.numSampleTimes*S->sizes.numSampleTimes + 1, sizeof(int_T));
 	S->mdlInfo->perTaskSampleHits = S->mdlInfo->sampleHits;
@@ -529,14 +545,17 @@ void allocateSimStructVectors(Model* m) {
 	S->work.iWork                 = (int_T* )calloc(S->sizes.numIWork       + 1, sizeof(int_T));
 	S->work.pWork                 = (void** )calloc(S->sizes.numPWork       + 1, sizeof(void*));
 	S->work.rWork                 = (real_T*)calloc(S->sizes.numRWork       + 1, sizeof(real_T));
-	for (i = 0; i < S->sizes.in.numInputPorts; i++) {
+
+	for (int_T i = 0; i < S->sizes.in.numInputPorts; i++) {
 		SetInputPortDimensionInfoFcn_FMI(S, i);
 	}
-	for (i = 0; i < S->sizes.out.numOutputPorts; i++) {
+	
+	for (int_T i = 0; i < S->sizes.out.numOutputPorts; i++) {
 		SetOutputPortDimensionInfoFcn_FMI(S, i);
 	}
-	for (i = 0; i < S->sizes.numDWork; i++) {
-		dtypeSize = getDataTypeSize(S, S->work.dWork.sfcn[i].dataTypeId);
+	
+	for (int_T i = 0; i < S->sizes.numDWork; i++) {
+		size_t dtypeSize = getDataTypeSize(S, S->work.dWork.sfcn[i].dataTypeId);
 		S->work.dWork.sfcn[i].array = calloc(S->work.dWork.sfcn[i].width + 1, dtypeSize);
 	}
 }
@@ -886,7 +905,7 @@ void NewDiscreteStates(Model *model, int *valuesOfContinuousStatesChanged, real_
     
     model->shouldRecompute = 1;
 
-#if defined(MATLAB_R2017b_) || defined(MATLAB_R2020a_)
+#if MATLAB_VERSION >= R2017b
     if (model->S->mdlInfo->mdlFlags.blockStateForSolverChangedAtMajorStep) {
         model->S->mdlInfo->mdlFlags.blockStateForSolverChangedAtMajorStep = 0U;
 #else
