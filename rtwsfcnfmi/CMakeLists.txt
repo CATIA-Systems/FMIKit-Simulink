@@ -3,8 +3,8 @@ cmake_minimum_required (VERSION 3.22)
 set(MODEL_NAME "" CACHE STRING "Model name")
 set(SOLVER "ode1" CACHE STRING "Solver")
 set_property(CACHE SOLVER PROPERTY STRINGS ode1 ode2 ode3 ode4 ode5 ode8 ode14x)
-set(MATLAB_ROOT "C:/Program Files/MATLAB/R2019b" CACHE STRING "MATLAB install directory")
-set(MATLAB_VERSION "MATLAB_R2017b_" CACHE STRING "MATLAB version for conditional compilation")
+set(MATLAB_ROOT "C:/Program Files/MATLAB/R2022b" CACHE STRING "MATLAB install directory")
+set(MATLAB_VERSION "913" CACHE STRING "MATLAB version for conditional compilation")
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
@@ -72,7 +72,7 @@ if (EXISTS "${RTW_DIR}/rt_zcfcn.c")
 endif ()
 
 if (NOT LOAD_MEX)
-  set (MODEL_SOURCES ${MODEL_SOURCES} "${MATLAB_ROOT}/rtw/c/src/rt_matrx.c")
+  set (MODEL_SOURCES ${MODEL_SOURCES} rt_matrx_wrapper.c)
 endif ()
 
 add_library(${MODEL_NAME} SHARED
@@ -112,7 +112,7 @@ target_compile_definitions(${MODEL_NAME} PRIVATE
   rt_matrx_h
   RT_MALLOC
   NDEBUG
-  ${MATLAB_VERSION}
+  MATLAB_VERSION=${MATLAB_VERSION}
 )
 
 # don't add the "lib" prefix to the shared library

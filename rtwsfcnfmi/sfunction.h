@@ -10,6 +10,20 @@
 #define SFCN_FMI_MAX_TIME  1e100
 #define SFCN_FMI_EPS       2e-13  /* Not supported with discrete sample times smaller than this */
 
+#ifndef ssSetRegInputPortDimensionInfoFcn
+#define ssSetRegInputPortDimensionInfoFcn(S, fcn) \
+    (S)->blkInfo.blkInfo2->mdlInfoSLSize->regInputPortDimsInfo = (fcn)
+#endif
+
+#ifndef ssSetRegOutputPortDimensionInfoFcn
+#define ssSetRegOutputPortDimensionInfoFcn(S, fcn) \
+    (S)->blkInfo.blkInfo2->mdlInfoSLSize->regOutputPortDimsInfo = (fcn)
+#endif
+
+#ifndef ssGetNumContStatesPtr
+#define ssGetNumContStatesPtr(S) &((S)->sizes.numContStates)
+#endif
+
 
 /* Model status */
 typedef enum {
