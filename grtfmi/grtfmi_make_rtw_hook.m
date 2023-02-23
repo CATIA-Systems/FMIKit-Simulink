@@ -43,10 +43,13 @@ else
     copyfile(fullfile(grtfmi_dir, 'model.png'), fullfile('FMUArchive', 'model.png'));
 end
 
-command             = get_param(modelName, 'CMakeCommand');
-command             = grtfmi_find_cmake(command);
+cmake_command       = get_param(modelName, 'CMakeCommand');
+cmake_command       = grtfmi_find_cmake(cmake_command);
 generator           = get_param(modelName, 'CMakeGenerator');
+generator_platform  = get_param(modelName, 'CMakeGeneratorPlatform');
 toolset             = get_param(modelName, 'CMakeToolset');
+optimization_level  = get_param(modelName, 'CMakeCompilerOptimizationLevel');
+optimization_flags  = get_param(modelName, 'CMakeCompilerOptimizationFlags');
 build_configuration = get_param(modelName, 'CMakeBuildConfiguration');
 source_code_fmu     = get_param(modelName, 'SourceCodeFMU');
 fmi_version         = get_param(modelName, 'FMIVersion');
@@ -90,6 +93,13 @@ end
 
 % write the CMakeCache.txt file
 fid = fopen('CMakeCache.txt', 'w');
+fprintf(fid, 'CMAKE_GENERATOR:STRING=%s\n', generator);
+if ispc && ~strcmp(generator, 'MinGW Makefiles')
+    fprintf(fid, 'CMAKE_GENERATOR_PLATFORM:STRING=%s\n', generator_platform);
+end
+if ~isempty(toolset)
+    fprintf(fid, 'CMAKE_GENERATOR_TOOLSET:STRING=%s\n', toolset);
+end
 fprintf(fid, 'MODEL_NAME:STRING=%s\n', modelName);
 fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
 fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
@@ -99,28 +109,23 @@ fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);
 fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
 fprintf(fid, 'SIMSCAPE:BOOL=%s\n', upper(simscape_blocks));
 fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
-fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationLevel'));
-fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', get_param(gcs, 'CMakeCompilerOptimizationFlags'));
+fprintf(fid, 'COMPILER_OPTIMIZATION_LEVEL:STRING=%s\n', optimization_level);
+fprintf(fid, 'COMPILER_OPTIMIZATION_FLAGS:STRING=%s\n', optimization_flags);
 fclose(fid);
 
 disp('### Generating project')
 
-cmake_options = [' -G "' generator '"'];
+command = ['"' cmake_command '" "' strrep(grtfmi_dir, '\', '/') '"'];
 
-if ispc
-    generator_platform = get_param(modelName, 'CMakeGeneratorPlatform');
-    cmake_options = [cmake_options ' -A ' generator_platform];
+if strcmp(generator, 'MinGW Makefiles') && isenv('MW_MINGW64_LOC')
+    command = ['set PATH=%PATH%;"' getenv('MW_MINGW64_LOC') '" && ' command];
 end
 
-if ~isempty(toolset)
-    cmake_options = [cmake_options ' -T "' toolset '"'];
-end
-
-status = system(['"' command '"' cmake_options ' "' strrep(grtfmi_dir, '\', '/') '"']);
+status = system(command);
 assert(status == 0, 'Failed to run CMake generator');
 
 disp('### Building FMU')
-status = system(['"' command '" --build . --config ' build_configuration]);
+status = system(['"' cmake_command '" --build . --config ' build_configuration]);
 assert(status == 0, 'Failed to build FMU');
 
 % copy the FMU to the working directory
