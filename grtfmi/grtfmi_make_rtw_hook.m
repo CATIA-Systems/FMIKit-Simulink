@@ -117,7 +117,7 @@ disp('### Generating project')
 
 command = ['"' cmake_command '" "' strrep(grtfmi_dir, '\', '/') '"'];
 
-if strcmp(generator, 'MinGW Makefiles') && isenv('MW_MINGW64_LOC')
+if strcmp(generator, 'MinGW Makefiles') && ~isempty(getenv('MW_MINGW64_LOC'))
     command = ['set PATH=%PATH%;"' getenv('MW_MINGW64_LOC') '" && ' command];
 end
 
