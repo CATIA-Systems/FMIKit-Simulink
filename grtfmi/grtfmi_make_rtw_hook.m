@@ -83,6 +83,7 @@ disp('### Running CMake generator')
 custom_include = cmake_list(custom_include);
 custom_source  = cmake_list(custom_source);
 custom_library = cmake_list(custom_library);
+custom_define  = cmake_list(regexp(get_param(modelName, 'CustomDefine'), '\s+', 'split'));
 
 % check for Simscape blocks
 if isempty(find_system(modelName, 'BlockType', 'SimscapeBlock'))
@@ -106,6 +107,7 @@ fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
 fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
 fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', custom_source);
 fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);
+fprintf(fid, 'CUSTOM_DEFINE:STRING=%s\n', custom_define);
 fprintf(fid, 'SOURCE_CODE_FMU:BOOL=%s\n', upper(source_code_fmu));
 fprintf(fid, 'SIMSCAPE:BOOL=%s\n', upper(simscape_blocks));
 fprintf(fid, 'FMI_VERSION:STRING=%s\n', fmi_version);
