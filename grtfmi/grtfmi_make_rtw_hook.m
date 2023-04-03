@@ -14,7 +14,7 @@ end
 % create the archive directory (uncompressed FMU)
 mkdir('FMUArchive');
 
-template_dir = get_param(gcs, 'FMUTemplateDir');
+template_dir = get_param(modelName, 'FMUTemplateDir');
 
 % copy template files
 if ~isempty(template_dir)
@@ -27,7 +27,7 @@ if ~strcmp(current_dir(end-11:end), '_grt_fmi_rtw')
     return
 end
 
-if strcmp(get_param(gcs, 'GenCodeOnly'), 'on')
+if strcmp(get_param(modelName, 'GenCodeOnly'), 'on')
     return
 end
 
@@ -35,7 +35,7 @@ pathstr = which('grtfmi.tlc');
 [grtfmi_dir, ~, ~] = fileparts(pathstr);
 
 % add model.png
-if strcmp(get_param(gcs, 'AddModelImage'), 'on')
+if strcmp(get_param(modelName, 'AddModelImage'), 'on')
     % create an image of the model
     print(['-s' modelName], '-dpng', fullfile('FMUArchive', 'model.png'));
 else
