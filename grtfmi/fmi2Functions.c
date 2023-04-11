@@ -19,7 +19,10 @@ const char *FMU_RESOURCES_DIR = NULL;
 
 typedef struct {
 	RT_MDL_TYPE *S;
-	const char *instanceName;
+#ifdef RT_MDL_P_T
+	RT_MDL_P_T defaultParameters;
+#endif
+	const char* instanceName;
 	fmi2CallbackLogger logger;
 	fmi2ComponentEnvironment componentEnvironment;
 	ModelVariable modelVariables[N_MODEL_VARIABLES];
@@ -131,7 +134,6 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
 	fmi2Boolean visible,
 	fmi2Boolean loggingOn) {
 
-    UNUSED(fmuType);
     UNUSED(visible);
     UNUSED(loggingOn);
 
@@ -176,11 +178,16 @@ fmi2Component fmi2Instantiate(fmi2String instanceName,
         }
     }
 
-    s_instance = malloc(sizeof(ModelInstance));
+    s_instance = (ModelInstance*)calloc(1, sizeof(ModelInstance));
 
-	len = strlen(instanceName);
-    s_instance->instanceName = malloc((len + 1) * sizeof(char));
-	strncpy((char *)s_instance->instanceName, instanceName, len + 1);
+	if (!s_instance) {
+		return NULL;
+	}
+
+#ifdef RT_MDL_P
+	memcpy(&s_instance->defaultParameters, &RT_MDL_P, sizeof(RT_MDL_P_T));
+#endif
+	s_instance->instanceName = strdup(instanceName);
     s_instance->logger = functions->logger;
     s_instance->componentEnvironment = functions->componentEnvironment;
 
@@ -270,7 +277,11 @@ fmi2Status fmi2Reset(fmi2Component c) {
         MODEL_TERMINATE();
     }
 
-	initializeModelVariables(s_instance->S, s_instance->modelVariables);
+	s_instance->S = RT_MDL_INSTANCE;
+
+#ifdef RT_MDL_P
+	memcpy(&RT_MDL_P, &s_instance->defaultParameters, sizeof(RT_MDL_P_T));
+#endif
 
 	return fmi2OK;
 }
@@ -529,10 +540,10 @@ fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
 
-    UNUSED(c);
-    UNUSED(FMUstate);
+	UNUSED(c);
+	UNUSED(FMUstate);
 
-    NOT_IMPLEMENTED
+	NOT_IMPLEMENTED
 }
 
 fmi2Status fmi2SerializedFMUstateSize(fmi2Component c, fmi2FMUstate  FMUstate, size_t* size) {
