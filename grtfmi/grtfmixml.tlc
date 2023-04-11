@@ -147,6 +147,15 @@ typedef struct {
 #define rtmGetY(S)          (&%<tOutput>)
 #define rtmGetBlockIO(S)    (&%<tBlockIO>)
 
+  %foreach vargroupid = VarGroups.NumVarGroups
+    %assign vargroup = VarGroups.VarGroup[vargroupid]
+    %if vargroup.Category == "Parameter"
+/* Parameters */
+#define RT_MDL_P_T  %<GlobalScope.tParametersType>
+#define RT_MDL_P    %<GlobalScope.tParameters>
+    %endif
+  %endforeach
+
 static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariables[]) {
   %% Parameters
   %selectfile xmlfile2
