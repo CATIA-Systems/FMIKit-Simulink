@@ -35,7 +35,13 @@
   <CoSimulation
     modelIdentifier="%<OrigName>"
     canBeInstantiatedOnlyOncePerProcess="true"
-    canHandleVariableCommunicationStepSize="true">
+    canHandleVariableCommunicationStepSize="true"
+  %if FMIVersion == "2"
+    canGetAndSetFMUstate="true"
+  %else
+    canGetAndSetFMUState="true"
+  %endif
+  >
   %if SourceCodeFMU
     %assign simscapeBlocks = FEVAL("find_system", modelName, "BlockType", "SimscapeBlock")
     %if ISEMPTY(simscapeBlocks)

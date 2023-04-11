@@ -513,18 +513,32 @@ fmi2Status fmi2SetString(fmi2Component c, const fmi2ValueReference vr[], size_t 
 /* Getting and setting the internal FMU state */
 fmi2Status fmi2GetFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {
 
-    UNUSED(c);
-    UNUSED(FMUstate);
+	ASSERT_INSTANCE
 
-    NOT_IMPLEMENTED
+	const size_t size = sizeof(RT_MDL_TYPE);
+
+	*FMUstate = calloc(1, size);
+
+	if (!*FMUstate) {
+		return fmi2Error;
+	}
+
+	memcpy(*FMUstate, RT_MDL_INSTANCE, size);
+
+	return fmi2OK;
 }
 
 fmi2Status fmi2SetFMUstate(fmi2Component c, fmi2FMUstate  FMUstate) {
 
-    UNUSED(c);
-    UNUSED(FMUstate);
+	ASSERT_INSTANCE
 
-    NOT_IMPLEMENTED
+	if (!FMUstate) {
+		return fmi2Error;
+	}
+
+	memcpy(RT_MDL_INSTANCE, FMUstate, sizeof(RT_MDL_TYPE));
+	
+	return fmi2OK;
 }
 
 fmi2Status fmi2FreeFMUstate(fmi2Component c, fmi2FMUstate* FMUstate) {

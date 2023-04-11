@@ -656,11 +656,34 @@ fmi3Status fmi3GetVariableDependencies(fmi3Instance instance,
 
 /* Getting and setting the internal FMU state */
 fmi3Status fmi3GetFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
-    NOT_IMPLEMENTED
+
+    ASSERT_INSTANCE
+
+    const size_t size = sizeof(RT_MDL_TYPE);
+
+    *FMUState = calloc(1, size);
+
+    if (!*FMUState) {
+        return fmi3Error;
+    }
+
+    memcpy(*FMUState, RT_MDL_INSTANCE, size);
+
+    return fmi3OK;
 }
 
 fmi3Status fmi3SetFMUState(fmi3Instance instance, fmi3FMUState  FMUState) {
-    NOT_IMPLEMENTED
+
+    ASSERT_INSTANCE
+
+
+    if (!FMUState) {
+        return fmi3Error;
+    }
+
+    memcpy(RT_MDL_INSTANCE, FMUState, sizeof(RT_MDL_TYPE));
+
+    return fmi3OK;
 }
 
 fmi3Status fmi3FreeFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
