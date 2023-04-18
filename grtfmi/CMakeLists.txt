@@ -1,8 +1,11 @@
 cmake_minimum_required (VERSION 3.22)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 set(MODEL_NAME "" CACHE STRING "Model name")
 set(MATLAB_ROOT "C:/Program Files/MATLAB/R2016b" CACHE STRING "MATLAB install directory")
 set(RTW_DIR "" CACHE STRING "RTW generated model directory")
+set(ARCH "win64" CACHE STRING "System architecture")
 set(CUSTOM_INCLUDE "" CACHE STRING "Additional include directories")
 set(CUSTOM_SOURCE "" CACHE STRING "Additional source files")
 set(CUSTOM_LIBRARY "" CACHE STRING "Additional static libraries")
@@ -54,21 +57,6 @@ else ()
     set (FMI_PLATFORM ${FMI_PLATFORM}32)
   endif ()
 
-endif ()
-
-# MATLAB architecture
-if (WIN32)
-  set(ARCH win)
-elseif (APPLE)
-  set(ARCH maci)
-else ()
-  set(ARCH glnxa)
-endif ()
-
-if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
-  set (ARCH ${ARCH}64)
-else ()
-  set (ARCH ${ARCH}32)
 endif ()
 
 if (MSVC)
@@ -140,32 +128,21 @@ if (${SIMSCAPE})
   file(GLOB PM_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}/*.c")
   file(GLOB SSC_CORE_SOURCES "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/core/c/${ARCH}/*.c")
   file(GLOB SSC_SLI_SOURCES  "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}/*.c")
-
-  add_library (ex       STATIC ${EX_SOURCES})
-  add_library (mc       STATIC ${MC_SOURCES})
-  add_library (ne       STATIC ${NE_SOURCES})
-  add_library (pm       STATIC ${PM_SOURCES})
-  add_library (ssc_core STATIC ${SSC_CORE_SOURCES})
-  add_library (ssc_sli  STATIC ${SSC_SLI_SOURCES})
+  file(GLOB SSC_ST_SOURCES   "${MATLAB_ROOT}/toolbox/physmod/simscape/simtypes/core/c/${ARCH}/*.c")
 
   set(SIMSCAPE_INCLUDE
     ${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/simscape/engine/core/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/simscape/compiler/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/ds/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/simscape/simtypes/core/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/network_engine/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/math/core/c/${ARCH}
+    ${MATLAB_ROOT}/toolbox/physmod/common/logging/core/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/lang/core/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/external/library/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}
-    ${MATLAB_ROOT}/toolbox/physmod/simscape/simscapedemos
   )
-
-  target_include_directories (ex       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
-  target_include_directories (mc       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
-  target_include_directories (ne       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
-  target_include_directories (pm       PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
-  target_include_directories (ssc_core PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
-  target_include_directories (ssc_sli  PUBLIC ${RTW_DIR} ${RTW_INCLUDE} ${SIMSCAPE_INCLUDE})
 
   foreach (INCLUDE_PATH ${SIMSCAPE_INCLUDE})
     file(GLOB COMPONENT_HEADERS "${INCLUDE_PATH}/*.h")
@@ -179,6 +156,7 @@ if (${SIMSCAPE})
     ${PM_SOURCES}
     ${SSC_CORE_SOURCES}
     ${SSC_SLI_SOURCES}
+    ${SSC_ST_SOURCES}
   )
 
 endif ()
@@ -187,7 +165,18 @@ add_library (${MODEL_NAME} SHARED
   ${RTW_DIR}/modelDescription.xml
   ${HEADERS}
   ${SOURCES}
+  ${SIMSCAPE_SOURCES}
 )
+
+if (${SIMSCAPE})
+    source_group("ex"       FILES ${EX_SOURCES})
+    source_group("mc"       FILES ${MC_SOURCES})
+    source_group("ne"       FILES ${NE_SOURCES})
+    source_group("pm"       FILES ${PM_SOURCES})
+    source_group("ssc_core" FILES ${SSC_CORE_SOURCES})
+    source_group("ssc_sli"  FILES ${SSC_SLI_SOURCES})
+    source_group("ssc_st"   FILES ${SSC_ST_SOURCES})
+endif ()
 
 set_property(TARGET ${MODEL_NAME} PROPERTY C_STANDARD 99)
 
@@ -216,10 +205,6 @@ target_compile_definitions(${MODEL_NAME} PUBLIC
 )
 
 target_link_libraries(${MODEL_NAME} ${CUSTOM_LIBRARY})
-
-if (${SIMSCAPE})
-  target_link_libraries(${MODEL_NAME} ex mc ne pm ssc_core ssc_sli)
-endif ()
 
 file(READ ${MATLAB_ROOT}/simulink/include/simstruc.h CONTENTS)
 file(WRITE ${RTW_DIR}/Temp/simstruc_rt.h "
