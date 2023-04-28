@@ -102,8 +102,9 @@ if ~isempty(toolset)
     fprintf(fid, 'CMAKE_GENERATOR_TOOLSET:STRING=%s\n', toolset);
 end
 fprintf(fid, 'MODEL_NAME:STRING=%s\n', modelName);
-fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
 fprintf(fid, 'MATLAB_ROOT:STRING=%s\n', strrep(matlabroot, '\', '/'));
+fprintf(fid, 'RTW_DIR:STRING=%s\n', strrep(pwd, '\', '/'));
+fprintf(fid, 'ARCH:STRING=%s\n', computer('arch'));
 fprintf(fid, 'CUSTOM_INCLUDE:STRING=%s\n', custom_include);
 fprintf(fid, 'CUSTOM_SOURCE:STRING=%s\n', custom_source);
 fprintf(fid, 'CUSTOM_LIBRARY:STRING=%s\n', custom_library);

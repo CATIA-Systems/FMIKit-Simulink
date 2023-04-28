@@ -66,14 +66,14 @@ disp('### Generating project')
 
 source_dir = grtfmi_wslpath(grtfmi_dir);
 
-command = ['wsl "' cmake_command '" -S "' source_dir '" -B "' rtw_dir '"'];
+command = ['wsl -u root "' cmake_command '" -S "' source_dir '" -B "' rtw_dir '"'];
 
 status = system(command);
 assert(status == 0, 'Failed to run CMake generator');
 
 disp('### Building FMU')
 
-command = ['wsl "' cmake_command '" --build "' rtw_dir '"'];
+command = ['wsl -u root "' cmake_command '" --build "' rtw_dir '"'];
 status = system(command);
 assert(status == 0, 'Failed to build FMU');
 
