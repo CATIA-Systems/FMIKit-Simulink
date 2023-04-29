@@ -14,6 +14,7 @@ import org.jdesktop.swingx.JXTreeTable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -833,7 +834,7 @@ public class FMUBlockDialog extends JDialog {
             String startValue = startValues.get(variable.name);
 
             if ("structuralParameter".equals(variable.causality)) {
-                structuralParameterTypes.add(Util.typeEnumForVariable(variable));
+                structuralParameterTypes.add(Util.typeEnumForVariable(variable, modelDescription.fmiVersion));
                 structuralParameterVRs.add(variable.valueReference);
                 structuralParameterValues.add(startValue);
             } else if ("String".equals(variable.type)) {
@@ -842,7 +843,7 @@ public class FMUBlockDialog extends JDialog {
                 stringStartValues.add("'" + startValue + "'");
             } else {
                 scalarStartSizes.add(variableSize);
-                scalarStartTypes.add(Util.typeEnumForVariable(variable));
+                scalarStartTypes.add(Util.typeEnumForVariable(variable, modelDescription.fmiVersion));
                 scalarStartVRs.add(variable.valueReference);
                 scalarStartValues.add(startValue);
             }
@@ -869,7 +870,7 @@ public class FMUBlockDialog extends JDialog {
 
             inputPortWidths.add(inputPortWidth);
 
-            inputPortTypes.add(Util.typeEnumForVariable(firstVariable));
+            inputPortTypes.add(Util.typeEnumForVariable(firstVariable, modelDescription.fmiVersion));
 
             for (ScalarVariable variable : inputPort) {
                 inputPortVariableVRs.add(variable.valueReference);
@@ -895,7 +896,7 @@ public class FMUBlockDialog extends JDialog {
 
             outportWidths.add(portWidth);
 
-            outportPortTypes.add(Util.typeEnumForVariable(firstVariable));
+            outportPortTypes.add(Util.typeEnumForVariable(firstVariable, modelDescription.fmiVersion));
 
             for (ScalarVariable variable : outputPort) {
                 outputPortVariableVRs.add(variable.valueReference);
@@ -1005,7 +1006,7 @@ public class FMUBlockDialog extends JDialog {
                 params.add(isTunable ? "1" : "0");
 
                 // variable type
-                params.add(Integer.toString(Util.typeEnumForVariable(variable)));
+                params.add(Integer.toString(Util.typeEnumForVariable(variable, modelDescription.fmiVersion)));
 
                 // value reference
                 params.add(variable.valueReference);
@@ -1772,7 +1773,7 @@ public class FMUBlockDialog extends JDialog {
         panel7.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel7.setOpaque(false);
         panel4.add(panel7, new GridConstraints(1, 2, 9, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(280, 280), new Dimension(280, 280), new Dimension(280, 280), 0, false));
-        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null));
+        panel7.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         lblModelImage = new JLabel();
         lblModelImage.setEnabled(false);
         lblModelImage.setText("no image available");
