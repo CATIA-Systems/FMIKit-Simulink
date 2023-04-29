@@ -1252,8 +1252,10 @@ public class FMUBlockDialog extends JDialog {
 
         ArrayList<String> platforms = new ArrayList<String>();
 
-        Implementation implementation = modelDescription.coSimulation != null ? modelDescription.coSimulation : modelDescription.modelExchange;
+        final Implementation implementation = modelDescription.coSimulation != null ? modelDescription.coSimulation : modelDescription.modelExchange;
+        final String modelIdentifier = implementation.modelIdentifier;
 
+        // FMI 1.0 & 2.0
         if (!implementation.sourceFiles.isEmpty()) {
 
             boolean hasSources = true;
@@ -1270,8 +1272,6 @@ public class FMUBlockDialog extends JDialog {
             }
 
         }
-
-        String modelIdentifier = implementation.modelIdentifier;
 
         if (Util.isFile(unzipdir, "binaries", "darwin64", modelIdentifier + ".dylib")) {
             platforms.add("darwin64");
@@ -1291,6 +1291,31 @@ public class FMUBlockDialog extends JDialog {
 
         if (Util.isFile(unzipdir, "binaries", "win64", modelIdentifier + ".dll")) {
             platforms.add("win64");
+        }
+
+        // FMI 3.0
+        if (Util.isFile(unzipdir, "sources", "buildDescription.xml")) {
+            platforms.add("c-code");
+        }
+
+        if (Util.isFile(unzipdir, "binaries", "x86_64-darwin", modelIdentifier + ".dylib")) {
+            platforms.add("x86_64-darwin");
+        }
+
+        if (Util.isFile(unzipdir, "binaries", "x86-linux", modelIdentifier + ".so")) {
+            platforms.add("x86-linux");
+        }
+
+        if (Util.isFile(unzipdir, "binaries", "x86_64-linux", modelIdentifier + ".so")) {
+            platforms.add("x86_64-linux");
+        }
+
+        if (Util.isFile(unzipdir, "binaries", "x86-windows", modelIdentifier + ".dll")) {
+            platforms.add("x86-windows");
+        }
+
+        if (Util.isFile(unzipdir, "binaries", "x86_64-windows", modelIdentifier + ".dll")) {
+            platforms.add("x86_64-windows");
         }
 
         return platforms;
