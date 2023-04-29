@@ -315,17 +315,11 @@ static void cb_logMessage(FMIInstance *instance, FMIStatus status, const char *c
 	logCall(S, buf);
 }
 
-static void cb_logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message, ...) {
+static void cb_logFunctionCall(FMIInstance *instance, FMIStatus status, const char *message) {
 	
 	char buf[FMI_MAX_MESSAGE_LENGTH];
 
-	size_t len = snprintf(buf, FMI_MAX_MESSAGE_LENGTH, "[%s] ", instance->name);
-
-	va_list args;
-
-	va_start(args, message);
-	len += vsnprintf(&buf[len], FMI_MAX_MESSAGE_LENGTH - len, message, args);
-	va_end(args);
+	snprintf(buf, FMI_MAX_MESSAGE_LENGTH, "[%s] %s", instance->name, message);
 
 	appendStatus(status, buf, FMI_MAX_MESSAGE_LENGTH);
 
@@ -1051,7 +1045,7 @@ static void initialize(SimStruct *S) {
             CHECK_STATUS(FMI1InitializeSlave(instance, time, stopTime > time, stopTime));
         } else {
             CHECK_STATUS(FMI1SetTime(instance, time));
-            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S)));
+            CHECK_STATUS(FMI1Initialize(instance, toleranceDefined, relativeTolerance(S), &instance->fmi1Functions->eventInfo));
             if (instance->fmi1Functions->eventInfo.terminateSimulation) {
                 setErrorStatus(S, "Model requested termination at init");
                 return;
