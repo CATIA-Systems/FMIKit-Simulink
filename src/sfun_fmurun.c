@@ -261,6 +261,22 @@ static int ny(SimStruct *S) {
 	return (int)mxGetNumberOfElements(ssGetSFcnParam(S, outputPortWidthsParam));
 }
 
+static bool initialized(SimStruct* S) {
+
+	void** p = ssGetPWork(S);
+
+	FMIInstance* instance = (FMIInstance*)p[0];
+
+	switch (instance->state) {
+	case FMI2EventModeState:
+	case FMI2ContinuousTimeModeState:
+	case FMI2StepCompleteState:
+		return true;
+	default: 
+		return false;
+	}
+}
+
 static void logCall(SimStruct *S, const char* message) {
 
     FILE *logfile = NULL;
@@ -855,6 +871,8 @@ static void update(SimStruct *S, bool inputEvent) {
 		nextEventTime     = instance->fmi2Functions->eventInfo.nextEventTime;
     } else {
         // TODO
+		upcomingTimeEvent = false;
+		nextEventTime     = 0;
     }
 
 	// Work around for the event handling in Dymola FMUs:
@@ -1073,7 +1091,6 @@ static void initialize(SimStruct *S) {
         CHECK_ERROR(setParameters(S, false, false));
         CHECK_STATUS(FMI2SetupExperiment(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime));
         CHECK_STATUS(FMI2EnterInitializationMode(instance));
-        CHECK_STATUS(FMI2ExitInitializationMode(instance));
 
     } else {
 
@@ -1086,11 +1103,16 @@ static void initialize(SimStruct *S) {
         CHECK_ERROR(setParameters(S, false, false));
 
         CHECK_STATUS(FMI3EnterInitializationMode(instance, toleranceDefined, relativeTolerance(S), time, stopTime > time, stopTime));
-        CHECK_STATUS(FMI3ExitInitializationMode(instance));
 
     }
 
     if (isME(S)) {
+
+		if (isFMI2(S)) {
+			CHECK_STATUS(FMI2ExitInitializationMode(instance));
+		} else {
+			CHECK_STATUS(FMI3ExitInitializationMode(instance));
+		}
 
         // initialize the continuous states
         real_T *x = ssGetContStates(S);
@@ -1238,7 +1260,6 @@ static void mdlEnable(SimStruct *S) {
     if (!isFMI1(S)) {
         strcat(fmuResourceLocation, "/resources");
     }
-
     
     // instantiate the FMU
     if (isFMI1(S)) {
@@ -1753,6 +1774,15 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 		const time_T h = time - instance->time;
 
 		if (h > 0) {
+
+			if (!initialized(S)) {
+				if (isFMI2(S)) {
+					CHECK_STATUS(FMI2ExitInitializationMode(instance));
+				} else if (isFMI3(S)) {
+					CHECK_STATUS(FMI3ExitInitializationMode(instance));
+				}
+			}
+
 			if (isFMI1(S)) {
 				CHECK_STATUS(FMI1DoStep(instance, instance->time, h, fmi1True));
 			} else if (isFMI2(S)) {
@@ -1775,6 +1805,10 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 #define MDL_UPDATE
 #if defined(MDL_UPDATE)
 static void mdlUpdate(SimStruct *S, int_T tid) {
+
+	void** p = ssGetPWork(S);
+
+	FMIInstance* instance = (FMIInstance*)p[0];
 
 	logDebug(S, "mdlUpdate(tid=%d, time=%.16g, majorTimeStep=%d)", tid, ssGetT(S), ssIsMajorTimeStep(S));
 
@@ -1891,21 +1925,29 @@ static void mdlTerminate(SimStruct *S) {
 		    if (isFMI1(S)) {
 		
 			    if (isME(S)) {
-				    CHECK_STATUS(FMI1Terminate(instance));
+					if (initialized(S)) {
+						CHECK_STATUS(FMI1Terminate(instance));
+					}
 				    FMI1FreeModelInstance(instance);
 			    } else {
-				    CHECK_STATUS(FMI1TerminateSlave(instance));
+					if (initialized(S)) {
+						CHECK_STATUS(FMI1TerminateSlave(instance));
+					}
 				    FMI1FreeSlaveInstance(instance);
 			    }
 
 		    } else if (isFMI2(S)) {
-			
-			    CHECK_STATUS(FMI2Terminate(instance));
+				
+				if (initialized(S)) {
+					CHECK_STATUS(FMI2Terminate(instance));
+				}
 			    FMI2FreeInstance(instance);
 		
 		    } else {
-		
-			    CHECK_STATUS(FMI3Terminate(instance));
+
+				if (initialized(S)) {
+					CHECK_STATUS(FMI3Terminate(instance));
+				}
 			    FMI3FreeInstance(instance);
 		
 		    }
