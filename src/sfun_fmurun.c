@@ -224,6 +224,8 @@ static DTypeId simulinkVariableType(SimStruct *S, Parameter parameter, size_t in
 	case FMIUInt16Type:   return SS_UINT16;
 	case FMIInt32Type:    return SS_INT32;
 	case FMIUInt32Type:   return SS_UINT32;
+	case FMIInt64Type:    return SS_INT32;
+	case FMIUInt64Type:   return SS_UINT32;
 	case FMIBooleanType:  return SS_BOOLEAN;
 	default:              return -1; // error
 	}
@@ -570,6 +572,24 @@ static void setInput(SimStruct *S, bool direct, bool discrete, bool *inputEvent)
 			case FMIUInt32Type:
 				CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, (const uint32_T *)y, nValues));
 				break;
+			case FMIInt64Type: {
+				fmi3Int64* values = (fmi3Int64*)calloc(nValues, sizeof(fmi3Int64));
+				for (int j = 0; j < nValues; j++) {
+					values[j] = ((const int32_T*)y)[j];
+				}
+				CHECK_STATUS(FMI3SetInt64(instance, &vr, 1, values, nValues));
+				free(values);
+				break;
+			}
+			case FMIUInt64Type: {
+				fmi3UInt64* values = (fmi3UInt64*)calloc(nValues, sizeof(fmi3UInt64));
+				for (int j = 0; j < nValues; j++) {
+					values[j] = ((const uint32_T*)y)[j];
+				}
+				CHECK_STATUS(FMI3SetUInt64(instance, &vr, 1, values, nValues));
+				free(values);
+				break;
+			}
 			case FMIBooleanType: {
 				fmi3Boolean *values = (fmi3Boolean *)calloc(nValues, sizeof(fmi3Boolean));
 				for (int j = 0; j < nValues; j++) {
@@ -688,6 +708,24 @@ static void getOutput(SimStruct *S) {
 			case FMIUInt32Type:
 				CHECK_STATUS(FMI3GetUInt32(instance, &vr, 1, (uint32_T *)y, nValues));
 				break;
+			case FMIInt64Type: {
+				fmi3Int64* values = (fmi3Int64*)calloc(nValues, sizeof(fmi3Int64));
+				CHECK_STATUS(FMI3GetInt64(instance, &vr, 1, values, nValues));
+				for (int j = 0; j < nValues; j++) {
+					((int32_T*)y)[j] = values[j];
+				}
+				free(values);
+				break;
+			}
+			case FMIUInt64Type: {
+				fmi3UInt64* values = (fmi3UInt64*)calloc(nValues, sizeof(fmi3UInt64));
+				CHECK_STATUS(FMI3GetUInt64(instance, &vr, 1, values, nValues));
+				for (int j = 0; j < nValues; j++) {
+					((uint32_T*)y)[j] = values[j];
+				}
+				free(values);
+				break;
+			}
 			case FMIBooleanType: {
 				fmi3Boolean *values = (fmi3Boolean *)calloc(nValues, sizeof(fmi3Boolean));
 				CHECK_STATUS(FMI3GetBoolean(instance, &vr, 1, values, nValues));
@@ -1496,7 +1534,11 @@ static void mdlInitializeSizes(SimStruct *S) {
 	for (int i = 0; i < nu(S); i++) {
 		ssSetInputPortWidth(S, i, inputPortWidth(S, i));
 		ssSetInputPortRequiredContiguous(S, i, 1); // direct input signal access
-		DTypeId type = simulinkVariableType(S, inputPortTypesParam, i);
+		const DTypeId type = simulinkVariableType(S, inputPortTypesParam, i);
+		if (type < 0) {
+			setErrorStatus(S, "Unexpected type id for input port %d.", i);
+			return;
+		}
 		ssSetInputPortDataType(S, i, type);
 		bool dirFeed = inputPortDirectFeedThrough(S, i);
 		ssSetInputPortDirectFeedThrough(S, i, dirFeed); // direct feed through
@@ -1515,6 +1557,10 @@ static void mdlInitializeSizes(SimStruct *S) {
 	for (int i = 0; i < ny(S); i++) {
 		ssSetOutputPortWidth(S, i, outputPortWidth(S, i));
 		DTypeId type = simulinkVariableType(S, outputPortTypesParam, i);
+		if (type < 0) {
+			setErrorStatus(S, "Unexpected type id for output port %d.", i);
+			return;
+		}
 		ssSetOutputPortDataType(S, i, type);
 	}
 
