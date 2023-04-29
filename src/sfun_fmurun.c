@@ -211,23 +211,39 @@ static FMIVariableType variableType(SimStruct *S, Parameter parameter, int index
 }
 
 static DTypeId simulinkVariableType(SimStruct *S, Parameter parameter, size_t index) {
+	
 	const mxArray *param = ssGetSFcnParam(S, parameter);
 	const real_T realValue = ((real_T *)mxGetData(param))[index];
 	const int intValue = (int)realValue;
-	FMIVariableType type = (FMIVariableType)intValue;
+	const FMIVariableType type = (FMIVariableType)intValue;
+	
 	switch (type) {
-	case FMIFloat32Type:  return SS_SINGLE;
-	case FMIFloat64Type:  return SS_DOUBLE;
-	case FMIInt8Type:     return SS_INT8;
-	case FMIUInt8Type:    return SS_UINT8;
-	case FMIInt16Type:    return SS_INT16;
-	case FMIUInt16Type:   return SS_UINT16;
-	case FMIInt32Type:    return SS_INT32;
-	case FMIUInt32Type:   return SS_UINT32;
-	case FMIInt64Type:    return SS_INT32;
-	case FMIUInt64Type:   return SS_UINT32;
-	case FMIBooleanType:  return SS_BOOLEAN;
-	default:              return -1; // error
+	case FMIFloat32Type:
+	case FMIDiscreteFloat32Type:
+		return SS_SINGLE;
+	case FMIFloat64Type:
+	case FMIDiscreteFloat64Type:
+		return SS_DOUBLE;
+	case FMIInt8Type:     
+		return SS_INT8;
+	case FMIUInt8Type:    
+		return SS_UINT8;
+	case FMIInt16Type:    
+		return SS_INT16;
+	case FMIUInt16Type:   
+		return SS_UINT16;
+	case FMIInt32Type:    
+		return SS_INT32;
+	case FMIUInt32Type:   
+		return SS_UINT32;
+	case FMIInt64Type:    
+		return SS_INT32;
+	case FMIUInt64Type:   
+		return SS_UINT32;
+	case FMIBooleanType:  
+		return SS_BOOLEAN;
+	default:              
+		return -1; // error
 	}
 }
 
