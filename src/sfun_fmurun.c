@@ -1756,13 +1756,13 @@ static void mdlOutputs(SimStruct *S, int_T tid) {
 			if (isFMI1(S)) {
 				CHECK_STATUS(FMI1DoStep(instance, instance->time, h, fmi1True));
 			} else if (isFMI2(S)) {
-				CHECK_STATUS(FMI2DoStep(instance, instance->time, h, fmi2False));
+				CHECK_STATUS(FMI2DoStep(instance, instance->time, h, fmi2True));
 			} else {
 				fmi3Boolean eventEncountered;
 				fmi3Boolean terminateSimulation;
 				fmi3Boolean earlyReturn;
 				fmi3Float64 lastSuccessfulTime;
-				CHECK_STATUS(FMI3DoStep(instance, instance->time, h, fmi2False, &eventEncountered, &terminateSimulation, &earlyReturn, &lastSuccessfulTime));
+				CHECK_STATUS(FMI3DoStep(instance, instance->time, h, fmi3True, &eventEncountered, &terminateSimulation, &earlyReturn, &lastSuccessfulTime));
                 // TODO: handle terminateSimulation == true
 			}
 		}
