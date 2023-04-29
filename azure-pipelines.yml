@@ -57,7 +57,7 @@ jobs:
 - job: maci64
   displayName: 'macOS'
   pool:
-    vmImage: 'macos-10.15'
+    vmImage: 'macos-11'
 
   steps:
 
@@ -89,7 +89,7 @@ jobs:
   - win32
   - win64
   pool:
-    vmImage: 'ubuntu-18.04'
+    vmImage: 'ubuntu-20.04'
 
   steps:
 
