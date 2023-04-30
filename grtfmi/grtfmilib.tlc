@@ -59,6 +59,16 @@
   %endswitch
 %endfunction
 
+%function GetDefaultStartValue(record) Output
+  %assign dataTypeId = LibGetRecordDataTypeId(record)
+  %assign dataType   = ::CompiledModel.DataTypes.DataType[dataTypeId]
+  %if ISFIELD(dataType, "Enumeration")
+    %return dataType.Enumeration[0].Value
+  %else
+    %return "0"
+  %endif
+%endfunction
+
 %function MinMaxAttributes(port, fmiType)
   %assign attributes = ""
   %if !ISFIELD(port, "BlockName")
@@ -149,6 +159,10 @@
       %return vr
     %endif
   %else
+    %if fmiType == "Enumeration"
+      %assign dtypeID = 6
+      %assign typeAttr = " declaredType=\"%<dataType.DTName>\"%<typeAttr>"
+    %endif
     %selectfile incfile
 
     %if width > 1  %% array
@@ -205,10 +219,6 @@
         %assign startAttr = " start=\"%<startValue>\""
       %else
         %assign startAttr = ""
-      %endif
-      %if fmiType == "Enumeration"
-        %assign dtypeID = 6
-        %assign typeAttr = " declaredType=\"%<dataType.DTName>\"%<typeAttr>"
       %endif
       %selectfile xmlfile2
     <ScalarVariable name="%<variableName>%<variableSubs>" valueReference="%<vr>"%<variableAttr>>
