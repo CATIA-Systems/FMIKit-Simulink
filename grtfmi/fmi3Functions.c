@@ -414,7 +414,40 @@ fmi3Status fmi3GetInt64(fmi3Instance instance,
     size_t nValueReferences,
     fmi3Int64 values[],
     size_t nValues) {
-    NOT_IMPLEMENTED
+    
+    ASSERT_INSTANCE
+
+    size_t i, j, index, copied = 0;
+    ModelVariable* v;
+
+    for (i = 0; i < nValueReferences; i++) {
+
+        index = valueReferences[i] - 1;
+
+        if (index >= N_MODEL_VARIABLES) {
+            return fmi3Error;
+        }
+
+        v = &s_instance->modelVariables[index];
+
+        if (v->dtypeID != SS_INT32) {
+            return fmi3Error;
+        }
+
+        if (copied + v->size > nValues) {
+            return fmi3Error;
+        }
+
+        for (j = 0; j < v->size; j++) {
+            ((fmi3Int64*)values)[j] = ((int32_T*)v->address)[j];
+        }
+
+        values += v->size;
+
+        copied += v->size;
+    }
+
+    return fmi3OK;
 }
 
 fmi3Status fmi3GetUInt64(fmi3Instance instance,
@@ -593,7 +626,40 @@ fmi3Status fmi3SetInt64(fmi3Instance instance,
     size_t nValueReferences,
     const fmi3Int64 values[],
     size_t nValues) {
-    NOT_IMPLEMENTED
+
+    ASSERT_INSTANCE
+
+    size_t i, j, index, copied = 0;
+    ModelVariable* v;
+
+    for (i = 0; i < nValueReferences; i++) {
+
+        index = valueReferences[i] - 1;
+
+        if (index >= N_MODEL_VARIABLES) {
+            return fmi3Error;
+        }
+
+        v = &s_instance->modelVariables[index];
+
+        if (v->dtypeID != SS_INT32) {
+            return fmi3Error;
+        }
+
+        if (copied + v->size > nValues) {
+            return fmi3Error;
+        }
+
+        for (j = 0; j < v->size; j++) {
+            ((int32_T*)v->address)[j] = ((fmi3Int64*)values)[j];
+        }
+
+        values += v->size;
+
+        copied += v->size;
+    }
+
+    return fmi3OK;
 }
 
 fmi3Status fmi3SetUInt64(fmi3Instance instance,

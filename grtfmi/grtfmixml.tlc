@@ -210,10 +210,11 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %else
           %assign dataName = "&(rtmGetU(S)->%<port.Identifier>"
         %endif
+        %assign startValue = GetDefaultStartValue(port)
         %if FMIVersion == "2"
-          %assign vr = VariableFMI2(port, variableName, dataName, vr, " causality=\"input\"", " start=\"0\"")
+          %assign vr = VariableFMI2(port, variableName, dataName, vr, " causality=\"input\"", " start=\"%<startValue>\"")
         %else
-          %assign vr = VariableFMI3(port, variableName, dataName, vr, " causality=\"input\" start=\"0\"", "")
+          %assign vr = VariableFMI3(port, variableName, dataName, vr, " causality=\"input\" start=\"%<startValue>\"", "")
         %endif
       %endforeach
     %endif
