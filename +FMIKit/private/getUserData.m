@@ -15,7 +15,7 @@ for i = 1:numel(mask.Parameters)
     userData.startValues(parameter.Prompt) = parameter.Value;
 end
 
-if ~strcmp(userData.fmiKitVersion, FMIKit.version)
+if ~strcmp(userData.fmiKitVersion, '3.0')
     error([getfullname(block) ' was imported with an incompatible version of FMI Kit. Please re-import the FMU.']);
 end
 

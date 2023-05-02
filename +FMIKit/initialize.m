@@ -58,8 +58,8 @@ end
 
 % check fmikit.jar version
 jarVersion = char(fmikit.ui.FMUBlockDialog.FMI_KIT_VERSION);
-if ~strcmp(jarVersion, FMIKit.version)
-    error(['Wrong fmikit.jar version. Expected ' FMIKit.version ...
+if ~strcmp(jarVersion, '3.0')
+    error(['Wrong fmikit.jar version. Expected 3.0' ...
       ' but was ' jarVersion '.'])
 end
 
