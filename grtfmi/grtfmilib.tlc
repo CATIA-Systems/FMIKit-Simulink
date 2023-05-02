@@ -96,6 +96,7 @@
         %assign unit = ""
       %endif
       %if TYPE(unit) == "String" && !ISEMPTY(unit) && unit != "inherit"
+        %assign unit = FEVAL("grtfmi_xml_encode", unit)
         %assign attributes = "%<attributes> unit=\"%<unit>\""
         %assign ::units = ::units + unit
       %endif
