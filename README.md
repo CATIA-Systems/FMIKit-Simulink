@@ -41,5 +41,5 @@ Our partners at [Claytex](https://www.claytex.com/about-us/contact-us/) are read
 
 ## License
 
-Copyright &copy; 2022 Dassault Syst&egrave;mes.
+Copyright &copy; 2023 Dassault Syst&egrave;mes.
 The code is released under the [2-Clause BSD license](LICENSE.txt).
