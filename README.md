@@ -8,7 +8,7 @@ A Simulink library to import and export [Functional Mock-up Units](https://fmi-s
 
 - FMI 1.0, 2.0, and 3.0
 - Model Exchange and Co-Simulation
-- MATLAB R2016a - R2022a
+- MATLAB R2016a - R2023a
 
 ## Quick start
 
