@@ -8,7 +8,7 @@ FMI Kit supports...
 
 - FMI 1.0, 2.0, and 3.0
 - Model Exchange and Co-Simulation
-- MATLAB R2016a - R2022a
+- MATLAB R2016a - R2023a
 
 See the [changelog](changelog.html) for a list of changes in this version.
 For updates visit the [project on GitHub](https://github.com/CATIA-Systems/FMIKit-Simulink).
