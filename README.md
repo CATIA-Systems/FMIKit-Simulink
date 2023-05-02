@@ -29,7 +29,7 @@ FMIKit.initialize()
 fmikit_demo_BouncingBall
 
 % open the documentation
-web('FMIKit-Simulink-3.0/html/index.html')
+web('FMIKit-Simulink-3.1/html/index.html')
 ```
 
 See the documentation to learn how to [import](docs/fmu_import.md) and [export](docs/fmu_export.md) FMUs.
