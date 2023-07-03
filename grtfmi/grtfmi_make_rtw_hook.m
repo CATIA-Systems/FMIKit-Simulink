@@ -46,7 +46,9 @@ end
 cmake_command       = get_param(modelName, 'CMakeCommand');
 cmake_command       = grtfmi_find_cmake(cmake_command);
 generator           = get_param(modelName, 'CMakeGenerator');
-generator_platform  = get_param(modelName, 'CMakeGeneratorPlatform');
+if ispc
+    generator_platform  = get_param(modelName, 'CMakeGeneratorPlatform');
+end
 toolset             = get_param(modelName, 'CMakeToolset');
 optimization_level  = get_param(modelName, 'CMakeCompilerOptimizationLevel');
 optimization_flags  = get_param(modelName, 'CMakeCompilerOptimizationFlags');
