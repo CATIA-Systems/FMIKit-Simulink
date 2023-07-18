@@ -77,9 +77,9 @@ public class EditTest {
 //					
 					dialog.generateSourceSFunction();
 					
-					List<String> sourceFiles = dialog.getSourceFiles();
+//					List<String> sourceFiles = dialog.getSourceFiles();
 					
-					System.out.println(sourceFiles);
+//					System.out.println(sourceFiles);
 					
 				} catch (Exception e) {
 					e.printStackTrace();

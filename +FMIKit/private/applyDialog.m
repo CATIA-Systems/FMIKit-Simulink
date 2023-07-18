@@ -91,9 +91,22 @@ if userData.useSourceCode
     mex_args{end+1} = ['sfun_' model_identifier '.c'];
 
     % FMU sources
-    it = dialog.getSourceFiles().listIterator();
+    sourceFileSet = dialog.getSourceFileSet();
+
+    it = sourceFileSet.sourceFiles.listIterator();
     while it.hasNext()
         mex_args{end+1} = ['"' fullfile(unzipdir, 'sources', it.next()) '"'];
+    end
+
+    % preprocessor definitions
+    it = sourceFileSet.preprocessorDefinitions.listIterator();
+    while it.hasNext()
+        definition = it.next();
+        argument = ['-D' char(definition.name)];
+        if ~isempty(definition.value)
+            argument = [argument '=' char(definition.value)];
+        end
+        mex_args{end+1} = argument;
     end
 
     try
