@@ -26,9 +26,17 @@ if userData.useSourceCode
     };
     
     sources_files = {}; %#ok<*AGROW>
-    it = dialog.getSourceFiles().listIterator();
+
+    sourceFileSet = dialog.getSourceFileSet();
+
+    it = sourceFileSet.sourceFiles.listIterator();
     while it.hasNext()
         sources_files{end+1} = ['"' fullfile(unzipdir, 'sources', it.next()) '"'];
+    end
+
+    it = sourceFileSet.includeDirectories.listIterator();
+    while it.hasNext()
+        include_dirs{end+1} = ['"' fullfile(unzipdir, 'sources', it.next()) '"'];
     end
     
     % S-function sources
