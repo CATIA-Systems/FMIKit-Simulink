@@ -384,6 +384,7 @@ public class ModelDescriptionReader {
 			scalarVariable.startValue = element.getAttribute("start");
 			scalarVariable.description = element.getAttribute("description");
 			scalarVariable.causality = element.getAttribute("causality");
+			scalarVariable.variability = element.getAttribute("variability");
 			scalarVariable.unit = element.getAttribute("unit");
 			scalarVariable.derivative = element.getAttribute("derivative");
 

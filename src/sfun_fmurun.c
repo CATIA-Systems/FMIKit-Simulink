@@ -782,10 +782,10 @@ static void setParameters(SimStruct *S, bool structuralOnly, bool tunableOnly) {
 
     for (int i = numParams; i < nSFcnParams; i += 5) {
 
-        const double            strucural = mxGetScalar(ssGetSFcnParam(S, i));
-        const double            tunable   = mxGetScalar(ssGetSFcnParam(S, i + 1));
-        const FMIVariableType   type      = mxGetScalar(ssGetSFcnParam(S, i + 2));
-        const FMIValueReference vr        = mxGetScalar(ssGetSFcnParam(S, i + 3));
+        const bool strucural = (bool)mxGetScalar(ssGetSFcnParam(S, i));
+        const bool tunable = (bool)mxGetScalar(ssGetSFcnParam(S, i + 1));
+        const FMIVariableType type = (FMIVariableType)mxGetScalar(ssGetSFcnParam(S, i + 2));
+        const FMIValueReference vr = (FMIValueReference)mxGetScalar(ssGetSFcnParam(S, i + 3));
 
         if (structuralOnly && !strucural) continue;
 
@@ -797,45 +797,126 @@ static void setParameters(SimStruct *S, bool structuralOnly, bool tunableOnly) {
                 CHECK_STATUS(FMI2EnterEventMode(instance));
             }
 
-            for (int j = 0; j < 1; j++) {
+            // TODO: iterate over array
 
-                // TODO: iterate over array
+            const mxArray *pa = ssGetSFcnParam(S, i + 4);
 
-                const mxArray *pa = ssGetSFcnParam(S, i + 4);
-
-                switch (type) {
-                case FMIRealType:
-                case FMIDiscreteRealType: {
-                    const fmi2Real value = mxGetScalar(pa);
-                    CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &value));
-                    break;
-                }
-                case FMIIntegerType: {
-                    const fmi2Integer value = mxGetScalar(pa);
-                    CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &value));
-                    break;
-                }
-                case FMIBooleanType: {
-                    const fmi2Boolean value = mxGetScalar(pa);
-                    CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &value));
-                    break;
-                }
-                case FMIStringType: {
-                	const char    *value = getStringParam(S, i + 4, 0);
-               		CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String *)&value));
-                	mxFree(value);
-                    break;
-                }
-                default:
-                    setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
-                    return;
-                }
+            switch (type) {
+            case FMIRealType:
+            case FMIDiscreteRealType: {
+                const fmi2Real value = (fmi2Real)mxGetScalar(pa);
+                CHECK_STATUS(FMI2SetReal(instance, &vr, 1, &value));
+                break;
+            }
+            case FMIIntegerType: {
+                const fmi2Integer value = (fmi2Integer)mxGetScalar(pa);
+                CHECK_STATUS(FMI2SetInteger(instance, &vr, 1, &value));
+                break;
+            }
+            case FMIBooleanType: {
+                const fmi2Boolean value = (fmi2Boolean)mxGetScalar(pa);
+                CHECK_STATUS(FMI2SetBoolean(instance, &vr, 1, &value));
+                break;
+            }
+            case FMIStringType: {
+                const fmi2String value = (fmi2String)getStringParam(S, i + 4, 0);
+               	CHECK_STATUS(FMI2SetString(instance, &vr, 1, (const fmi2String*)&value));
+                mxFree((void*)value);
+                break;
+            }
+            default:
+                setErrorStatus(S, "Unsupported type id for FMI 2.0: %d", type);
+                return;
             }
 
             if (instance->state == FMI2EventModeState) {
                 CHECK_STATUS(FMI2EnterContinuousTimeMode(instance));
             }
-        }
+        
+		} else if (isFMI3(S)) {
+
+			if (instance->state == FMI2ContinuousTimeModeState) {
+				CHECK_STATUS(FMI3EnterEventMode(instance));
+			}
+
+			// TODO: iterate over array
+
+			const mxArray* pa = ssGetSFcnParam(S, i + 4);
+
+			switch (type) {
+			case FMIFloat32Type:
+			case FMIDiscreteFloat32Type: {
+				const fmi3Float32 value = (fmi3Float32)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetFloat32(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIFloat64Type:
+			case FMIDiscreteFloat64Type: {
+				const fmi3Float64 value = (fmi3Float64)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetFloat64(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIInt8Type: {
+				const fmi3Int8 value = (fmi3Int8)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetInt8(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIUInt8Type: {
+				const fmi3UInt8 value = (fmi3UInt8)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetUInt8(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIInt16Type: {
+				const fmi3Int16 value = (fmi3Int16)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetInt16(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIUInt16Type: {
+				const fmi3UInt16 value = (fmi3UInt16)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetUInt16(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIInt32Type: {
+				const fmi3Int32 value = (fmi3Int32)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetInt32(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIUInt32Type: {
+				const fmi3UInt32 value = (fmi3UInt32)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetUInt32(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIInt64Type: {
+				const fmi3Int64 value = (fmi3Int64)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetInt64(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIUInt64Type: {
+				const fmi3UInt64 value = (fmi3UInt64)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetUInt64(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIBooleanType: {
+				const fmi3Boolean value = (fmi3Boolean)mxGetScalar(pa);
+				CHECK_STATUS(FMI3SetBoolean(instance, &vr, 1, &value, 1));
+				break;
+			}
+			case FMIStringType: {
+				fmi3String value = (fmi3String)getStringParam(S, i + 4, 0);
+				CHECK_STATUS(FMI3SetString(instance, &vr, 1, (const fmi3String*)&value, 1));
+				mxFree((void*)value);
+				break;
+			}
+			default:
+				setErrorStatus(S, "Unsupported type id for FMI 3.0: %d", type);
+				return;
+			}
+
+			if (instance->state == FMI2EventModeState) {
+				CHECK_STATUS(FMI3EnterContinuousTimeMode(instance));
+			}
+
+		}
 
     }
 
