@@ -26,7 +26,7 @@ def expand_includes(out, filename):
                 inc_file = between_quotes.findall(line)[0]
                 if inc_file not in included:
                     expand_includes(out, inc_file)
-                    included.add(filename)
+                    included.add(inc_file)
             else:
                 out.write(line)
 
