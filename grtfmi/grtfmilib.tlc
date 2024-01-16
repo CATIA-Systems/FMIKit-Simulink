@@ -131,6 +131,11 @@
   %assign variableAttr = "%<variableAttr>%<descAttr>"
   %assign minMaxAttr   = MinMaxAttributes(record, fmiType)
   %assign typeAttr     = "%<typeAttr>%<minMaxAttr>"
+  %if dataTypeName == "real_T" || dataTypeName == "real32_T"
+    %assign variableAttr = "%<variableAttr> variability=\"continuous\""
+  %else
+    %assign variableAttr = "%<variableAttr> variability=\"discrete\""
+  %endif
   %if ISFIELD(record, "IsPseudoWorkspaceVar") && record.IsPseudoWorkspaceVar == "yes"
     %return vr
   %endif
