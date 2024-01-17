@@ -122,13 +122,12 @@ set(RTW_INCLUDE
 
 if (${SIMSCAPE})
 
-  file(GLOB EX_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/external/library/c/${ARCH}/*.c")
-  file(GLOB MC_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/math/core/c/${ARCH}/*.c")
-  file(GLOB NE_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/network_engine/c/${ARCH}/*.c")
-  file(GLOB PM_SOURCES       "${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}/*.c")
-  file(GLOB SSC_CORE_SOURCES "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/core/c/${ARCH}/*.c")
-  file(GLOB SSC_SLI_SOURCES  "${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}/*.c")
-  file(GLOB SSC_ST_SOURCES   "${MATLAB_ROOT}/toolbox/physmod/simscape/simtypes/core/c/${ARCH}/*.c")
+  file(GLOB EX_SOURCES       "${MATLAB_ROOT}/extern/physmod/${ARCH}/ex/src/*.c")
+  file(GLOB MC_SOURCES       "${MATLAB_ROOT}/extern/physmod/${ARCH}/mc/src/*.c")
+  file(GLOB PM_SOURCES       "${MATLAB_ROOT}/extern/physmod/${ARCH}/pm/src/*.c")
+  file(GLOB SSC_CORE_SOURCES "${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_core/src/*.c")
+  file(GLOB SSC_SLI_SOURCES  "${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_sli/src/*.c")
+  file(GLOB SSC_ST_SOURCES   "${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_st/src/*.c")
 
   set(SIMSCAPE_INCLUDE
     ${MATLAB_ROOT}/toolbox/physmod/simscape/engine/sli/c/${ARCH}
@@ -142,6 +141,16 @@ if (${SIMSCAPE})
     ${MATLAB_ROOT}/toolbox/physmod/common/lang/core/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/external/library/c/${ARCH}
     ${MATLAB_ROOT}/toolbox/physmod/common/foundation/core/c/${ARCH}
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ex/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/lang/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/mc/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/pm/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_core/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_sli/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_st/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/pm_log/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_ds/include
+    ${MATLAB_ROOT}/extern/physmod/${ARCH}/ssc_comp/include
   )
 
   foreach (INCLUDE_PATH ${SIMSCAPE_INCLUDE})
