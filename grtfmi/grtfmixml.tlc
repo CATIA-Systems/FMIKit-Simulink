@@ -198,7 +198,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign dataName = "&(rtmGetDefaultParam(S)->%<identifier>"
       %endif
       %if FMIVersion == "2"
-        %assign vr = VariableFMI2(param, variableName, dataName, vr, " causality=\"parameter\" variability=\"tunable\"", "")
+        %assign vr = VariableFMI2(param, variableName, dataName, vr, " causality=\"parameter\"", "", "tunable")
       %else
         %assign vr = VariableFMI3(param, variableName, dataName, vr, " causality=\"parameter\" variability=\"tunable\"", "")
       %endif
@@ -221,7 +221,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %endif
         %assign startValue = GetDefaultStartValue(port)
         %if FMIVersion == "2"
-          %assign vr = VariableFMI2(port, variableName, dataName, vr, " causality=\"input\"", " start=\"%<startValue>\"")
+          %assign vr = VariableFMI2(port, variableName, dataName, vr, " causality=\"input\"", " start=\"%<startValue>\"", "")
         %else
           %assign vr = VariableFMI3(port, variableName, dataName, vr, " causality=\"input\" start=\"%<startValue>\"", "")
         %endif
@@ -246,7 +246,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
           %assign dataName = "&(rtmGetY(S)->%<block.Identifier>"
         %endif
         %if FMIVersion == "2"
-          %assign nextVR = VariableFMI2(port, variableName, dataName, vr, " causality=\"output\"", "")
+          %assign nextVR = VariableFMI2(port, variableName, dataName, vr, " causality=\"output\"", "", "")
         %else
           %assign nextVR = VariableFMI3(port, variableName, dataName, vr, " causality=\"output\"", "")
         %endif
@@ -269,7 +269,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
         %assign variableName = identifier
         %assign dataName = "&(%<identifier>"
         %if FMIVersion == "2"
-          %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "")
+          %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "", "")
         %else
           %assign vr = VariableFMI3(blockoutput, variableName, dataName, vr, "", "")
         %endif
@@ -301,7 +301,7 @@ static void initializeModelVariables(RT_MDL_TYPE* S, ModelVariable modelVariable
           %assign dataName = "&(rtmGetBlockIO(S)->%<varGroup.Name>.%<identifier>"
         %endif
         %if FMIVersion == "2"
-          %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "")
+          %assign vr = VariableFMI2(blockoutput, variableName, dataName, vr, "", "", "")
         %else
           %assign vr = VariableFMI3(blockoutput, variableName, dataName, vr, "", "")
         %endif
