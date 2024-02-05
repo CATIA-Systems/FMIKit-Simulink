@@ -9,15 +9,6 @@ extern "C" {
 
 struct FMI3Functions_ {
 
-    fmi3Boolean eventModeUsed;
-
-    fmi3Boolean discreteStatesNeedUpdate;
-    fmi3Boolean terminateSimulation;
-    fmi3Boolean nominalsOfContinuousStatesChanged;
-    fmi3Boolean valuesOfContinuousStatesChanged;
-    fmi3Boolean nextEventTimeDefined;
-    fmi3Float64 nextEventTime;
-
     /***************************************************
     Common Functions for FMI 3.0
     ****************************************************/

@@ -8,7 +8,7 @@ This header file defines the data and function types of FMI 3.0.
 It must be used when compiling an FMU or an FMI importer.
 
 Copyright (C) 2011 MODELISAR consortium,
-              2012-2022 Modelica Association Project "FMI"
+              2012-2023 Modelica Association Project "FMI"
               All rights reserved.
 
 This file is licensed by the copyright holders under the 2-Clause BSD License
@@ -103,8 +103,8 @@ typedef void (*fmi3IntermediateUpdateCallback) (
 /* end::CallbackIntermediateUpdate[] */
 
 /* tag::CallbackPreemptionLock[] */
-typedef void (*fmi3LockPreemptionCallback)   ();
-typedef void (*fmi3UnlockPreemptionCallback) ();
+typedef void (*fmi3LockPreemptionCallback)   (void);
+typedef void (*fmi3UnlockPreemptionCallback) (void);
 /* end::CallbackPreemptionLock[] */
 
 /* Define fmi3 function pointer types to simplify dynamic loading */

@@ -13,6 +13,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 #ifndef FMI_MAX_MESSAGE_LENGTH
 #define FMI_MAX_MESSAGE_LENGTH 4096
@@ -75,24 +76,19 @@ typedef enum {
 } FMIInterfaceType;
 
 typedef enum {
-    FMI2StartAndEndState        = 1 << 0,
-    FMI2InstantiatedState       = 1 << 1,
-    FMI2InitializationModeState = 1 << 2,
 
-    // model exchange states
-    FMI2EventModeState          = 1 << 3,
-    FMI2ContinuousTimeModeState = 1 << 4,
+    FMIStartAndEndState         = 1 << 0,
+    FMIInstantiatedState        = 1 << 1,
+    FMIInitializationModeState  = 1 << 2,
+    FMITerminatedState          = 1 << 3,
+    FMIConfigurationModeState   = 1 << 4,
+    FMIReconfigurationModeState = 1 << 5,
+    FMIEventModeState           = 1 << 6,
+    FMIContinuousTimeModeState  = 1 << 7,
+    FMIStepModeState            = 1 << 8,
+    FMIClockActivationMode      = 1 << 9
 
-    // co-simulation states
-    FMI2StepCompleteState       = 1 << 5,
-    FMI2StepInProgressState     = 1 << 6,
-    FMI2StepFailedState         = 1 << 7,
-    FMI2StepCanceledState       = 1 << 8,
-
-    FMI2TerminatedState         = 1 << 9,
-    FMI2ErrorState              = 1 << 10,
-    FMI2FatalState              = 1 << 11,
-} FMI2State;
+} FMIState;
 
 typedef unsigned int FMIValueReference;
 
@@ -107,6 +103,10 @@ typedef struct FMI3Functions_ FMI3Functions;
 typedef void FMILogFunctionCall(FMIInstance *instance, FMIStatus status, const char *message);
 
 typedef void FMILogMessage(FMIInstance *instance, FMIStatus status, const char *category, const char *message);
+
+typedef void FMILogErrorMessage(const char* message, va_list args);
+
+extern FMILogErrorMessage* logErrorMessage;
 
 struct FMIInstance_ {
 
@@ -127,6 +127,8 @@ struct FMIInstance_ {
 
     double time;
 
+    bool eventModeUsed;
+
     char* logMessageBuffer;
     size_t logMessageBufferSize;
     size_t logMessageBufferPosition;
@@ -137,7 +139,7 @@ struct FMIInstance_ {
 
     bool logFMICalls;
 
-    FMI2State state;
+    FMIState state;
 
     FMIStatus status;
 
@@ -147,7 +149,19 @@ struct FMIInstance_ {
 
 };
 
-FMI_STATIC FMIInstance* FMICreateInstance(const char* instanceName, const char* libraryPath, FMILogMessage* logMessage, FMILogFunctionCall* logFunctionCall);
+FMI_STATIC void FMIPrintToStdErr(const char* message, va_list args);
+
+FMI_STATIC void FMILogError(const char* message, ...);
+
+FMI_STATIC FMIStatus FMICalloc(void** memory, size_t count, size_t size);
+
+FMI_STATIC FMIStatus FMIRealloc(void** memory, size_t size);
+
+FMI_STATIC void FMIFree(void** memory);
+
+FMI_STATIC FMIInstance* FMICreateInstance(const char* instanceName, FMILogMessage* logMessage, FMILogFunctionCall* logFunctionCall);
+
+FMI_STATIC FMIStatus FMILoadPlatformBinary(FMIInstance* instance, const char* libraryPath);
 
 FMI_STATIC void FMIFreeInstance(FMIInstance *instance);
 
@@ -156,8 +170,6 @@ FMI_STATIC void FMIClearLogMessageBuffer(FMIInstance* instance);
 FMI_STATIC void FMIAppendToLogMessageBuffer(FMIInstance* instance, const char* format, ...);
 
 FMI_STATIC void FMIAppendArrayToLogMessageBuffer(FMIInstance* instance, const void* values, size_t nValues, const size_t sizes[], FMIVariableType variableType);
-
-FMI_STATIC FMIStatus FMIURIToPath(const char *uri, char *path, const size_t pathLength);
 
 FMI_STATIC FMIStatus FMIPathToURI(const char *path, char *uri, const size_t uriLength);
 
