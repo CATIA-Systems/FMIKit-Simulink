@@ -1318,7 +1318,7 @@ static void mdlEnable(SimStruct *S) {
         return;
     }
 
-#if !defined(FMI2_FUNCTION_PREFIX)
+#if !defined(FMI2_FUNCTION_PREFIX) && !defined(FMI3_FUNCTION_PREFIX)
 	if (FMILoadPlatformBinary(instance, libraryPath) != FMIOK) {
 		setErrorStatus(S, "Failed to load platform binary %s.", libraryPath);
 		return;
