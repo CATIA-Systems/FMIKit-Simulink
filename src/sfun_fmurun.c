@@ -6,6 +6,10 @@
 
 #include <math.h>
 
+#ifdef _DS2510
+#include <brtenv.h>
+#endif
+
 #define FMI_MAX_MESSAGE_LENGTH 4096
 
 #define INTERNET_MAX_URL_LENGTH 2083
@@ -281,6 +285,10 @@ static bool initialized(SimStruct* S) {
 
 static void logCall(SimStruct *S, const char* message) {
 
+#ifdef _DS2510
+	msg_info_set(MSG_SM_USER, 1, message);
+	msg_info_set(MSG_SM_USER, 2, "\n");
+#else
     FILE *logfile = NULL;
 
 	void **p = ssGetPWork(S);
@@ -297,6 +305,7 @@ static void logCall(SimStruct *S, const char* message) {
         ssPrintf(message);
         ssPrintf("\n");
     }
+#endif
 }
 
 static void appendStatus(FMIStatus status, char *message, size_t size) {
@@ -1719,13 +1728,16 @@ static void mdlStart(SimStruct *S) {
         p[1] = NULL;
     }
 
-	const char *logFile = getStringParam(S, logFileParam, 0);
+#ifndef _DS2510
+    const char *logFile = getStringParam(S, logFileParam, 0);
 
 	if (strlen(logFile) > 0) {
 	    p[1] = fopen(logFile, "w");
 	}
 
     mxFree((void *)logFile);
+#endif
+
 	if (nz(S) > 0) {
 		p[2] = calloc(nz(S), sizeof(fmi3Int32));
 	} else {
