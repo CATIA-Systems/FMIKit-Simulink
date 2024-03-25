@@ -41,6 +41,9 @@ endif ()
 
 add_library(${SOLVER} STATIC ${SOLVER_SOURCES})
 
+set_property(TARGET ${SOLVER} PROPERTY C_STANDARD 99)
+set_property(TARGET ${SOLVER} PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 target_compile_definitions(${SOLVER} PRIVATE
   _CRT_SECURE_NO_WARNINGS
   NRT
@@ -93,7 +96,7 @@ if (WIN32)
     "${MATLAB_ROOT}/extern/lib/win64/microsoft/sf_runtime.lib"
     ${SOLVER}
   )
-elseif (APPLE)
+else ()
   target_link_libraries(${MODEL_NAME} ${SOLVER})
 endif ()
 
