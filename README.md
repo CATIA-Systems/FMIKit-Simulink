@@ -1,3 +1,9 @@
+```
+⚠️ NOTE
+
+Import and export of FMUs is now natively supported by MATLAB/Simulink. Therefore, this project will no longer be continued.
+```
+
 ![FMI Kit banner](docs/images/banner.png)
 
 # FMI Kit for Simulink
